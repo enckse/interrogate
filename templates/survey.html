@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+    {% block main %}
+        <script type="text/javascript">
+        function do_submit(mode){
+            $('#survey_form').submit(function(e){
+                e.preventDefault();
+                $.ajax({
+                    data: $(this).serialize(),
+                    type: $(this).attr('method'),
+                    url: "/" + mode + "/{{idx}}",
+                    success: function(response) {
+                        // NOTE: throwing out response because we don't care
+                    }
+                });
+                return false;
+            });
+        }
+
+        function do_save(){
+            do_submit('save')
+            // NOTE: for-change the window at this point
+            if ({{do_follow}})
+            {
+                window.location = "/{{follow}}/{{session_id}}"
+            }
+            else
+            {
+                window.location.href = "/completed";
+            }
+        }
+
+        $(document).ready(function() {
+            do_submit('snapshot')
+        });
+
+        window.onload=function(){
+            var auto = setTimeout(function(){ autoRefresh(); }, 100);
+            function submitform(){
+                $('#survey_form').submit()
+            }
+
+            function autoRefresh(){
+                clearTimeout(auto);
+               // Change this timeout to adjust how often auto-submit in the background is happening
+                auto = setTimeout(function(){ submitform(); autoRefresh(); }, 15000);
+            }
+        }
+        </script>
+        <h4>{{ title }}</h4>
+        <form name="survey_form" id="survey_form" action="/snapshot" method='POST'>
+            <input type="hidden" name="session" value="{{session_id}}" />
+            {% if anon == "FALSE" %}
+                <div class="row">
+                  <div class="six columns">
+                    <label for="name">Your name</label>
+                    <input class="u-full-width" name="name" type="text" placeholder="Leeroy Jenkins" id="name">
+                  </div>
+                  <div class="six columns">
+                      <label for="email">Your email</label>
+                      <input class="u-full-width" name="email" type="email" placeholder="test@mailbox.com" id="email">
+                  </div>
+                </div>
+            {% endif %}
+            {% for question in questions %}
+            <div class="row">
+                {% if question.q_type == "input" %}
+                    <label for="{{ question.q_text }}">{{ question.q_text }}</label>
+                    <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
+                    <input class="u-full-width" type="text" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
+                {% endif %}
+                {% if question.q_type == "long" %}
+                    <label for="{{ question.q_text }}">{{ question.q_text }}</label>
+                    <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
+                    <textarea class="u-full-width" name="{{question.q_id}}" style="min-height: 105px;"placeholder="" id="{{ question.q_text }}"></textarea>
+                {% endif %}
+                {% if question.q_type == "option" %}
+                      <label for="{{ question.q_text }}">{{ question.q_text }}</label>
+                      <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
+                      <select class="u-full-width" id="{{ question.q_text }}" name="{{question.q_id}}">
+                          {% for option in question.q_opts %}
+                            <option value="{{ option }}"> {{ option }}</option>
+                          {% endfor %}
+                        </select>
+                {% endif %}
+                {% if question.q_type == "slide" %}
+                    <label for="{{ question.q_text }}">{{ question.q_text }}</label>
+                    <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
+                    <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="{{ 'slide' + question.q_id }}"></div>
+                    <input type="hidden" name="{{ question.q_id }}" value="" id="{{ 'hidden' + question.q_id }}" />
+
+                    <script>
+                        var {{ 'slide' + question.q_id }} = document.getElementById('{{ 'slide' + question.q_id }}');
+                        noUiSlider.create({{ 'slide' + question.q_id }}, {
+                            start: 50,
+                            range: {
+                                min: 0,
+                                max: 100
+                            },
+                            step: 5,
+                            behaviour: 'tap',
+                            pips: {
+                                mode: 'values',
+                                values: [10, 20, 30, 40, 50, 60, 70, 80, 90],
+                                density: 4
+                                }
+                        });
+
+                        var {{ 'slidehide' + question.q_id }} = document.getElementById('{{ 'hidden' + question.q_id }}');
+                        {{ 'slide' + question.q_id }}.noUiSlider.on('update', function( values, handle ) {
+                            {{ 'slidehide' + question.q_id }}.value = values[handle];
+                        });
+                    </script>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button class="button-primary" id="submit_form" onclick="do_save();">{% if follow %}Next{% else %}Submit{% endif %}</button>
+        </form>
+    {% endblock %}
