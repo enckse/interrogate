@@ -19,6 +19,11 @@ CONFIG_FILE_EXT = '.config'
 # key, within app context, where question definitions are stored
 QUESTION_KEY = 'questions'
 
+# output method
+METHOD_KEY = "method"
+OUT_METHOD = "_out_method_"
+OUT_METHODS = [x for x in dir() if x.startswith(OUT_METHOD)]
+
 # json fields to get values
 Q_ID = 'q_id'
 Q_TEXT = 'q_text'
@@ -130,19 +135,56 @@ def _save(idx, method):
     out_id = str(uuid.uuid4())
     questions_in = _get_config_path(idx)
     config_name = os.path.split(questions_in)[-1].replace(CONFIG_FILE_EXT, "")
-    dir_name = _build_output_path([today,
-                                   config_name,
-                                   use_client,
-                                   session,
-                                   method])
+    use_method = app.config[METHOD_KEY]
+    save_obj = SaveObject(results,
+                          today,
+                          config_name,
+                          use_client,
+                          session,
+                          method,
+                          out_id,
+                          questions_in)
+    use_method(save_obj)
+    return ""
+
+
+class SaveObject(object):
+    """save object."""
+
+    def __init__(self,
+                 results,
+                 today,
+                 config_name,
+                 use_client,
+                 session,
+                 method,
+                 out_id,
+                 questions_in):
+        """object init."""
+        self.results = results
+        self.today = today
+        self.config_name = config_name
+        self.use_client = use_client
+        self.session = session
+        self.method = method
+        self.out_id = out_id
+        self.questions_in = questions_in
+
+
+def _out_method_disk(obj):
+    """disk storage."""
+    dir_name = _build_output_path([obj.today,
+                                   obj.config_name,
+                                   obj.use_client,
+                                   obj.session,
+                                   obj.method])
     out_name = "{0}_{1}".format(_clean(str(time.time())),
-                                _clean(out_id))
+                                _clean(obj.out_id))
     with open(dir_name + out_name, 'w') as f:
-        f.write(json.dumps(results,
+        f.write(json.dumps(obj.results,
                            sort_keys=True,
                            indent=4,
                            separators=(',', ': ')))
-    return ""
 
 def _build_output_path(paths):
     """build an output path."""
@@ -163,9 +205,12 @@ if __name__ == "__main__":
                         help='port to operate on')
     parser.add_argument('--questions', nargs='+', type=str,
                         help='a json file expressing questions')
+    parser.add_argument('--output', default=OUT_METHOD + "disk",
+                        choices=OUT_METHODS,
+                        help="output method")
     args = parser.parse_args()
-
     app.config[QUESTION_KEY] = []
+    app.config[METHOD_KEY] = globals()[args.output]
     for q in args.questions:
         set_questions = os.path.join(QUESTION_DIR, q + CONFIG_FILE_EXT)
         if not os.path.exists(set_questions):
