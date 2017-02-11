@@ -1,0 +1,7 @@
+[submodule "static/nouislider"]
+        path = static/nouislider
+        url = https://github.com/leongersen/noUiSlider.git
+[submodule "static/skeleton"]
+        path = static/skeleton
+        url = https://github.com/dhg/Skeleton.git
+
