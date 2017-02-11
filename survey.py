@@ -34,10 +34,12 @@ LOCK = threading.RLock()
 # Store the input question sets into the app context
 app.config[QUESTION_KEY] = None
 
+
 def _get_config_path(index):
     """Retrieve the path to the config file."""
     questions_in = app.config[QUESTION_KEY][index]
     return questions_in
+
 
 def _get_questions(index):
     """Get question set."""
@@ -69,15 +71,18 @@ def _get_questions(index):
             q_id = q_id + 1
         return (title, anon, question_set)
 
+
 @app.route('/')
 def home():
     """Home shows a simple 'begin' page."""
     return render_template('begin.html')
-    
+
+
 @app.route('/begin')
 def begin():
     """Redirection wrapper to create the uuid for the session."""
     return redirect(url_for('survey', uuid=str(uuid.uuid4()), idx=0))
+
 
 @app.route('/<int:idx>/<uuid>')
 def survey(idx, uuid):
@@ -102,14 +107,17 @@ def snapshot(mode, idx):
     """Save a snapshot/submit of a survey."""
     return _save(idx, mode)
 
+
 @app.route("/completed")
 def completed():
     """Survey completed."""
     return render_template('complete.html')
 
+
 def _clean(value):
     """Clean invalid path chars from variables."""
     return "".join(c for c in value if c.isalnum() or c == '-')
+
 
 def _save(idx, method):
     """Save/snapshot a survey input."""
@@ -130,7 +138,7 @@ def _save(idx, method):
                 use_key = item[Q_TEXT]
         results[use_key] = val
         if key == "session":
-            session = val;
+            session = val
 
     out_id = str(uuid.uuid4())
     questions_in = _get_config_path(idx)
@@ -185,6 +193,7 @@ def _out_method_disk(obj):
                            sort_keys=True,
                            indent=4,
                            separators=(',', ': ')))
+
 
 def _build_output_path(paths):
     """build an output path."""
