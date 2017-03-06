@@ -34,15 +34,17 @@
         });
 
         window.onload=function(){
-            var auto = setTimeout(function(){ autoRefresh(); }, 100);
-            function submitform(){
-                $('#survey_form').submit()
-            }
+            if ({{snapshot_at}} > 0) {
+                var auto = setTimeout(function(){ autoRefresh(); }, 100);
+                function submitform(){
+                    $('#survey_form').submit()
+                }
 
-            function autoRefresh(){
-                clearTimeout(auto);
-               // Change this timeout to adjust how often auto-submit in the background is happening
-                auto = setTimeout(function(){ submitform(); autoRefresh(); }, 15000);
+                function autoRefresh(){
+                    clearTimeout(auto);
+                   // Change this timeout to adjust how often auto-submit in the background is happening
+                    auto = setTimeout(function(){ submitform(); autoRefresh(); }, 15000);
+                }
             }
         }
         </script>

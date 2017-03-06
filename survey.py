@@ -34,6 +34,8 @@ LOCK = threading.RLock()
 # Store the input question sets into the app context
 app.config[QUESTION_KEY] = None
 
+# Snapshot key
+SNAPTIME_KEY = 'snapshot-time'
 
 def _get_config_path(index):
     """Retrieve the path to the config file."""
@@ -99,7 +101,8 @@ def survey(idx, uuid):
                            session_id=uuid,
                            idx=idx,
                            do_follow=str(do_follow).lower(),
-                           follow=follow)
+                           follow=follow,
+                           snapshot_at=app.config[SNAPTIME_KEY])
 
 
 @app.route("/<mode>/<int:idx>", methods=['POST'])
@@ -210,6 +213,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Survey')
     parser.add_argument('--host', type=str, default="0.0.0.0",
                         help='host name')
+    parser.add_argument('--snapshot', type=int, default=15,
+                        help='auto snapshot (<= 0 is disabled)')
     parser.add_argument('--port', type=int, default=8080,
                         help='port to operate on')
     parser.add_argument('--questions', nargs='+', type=str,
@@ -220,6 +225,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
     app.config[METHOD_KEY] = globals()[args.output]
+    app.config[SNAPTIME_KEY] = args.snapshot
     for q in args.questions:
         set_questions = os.path.join(QUESTION_DIR, q + CONFIG_FILE_EXT)
         if not os.path.exists(set_questions):
