@@ -226,6 +226,9 @@ if __name__ == "__main__":
     app.config[QUESTION_KEY] = []
     app.config[METHOD_KEY] = globals()[args.output]
     app.config[SNAPTIME_KEY] = args.snapshot
+    if args.questions is None or len(args.questions) == 0:
+        print('question set(s) required')
+        exit(1)
     for q in args.questions:
         set_questions = os.path.join(QUESTION_DIR, q + CONFIG_FILE_EXT)
         if not os.path.exists(set_questions):
