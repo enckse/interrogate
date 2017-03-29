@@ -67,19 +67,24 @@
             {% endif %}
             {% for question in questions %}
             <div class="row">
+                <label for="{{ question.q_text }}">{{ question.q_text }}</label>
+                <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
                 {% if question.q_type == "input" %}
-                    <label for="{{ question.q_text }}">{{ question.q_text }}</label>
-                    <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
                     <input class="u-full-width" type="text" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
                 {% endif %}
                 {% if question.q_type == "long" %}
-                    <label for="{{ question.q_text }}">{{ question.q_text }}</label>
-                    <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
                     <textarea class="u-full-width" name="{{question.q_id}}" style="min-height: 105px;"placeholder="" id="{{ question.q_text }}"></textarea>
                 {% endif %}
+                {% if question.q_type == "label" %}
+                    <input class="u-full-width" type="hidden" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
+                {% endif %}
+                {% if question.q_type == "checkbox" %}
+                <input class="" type="checkbox" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
+                {% endif %}
+                {% if question.q_type == "number" %}
+                    <input class="u-full-width" type="number" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
+                {% endif %}
                 {% if question.q_type == "option" %}
-                      <label for="{{ question.q_text }}">{{ question.q_text }}</label>
-                      <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
                       <select class="u-full-width" id="{{ question.q_text }}" name="{{question.q_id}}">
                           {% for option in question.q_opts %}
                             <option value="{{ option }}"> {{ option }}</option>
@@ -87,8 +92,6 @@
                         </select>
                 {% endif %}
                 {% if question.q_type == "slide" %}
-                    <label for="{{ question.q_text }}">{{ question.q_text }}</label>
-                    <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
                     <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="{{ 'slide' + question.q_id }}"></div>
                     <input type="hidden" name="{{ question.q_id }}" value="" id="{{ 'hidden' + question.q_id }}" />
 
