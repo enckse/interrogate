@@ -22,7 +22,6 @@ QUESTION_KEY = 'questions'
 # output method
 METHOD_KEY = "method"
 OUT_METHOD = "_out_method_"
-OUT_METHODS = [x for x in dir() if x.startswith(OUT_METHOD)]
 
 # json fields to get values
 Q_ID = 'q_id'
@@ -182,6 +181,11 @@ class SaveObject(object):
         self.questions_in = questions_in
 
 
+def _out_method_off(obj):
+    """for demo purposes."""
+    pass
+
+
 def _out_method_disk(obj):
     """disk storage."""
     dir_name = _build_output_path([obj.today,
@@ -219,12 +223,14 @@ if __name__ == "__main__":
                         help='port to operate on')
     parser.add_argument('--questions', nargs='+', type=str,
                         help='a json file expressing questions')
-    parser.add_argument('--output', default=OUT_METHOD + "disk",
-                        choices=OUT_METHODS,
+    methods = [x.replace(OUT_METHOD,
+                         "") for x in dir() if x.startswith(OUT_METHOD)]
+    parser.add_argument('--output', default="disk",
+                        choices=methods,
                         help="output method")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
-    app.config[METHOD_KEY] = globals()[args.output]
+    app.config[METHOD_KEY] = globals()[OUT_METHOD + args.output]
     app.config[SNAPTIME_KEY] = args.snapshot
     if args.questions is None or len(args.questions) == 0:
         print('question set(s) required')
