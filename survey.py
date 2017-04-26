@@ -33,6 +33,7 @@ LOCK = threading.RLock()
 
 # sqlite init state
 SQLITE_INIT = False
+SQLITE_TABLE = "results"
 
 # Store the input question sets into the app context
 app.config[QUESTION_KEY] = None
@@ -192,28 +193,31 @@ def _out_method_sqlite(obj):
     with LOCK:
         global SQLITE_INIT
         db_name = os.path.join(ARTIFACTS, "output.db")
+        output_obj = {}
+        output_obj["results"] = json.dumps(obj.results)
+        output_obj["stamp"] = obj.today
+        output_obj["config"] = obj.config_name
+        output_obj["client"] = obj.use_client
+        output_obj["session"] = obj.session
+        output_obj["method"] = obj.method
+        output_obj["uuid"] = obj.out_id
         with sqlite3.connect(db_name) as conn:
             cursor = conn.cursor()
+            cols = []
+            params = []
+            create = []
+            for item in output_obj:
+                cols.append("?")
+                create.append(item + " TEXT")
+                params.append(output_obj[item])
             if not SQLITE_INIT:
                 SQLITE_INIT = True
                 cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS results (
-                    results TEXT,
-                    stamp TEXT,
-                    config TEXT,
-                    client TEXT,
-                    session TEXT,
-                    method TEXT,
-                    uuid TEXT
+                    CREATE TABLE IF NOT EXISTS ''' + SQLITE_TABLE + ''' (
+                    ''' + ",".join(create) + '''
                 )''')
-            params = [json.dumps(obj.results),
-                      obj.today,
-                      obj.config_name,
-                      obj.use_client,
-                      obj.session,
-                      obj.method,
-                      obj.out_id]
-            cursor.execute('INSERT INTO results values (?, ?, ?, ?, ?, ?, ?)',
+            cursor.execute('INSERT INTO ' + SQLITE_TABLE +
+                           ' values (' + ",".join(cols) + ')',
                            params)
 
 
