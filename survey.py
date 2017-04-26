@@ -22,6 +22,7 @@ QUESTION_KEY = 'questions'
 # output method
 METHOD_KEY = "method"
 OUT_METHOD = "_out_method_"
+ARTIFACTS = "artifacts"
 
 # json fields to get values
 Q_ID = 'q_id'
@@ -30,11 +31,15 @@ Q_TEXT = 'q_text'
 # used in the locations we need to prevent multiple threads from interacting
 LOCK = threading.RLock()
 
+# sqlite init state
+SQLITE_INIT = False
+
 # Store the input question sets into the app context
 app.config[QUESTION_KEY] = None
 
 # Snapshot key
 SNAPTIME_KEY = 'snapshot-time'
+
 
 def _get_config_path(index):
     """Retrieve the path to the config file."""
@@ -181,6 +186,37 @@ class SaveObject(object):
         self.questions_in = questions_in
 
 
+def _out_method_sqlite(obj):
+    """sqlite output."""
+    import sqlite3
+    with LOCK:
+        global SQLITE_INIT
+        db_name = os.path.join(ARTIFACTS, "output.db")
+        with sqlite3.connect(db_name) as conn:
+            cursor = conn.cursor()
+            if not SQLITE_INIT:
+                SQLITE_INIT = True
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS results (
+                    results TEXT,
+                    stamp TEXT,
+                    config TEXT,
+                    client TEXT,
+                    session TEXT,
+                    method TEXT,
+                    uuid TEXT
+                )''')
+            params = [json.dumps(obj.results),
+                      obj.today,
+                      obj.config_name,
+                      obj.use_client,
+                      obj.session,
+                      obj.method,
+                      obj.out_id]
+            cursor.execute('INSERT INTO results values (?, ?, ?, ?, ?, ?, ?)',
+                           params)
+
+
 def _out_method_off(obj):
     """for demo purposes."""
     pass
@@ -204,7 +240,7 @@ def _out_method_disk(obj):
 
 def _build_output_path(paths):
     """build an output path."""
-    base_dir = "artifacts"
+    base_dir = ARTIFACTS
     for path in paths:
         cleaned = _clean(path)
         base_dir = os.path.join(base_dir, cleaned)
