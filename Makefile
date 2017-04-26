@@ -1,3 +1,8 @@
+.PHONY: all
+
+all: 
+	python survey.py --port 8080 --questions example cont --output off
+
 install:
 	pip install flask
 	mkdir -p artifacts
@@ -10,5 +15,3 @@ analyze:
 	pep8 *.py
 	pep257 *.py
 
-all: 
-	python survey.py --port 8080 --questions example cont
