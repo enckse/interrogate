@@ -206,7 +206,7 @@ def _out_method_sqlite(obj):
             cols = []
             params = []
             create = []
-            for item in output_obj:
+            for item in sorted(output_obj.keys()):
                 cols.append("?")
                 create.append(item + " TEXT")
                 params.append(output_obj[item])
