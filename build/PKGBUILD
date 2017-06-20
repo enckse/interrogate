@@ -1,0 +1,26 @@
+pkgname=survey
+pkgver=r20.cc478b1
+pkgrel=1
+pkgdesc="a basic/primitive survey app for LAN-based survey completion"
+arch=('x86_64')
+url="https://github.com/epiphyte/survey"
+license=('MIT')
+makedepends=('python' 'python-setuptools' 'curl')
+source=("git+$url")
+sha512sums=('SKIP')
+_pkgdir="/opt/epiphyte/survey"
+
+pkgver() {
+    cd ${srcdir}/$pkgname
+    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+    cd ${srcdir}/$pkgname
+}
+
+package() {
+    cd ${srcdir}/$pkgname
+    mkdir -p "$pkgdir/$_pkgdir"
+    python setup.py install --root="$pkgdir/$_pkgdir" --optimize=1
+}
