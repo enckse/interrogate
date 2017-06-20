@@ -1,5 +1,5 @@
 pkgname=survey
-pkgver=r25.6eb674a
+pkgver=r27.8dd0fa9
 pkgrel=1
 pkgdesc="a basic/primitive survey app for LAN-based survey completion"
 arch=('x86_64')
