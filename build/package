@@ -1,5 +1,6 @@
 #!/bin/bash
 BIN=bin
 mkdir -p $BIN
+rm -rf $BIN/*
 cp PKGBUILD $BIN/PKGBUILD
 cd $BIN && makepkg -srf --sign
