@@ -3,7 +3,20 @@ survey
 
 a basic/primitive survey app for LAN-based survey completion.
 
-### setup
+## setup
+
+use the epiphyte [repository](https://github.com/epiphyte/repository) to install as a package
+
+```
+pacman -S survey
+```
+
+which will install to
+```
+/opt/epiphyte/survey
+```
+
+## development
 
 to install necessary dependencies
 
