@@ -3,10 +3,11 @@ EXAMPLE="^(example|cont)$\.config"
 EXAMPLES=$(shell ls $(QUESTIONS) | grep -E $(EXAMPLE) | sort -r)
 DEFINITIONS=$(shell ls $(QUESTIONS) | grep -E -v $(EXAMPLE) | sort)
 OUTPUT=disk
+PORT=8080
 .PHONY: all
 
 define run
-	python survey.py --port 8080 --questions $(shell echo $2 | sed "s/.config//g") --output $1
+	python survey.py --port $(PORT) --questions $(shell echo $2 | sed "s/.config//g") --output $1
 endef
 
 all: 
