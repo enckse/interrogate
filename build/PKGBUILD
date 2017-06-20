@@ -17,7 +17,7 @@ pkgver() {
 
 build() {
     cd ${srcdir}/$pkgname
-    git submodule update --init
+    make dependencies
 }
 
 package() {

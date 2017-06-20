@@ -15,11 +15,13 @@ all:
 examples:
 	$(call run,off,$(EXAMPLES))
 
-install:
+dependencies:
+	git submodule update --init
+	curl https://code.jquery.com/jquery-3.1.1.min.js > static/jquery.min.js
+
+install: dependencies
 	pip install flask
 	mkdir -p artifacts
-	git submodule update
-	curl https://code.jquery.com/jquery-3.1.1.min.js > static/jquery.min.js
 
 analyze:
 	pip install pep257
