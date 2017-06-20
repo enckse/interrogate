@@ -30,3 +30,5 @@ analyze:
 	pep8 *.py
 	pep257 *.py
 
+pack:
+	cd build && ./package
