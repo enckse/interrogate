@@ -1,5 +1,5 @@
 pkgname=survey
-pkgver=r21.f2a0b1c
+pkgver=r23.83c6d4d
 pkgrel=1
 pkgdesc="a basic/primitive survey app for LAN-based survey completion"
 arch=('x86_64')
@@ -26,4 +26,8 @@ package() {
     for f in $(find static/* -type f -print | grep -v ".git"); do
         install -Dm644 $f $pack/$f
     done
+    install -Dm755 survey.sh $pkgdir/usr/local/bin/survey
+    install -Dm644 survey.py $pack/survey.py
+    install -Dm644 -d $pack/artifacts
+    python3 setup.py install --root="$pkgdir/" --optimize=1
 }

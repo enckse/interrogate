@@ -20,8 +20,8 @@ dependencies:
 	curl https://code.jquery.com/jquery-3.1.1.min.js > static/jquery.min.js
 
 install: dependencies
-	pip install flask
 	mkdir -p artifacts
+	python setup.py install
 
 analyze:
 	pip install pep257
