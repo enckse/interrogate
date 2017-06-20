@@ -1,5 +1,5 @@
 pkgname=survey
-pkgver=r20.cc478b1
+pkgver=r21.f2a0b1c
 pkgrel=1
 pkgdesc="a basic/primitive survey app for LAN-based survey completion"
 arch=('x86_64')
@@ -17,10 +17,13 @@ pkgver() {
 
 build() {
     cd ${srcdir}/$pkgname
+    git submodule update --init
 }
 
 package() {
     cd ${srcdir}/$pkgname
-    mkdir -p "$pkgdir/$_pkgdir"
-    python setup.py install --root="$pkgdir/$_pkgdir" --optimize=1
+    local pack=$pkgdir/$_pkgdir
+    for f in $(find static/* -type f -print | grep -v ".git"); do
+        install -Dm644 $f $pack/$f
+    done
 }
