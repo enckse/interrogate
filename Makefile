@@ -29,6 +29,3 @@ analyze:
 	pip install pep8
 	pep8 *.py
 	pep257 *.py
-
-pack:
-	cd build && ./package
