@@ -12,7 +12,7 @@ _pkgdir="/opt/epiphyte/survey"
 
 pkgver() {
     cd ${srcdir}/$pkgname
-    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+    printf "%s.c%s" "$(date -u +%Y%m%d.%H%M)" "$(git rev-parse --short HEAD)"
 }
 
 build() {
