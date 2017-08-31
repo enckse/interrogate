@@ -281,4 +281,5 @@ if __name__ == "__main__":
             print("{0} does not exist...".format(set_questions))
             exit(-1)
         app.config[QUESTION_KEY].append(set_questions)
+    print("survey (__VERSION__)")
     app.run(host=args.host, port=args.port)
