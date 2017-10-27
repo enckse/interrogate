@@ -41,6 +41,8 @@ app.config[QUESTION_KEY] = None
 # Snapshot key
 SNAPTIME_KEY = 'snapshot-time'
 
+# Admin code
+ADMIN_CODE = "admin-code"
 
 def _get_config_path(index):
     """Retrieve the path to the config file."""
@@ -121,15 +123,18 @@ def completed():
     """Survey completed."""
     return render_template('complete.html')
 
-@app.route("/admin/<mode>")
-def admin(mode):
+@app.route("/admin/<code>/<mode>")
+def admin(code, mode):
     """Administrate the survey."""
-    if mode == "reload":
-        exit(1)
-    elif mode == "shutdown":
-        exit(0)
+    if app.config[ADMIN_CODE] == code:
+        if mode == "reload":
+            exit(1)
+        elif mode == "shutdown":
+            exit(0)
+        else:
+            print("unknown command: {}".format(mode))
     else:
-        print("unknown command: {}".format(mode))
+        print("invalid code: {}".format(code))
 
 def _clean(value):
     """Clean invalid path chars from variables."""
@@ -277,10 +282,12 @@ if __name__ == "__main__":
     parser.add_argument('--output', default="disk",
                         choices=methods,
                         help="output method")
+    parser.add_argument('--code', default='running', help='admin url code')
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
     app.config[METHOD_KEY] = globals()[OUT_METHOD + args.output]
     app.config[SNAPTIME_KEY] = args.snapshot
+    app.config[ADMIN_CODE] = args.code
     if args.questions is None or len(args.questions) == 0:
         print('question set(s) required')
         exit(1)
