@@ -10,7 +10,7 @@ if [ -z "$args" ]; then
     args=$SURVEY_SETTINGS
 fi
 exit_code=10
-while [ $exit_code -ne 10 ]; do
+while [ $exit_code -eq 10 ]; do
     echo "loading survey $@"
     python survey.py $@
     exit_code=$?
