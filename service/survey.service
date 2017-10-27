@@ -3,5 +3,4 @@ Description=Survey host
 
 [Service]
 Type=forking
-WorkingDir=/opt/epiphyte/survey/
-ExecStart=/usr/bin/python survey.py
+ExecStart=/usr/bin/survey
