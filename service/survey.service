@@ -2,6 +2,5 @@
 Description=Survey host
 
 [Service]
-WorkingDir=/opt/epiphyte/survey
-Type=forking
+Type=simple
 ExecStart=/usr/bin/survey

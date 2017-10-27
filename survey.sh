@@ -11,8 +11,8 @@ if [ -z "$args" ]; then
 fi
 exit_code=10
 while [ $exit_code -eq 10 ]; do
-    echo "loading survey $@"
-    python survey.py $@
+    echo "loading survey $args"
+    python survey.py $args
     exit_code=$?
 done
 cd $cwd
