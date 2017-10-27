@@ -1,7 +1,9 @@
 #!/bin/bash
+ENV_FILE="./env"
+cwd=$PWD
 cd /opt/epiphyte/survey/
-if [ -e env ]; then
-    source env
+if [ -e $ENV_FILE ]; then
+    source $ENV_FILE
 fi
 args="$@"
 if [ -z "$args" ]; then
@@ -13,3 +15,4 @@ while [ $exit_code -ne 0 ]; do
     python survey.py $@
     exit_code=$?
 done
+cd $cwd
