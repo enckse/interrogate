@@ -121,10 +121,15 @@ def completed():
     """Survey completed."""
     return render_template('complete.html')
 
-@app.route("/admin/reload")
-def reload():
-    """Reload the survey."""
-    exit(1)
+@app.route("/admin/<mode>")
+def admin(mode):
+    """Administrate the survey."""
+    if mode == "reload":
+        exit(1)
+    elif mode == "shutdown":
+        exit(0)
+    else:
+        print("unknown command: {}".format(mode))
 
 def _clean(value):
     """Clean invalid path chars from variables."""
