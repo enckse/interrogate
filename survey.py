@@ -121,6 +121,10 @@ def completed():
     """Survey completed."""
     return render_template('complete.html')
 
+@app.route("/admin/reload")
+def reload():
+    """Reload the survey."""
+    exit(1)
 
 def _clean(value):
     """Clean invalid path chars from variables."""
@@ -283,3 +287,4 @@ if __name__ == "__main__":
         app.config[QUESTION_KEY].append(set_questions)
     print("survey (__VERSION__)")
     app.run(host=args.host, port=args.port)
+    exit(0)
