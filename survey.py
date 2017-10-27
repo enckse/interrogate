@@ -128,7 +128,7 @@ def admin(code, mode):
     """Administrate the survey."""
     if app.config[ADMIN_CODE] == code:
         if mode == "reload":
-            exit(1)
+            exit(10)
         elif mode == "shutdown":
             exit(0)
         else:
