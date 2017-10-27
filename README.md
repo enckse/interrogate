@@ -16,6 +16,20 @@ which will install to
 /opt/epiphyte/survey
 ```
 
+## run
+
+to run
+```
+survey <args>
+```
+
+as a service
+```
+systemctl enable survey.service
+```
+
+edit the `/opt/epiphyte/survey/env` file to set args for running or as a service
+
 ## development
 
 to install necessary dependencies
