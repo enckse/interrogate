@@ -242,13 +242,18 @@ def _out_method_off(obj):
 
 def _out_method_disk(obj):
     """disk storage."""
-    dir_name = _build_output_path([obj.today,
-                                   obj.config_name,
-                                   obj.use_client,
-                                   obj.session,
-                                   obj.method])
-    out_name = "{0}_{1}".format(_clean(str(time.time())),
-                                _clean(obj.out_id))
+    dir_name = ARTIFACTS
+    unique_name = ".".join([obj.today,
+                            obj.config_name,
+                            obj.use_client,
+                            obj.session,
+                            str(time.time()),
+                            obj.out_id])
+    h = hashlib.sha256()
+    h.update(unique_name)
+    unique_name = str(h.digest())
+    out_name = "{0}_{1}".format(_clean(obj.method),
+                                _clean(unique_name))
     with open(dir_name + out_name, 'w') as f:
         f.write(json.dumps(obj.results,
                            sort_keys=True,
