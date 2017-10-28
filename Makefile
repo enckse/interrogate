@@ -18,7 +18,7 @@ examples:
 
 dependencies:
 	git submodule update --init
-	curl https://code.jquery.com/jquery-3.1.1.min.js > static/jquery.min.js
+	curl https://code.jquery.com/jquery-3.2.1.min.js > static/jquery.min.js
 
 install: dependencies
 	pip install flask
