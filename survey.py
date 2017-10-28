@@ -7,6 +7,7 @@ import json
 import uuid
 import datetime
 import os
+import hashlib
 import time
 import threading
 from flask import Flask, redirect, render_template, url_for, request
@@ -242,7 +243,7 @@ def _out_method_off(obj):
 
 def _out_method_disk(obj):
     """disk storage."""
-    dir_name = ARTIFACTS
+    dir_name = _build_output_path()
     unique_name = ".".join([obj.today,
                             obj.config_name,
                             obj.use_client,
@@ -250,10 +251,11 @@ def _out_method_disk(obj):
                             str(time.time()),
                             obj.out_id])
     h = hashlib.sha256()
-    h.update(unique_name)
+    h.update(unique_name.encode("utf-8"))
     unique_name = str(h.digest())
-    out_name = "{0}_{1}".format(_clean(obj.method),
-                                _clean(unique_name))
+    out_name = "{0}_{1}_{2}".format(_clean(obj.method),
+                                    _clean(obj.today),
+                                    _clean(unique_name))
     with open(dir_name + out_name, 'w') as f:
         f.write(json.dumps(obj.results,
                            sort_keys=True,
@@ -261,12 +263,9 @@ def _out_method_disk(obj):
                            separators=(',', ': ')))
 
 
-def _build_output_path(paths):
+def _build_output_path():
     """build an output path."""
     base_dir = ARTIFACTS
-    for path in paths:
-        cleaned = _clean(path)
-        base_dir = os.path.join(base_dir, cleaned)
     with LOCK:
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
