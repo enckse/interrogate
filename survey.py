@@ -286,8 +286,8 @@ if __name__ == "__main__":
                         choices=methods,
                         help="output method")
     parser.add_argument('--code', default='running', help='admin url code')
-    time = datetime.datetime.now().isoformat().replace(":", "_")
-    parser.add_argument('--tag', default=time, help="output tag")
+    now = datetime.datetime.now().isoformat().replace(":", "_")
+    parser.add_argument('--tag', default=now, help="output tag")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
     app.config[METHOD_KEY] = globals()[OUT_METHOD + args.output]
