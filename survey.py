@@ -262,7 +262,6 @@ def _out_method_disk(obj):
                            indent=4,
                            separators=(',', ': ')))
 
-
 def _build_output_path():
     """build an output path."""
     base_dir = ARTIFACTS
@@ -287,6 +286,8 @@ if __name__ == "__main__":
                         choices=methods,
                         help="output method")
     parser.add_argument('--code', default='running', help='admin url code')
+    time = datetime.datetime.now().isoformat().replace(":", "_")
+    parser.add_argument('--tag', default=time, help="output tag")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
     app.config[METHOD_KEY] = globals()[OUT_METHOD + args.output]
