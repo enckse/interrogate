@@ -39,11 +39,9 @@ SQLITE_TABLE = "results"
 # Store the input question sets into the app context
 app.config[QUESTION_KEY] = None
 
-# Snapshot key
 SNAPTIME_KEY = 'snapshot-time'
-
-# Admin code
 ADMIN_CODE = "admin-code"
+TAG_KEY = "tag-key"
 
 def _get_config_path(index):
     """Retrieve the path to the config file."""
@@ -254,7 +252,7 @@ def _out_method_disk(obj):
     h.update(unique_name.encode("utf-8"))
     unique_name = str(h.digest())
     out_name = "{0}_{1}_{2}".format(_clean(obj.method),
-                                    _clean(obj.today),
+                                    app.config[TAG_KEY],
                                     _clean(unique_name))
     with open(dir_name + out_name, 'w') as f:
         f.write(json.dumps(obj.results,
@@ -290,6 +288,7 @@ if __name__ == "__main__":
     parser.add_argument('--tag', default=now, help="output tag")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
+    app.config[TAG_KEY] = _clean(args.tag)
     app.config[METHOD_KEY] = globals()[OUT_METHOD + args.output]
     app.config[SNAPTIME_KEY] = args.snapshot
     app.config[ADMIN_CODE] = args.code
