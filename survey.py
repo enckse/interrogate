@@ -284,7 +284,7 @@ if __name__ == "__main__":
                         choices=methods,
                         help="output method")
     parser.add_argument('--code', default='running', help='admin url code')
-    now = datetime.datetime.now().isoformat().replace(":", "_")
+    now = datetime.datetime.now().isoformat().replace(":", "-")
     parser.add_argument('--tag', default=now, help="output tag")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
