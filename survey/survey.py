@@ -268,7 +268,7 @@ def main():
                         default="/var/db/survey/",
                         help="data store")
     parser.add_argument('--config',
-                        default="/etc/survey/"
+                        default="/etc/survey/",
                         help="survey config files")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
