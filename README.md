@@ -42,3 +42,4 @@ to install necessary dependencies
 make install
 ```
 
+[![Build Status](https://travis-ci.org/epiphyte/survey.svg?branch=master)](https://travis-ci.org/epiphyte/survey)
