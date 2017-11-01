@@ -1,3 +1,5 @@
+#!/usr/bin/python
+"""Setup script for survey tooling."""
 from setuptools import setup
 
 setup(

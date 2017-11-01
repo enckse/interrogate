@@ -1,3 +1,5 @@
+FILES=$(shell find . -type f | grep "\.py")
+
 dependencies:
 	git submodule update --init
 	curl https://code.jquery.com/jquery-3.2.1.min.js > survey/static/jquery.min.js
@@ -9,5 +11,5 @@ install: dependencies
 analyze:
 	pip install pep257
 	pip install pep8
-	pep8 *.py
-	pep257 *.py
+	pep8 $(FILES)
+	pep257 $(FILES)
