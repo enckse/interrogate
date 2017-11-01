@@ -217,8 +217,8 @@ def _out_method_disk(obj):
     time_id = _clean(str(time.time()))
     while len(time_id) < 20:
         time_id = time_id + "0"
-    out_name = "{0}_{1}_{2}_{3}".format(time_id,
-                                        app.config[TAG_KEY],
+    out_name = "{0}_{1}_{2}_{3}".format(app.config[TAG_KEY],
+                                        time_id,
                                         _clean(obj.method)[0:4],
                                         _clean(unique_name))
     with open(dir_name + out_name, 'w') as f:
