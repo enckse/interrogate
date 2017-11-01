@@ -10,7 +10,7 @@ import os
 import hashlib
 import time
 import threading
-from flask import Flask, redirect, render_template, url_for, request
+from flask import Flask, redirect, render_template, url_for, request, jsonify
 app = Flask(__name__)
 
 # where questions are stored and file naming for them
@@ -127,11 +127,17 @@ def admin(code, mode):
             exit(10)
         elif mode == "shutdown":
             exit(0)
+        elif mode == "results":
+            files = [f for f in 
+                     os.listdir(ARTIFACTS)
+                     if os.path.isfile(os.path.join(ARTIFACTS, f))]
+            files = [f for f in files if f.startswith(app.config[TAG_KEY])]
+            results = files
         else:
             print("unknown command: {}".format(mode))
     else:
         print("invalid code: {}".format(code))
-    return results
+    return jsonify(results)
 
 def _clean(value):
     """Clean invalid path chars from variables."""
