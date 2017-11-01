@@ -145,8 +145,8 @@ def admin(code, mode):
                         results = json.loads(f.read())
                 else:
                     print("unknown command: {}".format(mode))
-        else:
-            print("invalid code: {}".format(code))
+    else:
+        print("invalid code: {}".format(code))
     return jsonify(results)
 
 def _clean(value):
