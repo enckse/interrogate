@@ -247,7 +247,7 @@ def _build_output_path():
             os.makedirs(base_dir)
     return base_dir + "/"
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description='Survey')
     parser.add_argument('--host', type=str, default="0.0.0.0",
                         help='host name')
@@ -287,3 +287,6 @@ if __name__ == "__main__":
     print("survey (__VERSION__)")
     app.run(host=args.host, port=args.port)
     exit(0)
+
+if __name__ == "__main__":
+    main()
