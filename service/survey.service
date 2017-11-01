@@ -3,4 +3,4 @@ Description=Survey host
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/survey
+ExecStart=/usr/bin/survey-daemon
