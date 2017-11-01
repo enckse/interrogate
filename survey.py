@@ -32,10 +32,6 @@ Q_TEXT = 'q_text'
 # used in the locations we need to prevent multiple threads from interacting
 LOCK = threading.RLock()
 
-# sqlite init state
-SQLITE_INIT = False
-SQLITE_TABLE = "results"
-
 # Store the input question sets into the app context
 app.config[QUESTION_KEY] = None
 
@@ -125,6 +121,7 @@ def completed():
 @app.route("/admin/<code>/<mode>")
 def admin(code, mode):
     """Administrate the survey."""
+    results = ""
     if app.config[ADMIN_CODE] == code:
         if mode == "reload":
             exit(10)
@@ -134,6 +131,7 @@ def admin(code, mode):
             print("unknown command: {}".format(mode))
     else:
         print("invalid code: {}".format(code))
+    return results
 
 def _clean(value):
     """Clean invalid path chars from variables."""
@@ -198,40 +196,6 @@ class SaveObject(object):
         self.method = method
         self.out_id = out_id
         self.questions_in = questions_in
-
-
-def _out_method_sqlite(obj):
-    """sqlite output."""
-    import sqlite3
-    with LOCK:
-        global SQLITE_INIT
-        db_name = os.path.join(ARTIFACTS, "output.db")
-        output_obj = {}
-        output_obj["results"] = json.dumps(obj.results)
-        output_obj["stamp"] = obj.today
-        output_obj["config"] = obj.config_name
-        output_obj["client"] = obj.use_client
-        output_obj["session"] = obj.session
-        output_obj["method"] = obj.method
-        output_obj["uuid"] = obj.out_id
-        with sqlite3.connect(db_name) as conn:
-            cursor = conn.cursor()
-            cols = []
-            params = []
-            create = []
-            for item in sorted(output_obj.keys()):
-                cols.append("?")
-                create.append(item + " TEXT")
-                params.append(output_obj[item])
-            if not SQLITE_INIT:
-                SQLITE_INIT = True
-                cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS ''' + SQLITE_TABLE + ''' (
-                    ''' + ",".join(create) + '''
-                )''')
-            cursor.execute('INSERT INTO ' + SQLITE_TABLE +
-                           ' values (' + ",".join(cols) + ')',
-                           params)
 
 
 def _out_method_off(obj):
