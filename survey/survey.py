@@ -38,6 +38,7 @@ ADMIN_CODE = "admin-code"
 TAG_KEY = "tag-key"
 ARTIFACT_KEY = "artifact-key"
 
+
 def _get_config_path(index):
     """Retrieve the path to the config file."""
     questions_in = app.config[QUESTION_KEY][index]
@@ -117,6 +118,7 @@ def completed():
     """Survey completed."""
     return render_template('complete.html')
 
+
 @app.route("/admin/<code>/<mode>")
 def admin(code, mode):
     """Administrate the survey."""
@@ -131,7 +133,7 @@ def admin(code, mode):
             exit(0)
         elif mode == "results":
             with LOCK:
-                files = [f for f in 
+                files = [f for f in
                          os.listdir(store)
                          if os.path.isfile(os.path.join(store, f))]
                 files = [f for f in files if f.startswith(app.config[TAG_KEY])]
@@ -147,6 +149,7 @@ def admin(code, mode):
     else:
         print("invalid code: {}".format(code))
     return jsonify(results)
+
 
 def _clean(value):
     """Clean invalid path chars from variables."""
@@ -237,6 +240,7 @@ def _out_method_disk(obj):
                            indent=4,
                            separators=(',', ': ')))
 
+
 def _build_output_path():
     """build an output path."""
     base_dir = None
@@ -246,7 +250,9 @@ def _build_output_path():
             os.makedirs(base_dir)
     return base_dir + "/"
 
+
 def main():
+    """Main entry point."""
     parser = argparse.ArgumentParser(description='Survey')
     parser.add_argument('--host', type=str, default="0.0.0.0",
                         help='host name')

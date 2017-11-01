@@ -7,8 +7,8 @@ import sys
 import argparse
 
 
-def get_all(input_path, include):
-    """get all json objects"""
+def _get_all(input_path, include):
+    """get all json objects."""
     for root, dirs, files in os.walk(input_path):
         # detect files here
         for item in files:
@@ -31,12 +31,12 @@ def get_all(input_path, include):
                 yield j
 
 
-def stitch(path, json_out, csv_out, md_out, include):
+def _stitch(path, json_out, csv_out, md_out, include):
     """Stitch together."""
-    json_out.write("[");
+    json_out.write("[")
     first = True
     writer = None
-    for obj in get_all(path, include):
+    for obj in _get_all(path, include):
         keys = obj.keys()
         if first:
             writer = csv.DictWriter(csv_out,
@@ -78,11 +78,11 @@ def main():
     with open(output_name + '.json', 'w') as json_file:
         with open(output_name + '.csv', 'w') as csv_file:
             with open(output_name + ".md", 'w') as md_file:
-                stitch(args.store,
-                       json_file,
-                       csv_file,
-                       md_file,
-                       args.include)
+                _stitch(args.store,
+                        json_file,
+                        csv_file,
+                        md_file,
+                        args.include)
 
 if __name__ == "__main__":
     main()
