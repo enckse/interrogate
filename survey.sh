@@ -1,5 +1,5 @@
 #!/bin/bash
-ENV_FILE="/etc/survey.env"
+ENV_FILE="/etc/survey/environment"
 if [ -e $ENV_FILE ]; then
     source $ENV_FILE
 fi
