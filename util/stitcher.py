@@ -4,6 +4,7 @@ import os
 import json
 import csv
 import sys
+import argparse
 
 def get_all(input_path, include):
     """get all json objects"""
@@ -33,7 +34,12 @@ def stitch(path, json_out, csv_out, include):
     json_out.write("[");
     first = True
     keys = []
+    writer = csv.DictWriter(csv_out,
+                            fieldnames=keys,
+                            quoting=csv.QUOTE_NONNUMERIC)
+    writer.writeheader()
     for obj in get_all(path, include):
+        writer.writerow(obj)
         if not first:
             json_out.write(',')
         first = False
@@ -46,21 +52,26 @@ def stitch(path, json_out, csv_out, include):
             if k not in keys:
                 keys.append(k)
     json_out.write("]")
-    writer = csv.DictWriter(csv_out,
-                            fieldnames=keys,
-                            quoting=csv.QUOTE_NONNUMERIC)
-    writer.writeheader()
-    for obj in get_all(path, include):
-        writer.writerow(obj)
 
-if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print('requires an input dir and output file')
-        exit(-1)
-    including = []
-    if len(sys.argv) > 3:
-        including = sys.argv[3:]
-    output_name = sys.argv[2]
+def main():
+    """Main entry."""
+    parser = argparse.ArgumentParser(description="Survey results handler")
+    parser.add_argument("--tag", help="tag to restrict to", required=True)
+    parser.add_argument("--store",
+                        default="/var/db/survey/",
+                        help="data store")
+    parser.add_argument("--include",
+                        nargs='+',
+                        type=str,
+                        help="include files")
+    parser.add_argument("--output", required=True, help="output file name")
+    args = parser.parse_args()
     with open(output_name + '.json', 'w') as json_file:
         with open(output_name + '.csv', 'w') as csv_file:
-            stitch(sys.argv[1], json_file, csv_file, including)
+            stitch(args.store,
+                   args.output + ".json",
+                   args.output + ".csv",
+                   args.include)
+
+if __name__ == "__main__":
+    main()
