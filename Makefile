@@ -10,6 +10,6 @@ install: dependencies
 
 analyze:
 	pip install pep257
-	pip install pep8
-	pep8 $(FILES)
+	pip install pycodestyle
+	pycodestyle $(FILES)
 	pep257 $(FILES)
