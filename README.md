@@ -28,7 +28,11 @@ as a service
 systemctl enable survey.service
 ```
 
-edit the `/opt/epiphyte/survey/env` file to set args for running or as a service
+edit the `/etc/survey/environment` file to set args for running as a service
+
+### configure
+
+to configure edit a json definition (examples in the `questions` folder) and place them in `/etc/survey/` with a `.config` extension)
 
 ## development
 
@@ -38,27 +42,3 @@ to install necessary dependencies
 make install
 ```
 
-### examples
-
-to see the example config files and survey in action
-
-```
-make examples
-```
-
-### running
-
-by default the make (all) target will run all non-examples from questions in sorted (name) order and write to disk
-```
-make
-```
-
-to alter this behavior you can change OUTPUT to something else
-```
-make OUTPUT=sqlite
-```
-
-and/or provide explicit definitions to execute
-```
-make OUTPUT=sqlite DEFINITIONS=example
-```
