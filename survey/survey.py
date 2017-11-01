@@ -122,6 +122,9 @@ def completed():
 def admin(code, mode):
     """Administrate the survey."""
     results = {}
+    store = None
+    with LOCK:
+        store = app.config[ARTIFACT_KEY]
     if app.config[ADMIN_CODE] == code:
         if mode == "reload":
             exit(10)
@@ -129,7 +132,6 @@ def admin(code, mode):
             exit(0)
         elif mode == "results":
             with LOCK:
-                store = app.config[ARTIFACT_KEY]
                 files = [f for f in 
                          os.listdir(store)
                          if os.path.isfile(os.path.join(store, f))]
