@@ -159,7 +159,6 @@ def _save(idx, method):
         if key == "session":
             session = val
 
-    out_id = str(uuid.uuid4())
     questions_in = _get_config_path(idx)
     config_name = os.path.split(questions_in)[-1].replace(CONFIG_FILE_EXT, "")
     use_method = app.config[METHOD_KEY]
@@ -169,7 +168,6 @@ def _save(idx, method):
                           use_client,
                           session,
                           method,
-                          out_id,
                           questions_in)
     use_method(save_obj)
     return ""
@@ -185,7 +183,6 @@ class SaveObject(object):
                  use_client,
                  session,
                  method,
-                 out_id,
                  questions_in):
         """object init."""
         self.results = results
@@ -194,7 +191,6 @@ class SaveObject(object):
         self.use_client = use_client
         self.session = session
         self.method = method
-        self.out_id = out_id
         self.questions_in = questions_in
 
 
@@ -206,21 +202,20 @@ def _out_method_off(obj):
 def _out_method_disk(obj):
     """disk storage."""
     dir_name = _build_output_path()
-    unique_name = ".".join([obj.today,
-                            obj.config_name,
-                            obj.use_client,
-                            obj.session,
-                            obj.out_id])
-    h = hashlib.sha256()
-    h.update(unique_name.encode("utf-8"))
-    unique_name = str(h.digest())
+    parts = []
+    for item in [obj.today,
+                 obj.config_name,
+                 obj.use_client,
+                 obj.session]:
+        parts.append(_clean(item))
+    unique_name = "_".join(parts)
     time_id = _clean(str(time.time()))
     while len(time_id) < 20:
         time_id = time_id + "0"
     out_name = "{0}_{1}_{2}_{3}".format(app.config[TAG_KEY],
                                         time_id,
                                         _clean(obj.method)[0:4],
-                                        _clean(unique_name))
+                                        unique_name)
     with open(dir_name + out_name, 'w') as f:
         f.write(json.dumps(obj.results,
                            sort_keys=True,
