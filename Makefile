@@ -6,7 +6,6 @@ dependencies:
 
 install: dependencies
 	pip install flask
-	mkdir -p artifacts
 
 analyze:
 	pip install pep257
