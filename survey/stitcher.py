@@ -6,6 +6,7 @@ import csv
 import sys
 import argparse
 
+
 def get_all(input_path, include):
     """get all json objects"""
     for root, dirs, files in os.walk(input_path):
@@ -28,6 +29,7 @@ def get_all(input_path, include):
                     j['z-meta-' + str(idx)] = item
                     idx = idx + 1
                 yield j
+
 
 def stitch(path, json_out, csv_out, md_out, include):
     """Stitch together."""
@@ -57,6 +59,7 @@ def stitch(path, json_out, csv_out, md_out, include):
             md_out.write("```")
             md_out.write("\n")
     json_out.write("]")
+
 
 def main():
     """Main entry."""
