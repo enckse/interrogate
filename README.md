@@ -11,10 +11,10 @@ use the epiphyte [repository](https://github.com/epiphyte/repository) to install
 pacman -S survey
 ```
 
-which will install to
-```
-/opt/epiphyte/survey
-```
+### files
+
+* by default data is saved to `/var/db/survey/`
+* configuration is in `/etc/survey/`
 
 ## run
 
