@@ -23,7 +23,6 @@ QUESTION_KEY = 'questions'
 # output method
 METHOD_KEY = "method"
 OUT_METHOD = "_out_method_"
-ARTIFACTS = "artifacts"
 
 # json fields to get values
 Q_ID = 'q_id'
@@ -38,6 +37,7 @@ app.config[QUESTION_KEY] = None
 SNAPTIME_KEY = 'snapshot-time'
 ADMIN_CODE = "admin-code"
 TAG_KEY = "tag-key"
+ARTIFACT_KEY = "artifact-key"
 
 def _get_config_path(index):
     """Retrieve the path to the config file."""
@@ -122,21 +122,22 @@ def completed():
 def admin(code, mode):
     """Administrate the survey."""
     results = {}
-    if mode == "reload":
-        exit(10)
-    elif mode == "shutdown":
-        exit(0)
-    elif mode == "results":
-        with LOCK:
-            if app.config[ADMIN_CODE] == code:
-            files = [f for f in 
-                     os.listdir(ARTIFACTS)
-                     if os.path.isfile(os.path.join(ARTIFACTS, f))]
-            files = [f for f in files if f.startswith(app.config[TAG_KEY])]
-            results = files
+    if app.config[ADMIN_CODE] == code:
+        if mode == "reload":
+            exit(10)
+        elif mode == "shutdown":
+            exit(0)
+        elif mode == "results":
+            with LOCK:
+                store = app.config[ARTIFACT_KEY]
+                files = [f for f in 
+                         os.listdir(store)
+                         if os.path.isfile(os.path.join(store, f))]
+                files = [f for f in files if f.startswith(app.config[TAG_KEY])]
+                results = files
         else:
             with LOCK:
-                artifact_obj = os.path.join(ARTIFACTS, mode)
+                artifact_obj = os.path.join(store, mode)
                 if os.path.exists(artifact_obj):
                     with open(artifact_obj) as f:
                         results = json.loads(f.read())
@@ -237,8 +238,9 @@ def _out_method_disk(obj):
 
 def _build_output_path():
     """build an output path."""
-    base_dir = ARTIFACTS
+    base_dir = None
     with LOCK:
+        base_dir = app.config[ARTIFACT_KEY]
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
     return base_dir + "/"
@@ -261,8 +263,12 @@ if __name__ == "__main__":
     parser.add_argument('--code', default='running', help='admin url code')
     now = datetime.datetime.now().isoformat().replace(":", "-")
     parser.add_argument('--tag', default=now, help="output tag")
+    parser.add_argument('--store',
+                        default="/var/db/survey/",
+                        help="data store")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
+    app.config[ARTIFACT_KEY] = args.store
     app.config[TAG_KEY] = _clean(args.tag)
     app.config[METHOD_KEY] = globals()[OUT_METHOD + args.output]
     app.config[SNAPTIME_KEY] = args.snapshot
