@@ -287,6 +287,7 @@ def main():
             exit(-1)
         app.config[QUESTION_KEY].append(set_questions)
     print("survey (__VERSION__)")
+    print("tag: {}".format(args.tag))
     app.run(host=args.host, port=args.port)
     exit(0)
 
