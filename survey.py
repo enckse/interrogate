@@ -121,22 +121,28 @@ def completed():
 @app.route("/admin/<code>/<mode>")
 def admin(code, mode):
     """Administrate the survey."""
-    results = ""
-    if app.config[ADMIN_CODE] == code:
-        if mode == "reload":
-            exit(10)
-        elif mode == "shutdown":
-            exit(0)
-        elif mode == "results":
-            files = [f for f in 
-                     os.listdir(ARTIFACTS)
-                     if os.path.isfile(os.path.join(ARTIFACTS, f))]
-            files = [f for f in files if f.startswith(app.config[TAG_KEY])]
-            results = files
+    results = {}
+    with LOCK:
+        if app.config[ADMIN_CODE] == code:
+            if mode == "reload":
+                exit(10)
+            elif mode == "shutdown":
+                exit(0)
+            elif mode == "results":
+                files = [f for f in 
+                         os.listdir(ARTIFACTS)
+                         if os.path.isfile(os.path.join(ARTIFACTS, f))]
+                files = [f for f in files if f.startswith(app.config[TAG_KEY])]
+                results = files
+            else:
+                artifact_obj = os.path.join(ARTIFACTS, mode)
+                if os.path.exists(artifact_obj):
+                    with open(artifact_obj) as f:
+                        results = json.loads(f.read())
+                else:
+                    print("unknown command: {}".format(mode))
         else:
-            print("unknown command: {}".format(mode))
-    else:
-        print("invalid code: {}".format(code))
+            print("invalid code: {}".format(code))
     return jsonify(results)
 
 def _clean(value):
