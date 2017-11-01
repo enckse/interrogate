@@ -14,7 +14,6 @@ from flask import Flask, redirect, render_template, url_for, request, jsonify
 app = Flask(__name__)
 
 # where questions are stored and file naming for them
-QUESTION_DIR = 'questions'
 CONFIG_FILE_EXT = '.config'
 
 # key, within app context, where question definitions are stored
@@ -268,6 +267,9 @@ def main():
     parser.add_argument('--store',
                         default="/var/db/survey/",
                         help="data store")
+    parser.add_argument('--config',
+                        default="/etc/survey/"
+                        help="survey config files")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
     app.config[ARTIFACT_KEY] = args.store
@@ -279,7 +281,7 @@ def main():
         print('question set(s) required')
         exit(1)
     for q in args.questions:
-        set_questions = os.path.join(QUESTION_DIR, q + CONFIG_FILE_EXT)
+        set_questions = os.path.join(args.config, q + CONFIG_FILE_EXT)
         if not os.path.exists(set_questions):
             print("{0} does not exist...".format(set_questions))
             exit(-1)
