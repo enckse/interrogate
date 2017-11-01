@@ -1,7 +1,5 @@
 #!/bin/bash
-ENV_FILE="./env"
-cwd=$PWD
-cd /opt/epiphyte/survey/
+ENV_FILE="/etc/survey.env"
 if [ -e $ENV_FILE ]; then
     source $ENV_FILE
 fi
@@ -12,7 +10,6 @@ fi
 exit_code=10
 while [ $exit_code -eq 10 ]; do
     echo "loading survey $args"
-    python survey.py $args
+    survey $args
     exit_code=$?
 done
-cd $cwd
