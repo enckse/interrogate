@@ -246,14 +246,14 @@ def _out_method_disk(obj):
                             obj.config_name,
                             obj.use_client,
                             obj.session,
-                            str(time.time()),
                             obj.out_id])
     h = hashlib.sha256()
     h.update(unique_name.encode("utf-8"))
     unique_name = str(h.digest())
-    out_name = "{0}_{1}_{2}".format(_clean(obj.method),
-                                    app.config[TAG_KEY],
-                                    _clean(unique_name))
+    out_name = "{0}_{1}_{2}_{3}".format(_clean(str(time.time())),
+                                        app.config[TAG_KEY],
+                                        _clean(obj.method),
+                                        _clean(unique_name))
     with open(dir_name + out_name, 'w') as f:
         f.write(json.dumps(obj.results,
                            sort_keys=True,
