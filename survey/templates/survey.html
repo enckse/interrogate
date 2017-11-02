@@ -44,7 +44,7 @@
 
                 function autoRefresh(){
                     clearTimeout(auto);
-                   // Change this timeout to adjust how often auto-submit in the background is happening
+                    // Change this timeout to adjust how often auto-submit in the background is happening
                     auto = setTimeout(function(){ submitform(); autoRefresh(); }, 15000);
                 }
             }
