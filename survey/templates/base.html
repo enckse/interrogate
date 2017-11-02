@@ -1,17 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-
-  <!-- Basic Page Needs
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <meta charset="utf-8">
-  <title>{{ title  }}</title>
-
-  <!-- FONT
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <!-- <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css"> -->
-  <!-- we have to create a set of styles to link to local resources or the fonts wont pull from non internet connected devices -->
-    <style>
+    <head>
+        <!-- Basic Page Needs –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+        <meta charset="utf-8">
+        <title>{{ title  }}</title>
+        <!-- FONT –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+        <!-- <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css"> -->
+        <!-- we have to create a set of styles to link to local resources or the fonts wont pull from non internet connected devices -->
+        <style>
         @font-face {
           font-family: 'Raleway';
           font-style: normal;
@@ -36,33 +32,24 @@
                url('{{ url_for('static', filename='fonts/raleway-v11-latin-600.woff2')}}') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
                url('{{ url_for('static', filename='fonts/raleway-v11-latin-600.woff2')}}') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
         }
-    </style>
-
-  <!-- CSS
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='skeleton/css/normalize.css')}}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='skeleton/css/skeleton.css')}}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='nouislider/distribute/nouislider.min.css')}}">
-
-  <!-- SCRIPT
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <script src="{{ url_for('static', filename='nouislider/distribute/nouislider.min.js')}}"></script>
-  <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
-</head>
-<body>
-
-  <!-- Primary Page Layout
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-  <div class="container">
-      <div class="row">
-        <div style="margin-top: 5%">
-          {% block main %}
-          {% endblock %}
+        </style>
+        <!-- CSS –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='skeleton/css/normalize.css')}}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='skeleton/css/skeleton.css')}}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='nouislider/distribute/nouislider.min.css')}}">
+        <!-- SCRIPT –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+        <script src="{{ url_for('static', filename='nouislider/distribute/nouislider.min.js')}}"></script>
+        <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+    </head>
+    <body>
+        <!-- Primary Page Layout –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+        <div class="container">
+            <div class="row">
+                <div style="margin-top: 5%">
+                    {% block main %}
+                    {% endblock %}
+                </div>
+           </div>
         </div>
-      </div>
-  </div>
-
-<!-- End Document
-  –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-</body>
+    </body>
 </html>
