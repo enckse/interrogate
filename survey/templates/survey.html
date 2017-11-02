@@ -21,7 +21,7 @@
         }
 
         function do_save(){
-            // NOTE: for-change the window at this point
+            // NOTE: force-change the window at this point
             useUrl = "/completed"
             if ({{do_follow}})
             {
@@ -55,14 +55,14 @@
             <input type="hidden" name="session" value="{{session_id}}" />
             {% if anon == "FALSE" %}
                 <div class="row">
-                  <div class="six columns">
-                    <label for="name">Your name</label>
-                    <input class="u-full-width" name="name" type="text" placeholder="Leeroy Jenkins" id="name">
-                  </div>
-                  <div class="six columns">
-                      <label for="email">Your email</label>
-                      <input class="u-full-width" name="email" type="email" placeholder="test@mailbox.com" id="email">
-                  </div>
+                    <div class="six columns">
+                        <label for="name">Your name</label>
+                        <input class="u-full-width" name="name" type="text" placeholder="Leeroy Jenkins" id="name">
+                    </div>
+                    <div class="six columns">
+                        <label for="email">Your email</label>
+                        <input class="u-full-width" name="email" type="email" placeholder="test@mailbox.com" id="email">
+                    </div>
                 </div>
             {% endif %}
             {% for question in questions %}
@@ -79,22 +79,21 @@
                     <input class="u-full-width" type="hidden" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
                 {% endif %}
                 {% if question.q_type == "checkbox" %}
-                <input class="" type="checkbox" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
+                    <input class="" type="checkbox" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
                 {% endif %}
                 {% if question.q_type == "number" %}
                     <input class="u-full-width" type="number" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
                 {% endif %}
                 {% if question.q_type == "option" %}
                       <select class="u-full-width" id="{{ question.q_text }}" name="{{question.q_id}}">
-                          {% for option in question.q_opts %}
+                        {% for option in question.q_opts %}
                             <option value="{{ option }}"> {{ option }}</option>
-                          {% endfor %}
-                        </select>
+                        {% endfor %}
+                      </select>
                 {% endif %}
                 {% if question.q_type == "slide" %}
                     <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="{{ 'slide' + question.q_id }}"></div>
                     <input type="hidden" name="{{ question.q_id }}" value="" id="{{ 'hidden' + question.q_id }}" />
-
                     <script>
                         var {{ 'slide' + question.q_id }} = document.getElementById('{{ 'slide' + question.q_id }}');
                         noUiSlider.create({{ 'slide' + question.q_id }}, {
