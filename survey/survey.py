@@ -9,6 +9,8 @@ import datetime
 import os
 import hashlib
 import time
+import random
+import string
 import threading
 from flask import Flask, redirect, render_template, url_for, request, jsonify
 app = Flask(__name__)
@@ -162,7 +164,6 @@ def _save(idx, method):
     results = {}
     now_time = datetime.datetime.now()
     use_time = str(now_time)
-    today = now_time.strftime("%Y-%m-%d")
     use_client = request.remote_addr
     results['time'] = use_time
     results['client'] = use_client
@@ -178,11 +179,8 @@ def _save(idx, method):
             session = val
 
     questions_in = _get_config_path(idx)
-    config_name = os.path.split(questions_in)[-1].replace(CONFIG_FILE_EXT, "")
     use_method = app.config[METHOD_KEY]
     save_obj = SaveObject(results,
-                          today,
-                          config_name,
                           use_client,
                           session,
                           method,
@@ -196,16 +194,12 @@ class SaveObject(object):
 
     def __init__(self,
                  results,
-                 today,
-                 config_name,
                  use_client,
                  session,
                  method,
                  questions_in):
         """object init."""
         self.results = results
-        self.today = today
-        self.config_name = config_name
         self.use_client = use_client
         self.session = session
         self.method = method
@@ -217,13 +211,17 @@ def _out_method_off(obj):
     pass
 
 
+def _create_simple_id():
+    """Create a simple id."""
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+
 def _out_method_disk(obj):
     """disk storage."""
     dir_name = _build_output_path()
     parts = []
-    for item in [obj.today,
-                 obj.config_name,
-                 obj.use_client,
+    for item in [obj.use_client,
+                 _clean(_create_simple_id()),
                  obj.session]:
         parts.append(_clean(item))
     unique_name = "_".join(parts)
@@ -269,6 +267,7 @@ def main():
                         help="output method")
     parser.add_argument('--code', default='running', help='admin url code')
     now = datetime.datetime.now().isoformat().replace(":", "-")
+    now = now[0:19]
     parser.add_argument('--tag', default=now, help="output tag")
     parser.add_argument('--store',
                         default="/var/db/survey/",
