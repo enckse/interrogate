@@ -69,6 +69,9 @@
             <div class="row">
                 <label for="{{ question.q_text }}">{{ question.q_text }}</label>
                 <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
+                {% if question.q_type == "explanation" %}
+                    <input class="u-full-width" type="hidden" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
+                {% endif %}
                 {% if question.q_type == "input" %}
                     <input class="u-full-width" type="text" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
                 {% endif %}
