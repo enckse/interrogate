@@ -12,6 +12,7 @@ import time
 import random
 import string
 import threading
+import survey.version as ver
 from flask import Flask, redirect, render_template, url_for, request, jsonify
 app = Flask(__name__)
 
@@ -291,7 +292,7 @@ def main():
             print("{0} does not exist...".format(set_questions))
             exit(-1)
         app.config[QUESTION_KEY].append(set_questions)
-    print("survey (__VERSION__)")
+    print("survey ({})".format(ver.__version__))
     print("tag: {}".format(args.tag))
     app.run(host=args.host, port=args.port)
     exit(0)
