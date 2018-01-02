@@ -44,6 +44,7 @@ ARTIFACT_KEY = "artifact-key"
 # JSON results
 FAIL_JSON = "failed"
 
+
 def _get_config_path(index):
     """Retrieve the path to the config file."""
     questions_in = app.config[QUESTION_KEY][index]
