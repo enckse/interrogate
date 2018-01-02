@@ -41,6 +41,8 @@ ADMIN_CODE = "admin-code"
 TAG_KEY = "tag-key"
 ARTIFACT_KEY = "artifact-key"
 
+# JSON results
+FAIL_JSON = "failed"
 
 def _get_config_path(index):
     """Retrieve the path to the config file."""
@@ -125,7 +127,7 @@ def completed():
 @app.route("/admin/<code>/<mode>")
 def admin(code, mode):
     """Administrate the survey."""
-    results = {"noop": True}
+    results = {FAIL_JSON: "unknown"}
     store = None
     with LOCK:
         store = app.config[ARTIFACT_KEY]
@@ -148,9 +150,9 @@ def admin(code, mode):
                     with open(artifact_obj) as f:
                         results = json.loads(f.read())
                 else:
-                    print("unknown command: {}".format(mode))
+                    results[FAIL_JSON] = "command? {}".format(mode)
     else:
-        print("invalid code: {}".format(code))
+        results[FAIL_JSON] = "code? {}".format(code)
     return jsonify(results)
 
 
