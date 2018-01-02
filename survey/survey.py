@@ -125,7 +125,7 @@ def completed():
 @app.route("/admin/<code>/<mode>")
 def admin(code, mode):
     """Administrate the survey."""
-    results = {}
+    results = {"noop": True}
     store = None
     with LOCK:
         store = app.config[ARTIFACT_KEY]
