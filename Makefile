@@ -8,7 +8,6 @@ install: dependencies
 	pip install flask
 
 analyze:
-	pip install pep257
-	pip install pycodestyle
+	pip install pep257 pycodestyle
 	pycodestyle $(FILES)
 	pep257 $(FILES)
