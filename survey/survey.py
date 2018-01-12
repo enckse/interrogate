@@ -48,7 +48,7 @@ ARTIFACT_KEY = "artifact-key"
 FAIL_JSON = "failed"
 
 # Logging output
-_LOG_FILE = "/var/log/epiphyte.survey.log"
+_LOG_FILE = "/var/log/survey.log"
 
 
 @app.errorhandler(Exception)
