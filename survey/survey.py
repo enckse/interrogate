@@ -13,6 +13,8 @@ import random
 import string
 import threading
 import urllib.parse
+import logging
+import logging.handlers
 import survey.version as ver
 from flask import Flask, redirect, render_template, url_for, request, jsonify
 app = Flask(__name__)
@@ -44,6 +46,17 @@ ARTIFACT_KEY = "artifact-key"
 
 # JSON results
 FAIL_JSON = "failed"
+
+# Logging output
+_LOG_FILE = "/var/log/epiphyte.survey.log"
+
+
+@app.errorhandler(Exception)
+def handle_exceptions(e):
+    """Generic exception handler."""
+    app.logger.error("an exception has been caught")
+    app.logger.error(e)
+    return "an error has been encountered"
 
 
 def _get_config_path(index):
@@ -324,6 +337,13 @@ def main():
         app.config[QUESTION_KEY].append(set_questions)
     print("survey ({})".format(ver.__version__))
     print("tag: {}".format(args.tag))
+    handler = logging.handlers.RotatingFileHandler(_LOG_FILE,
+                                                   maxBytes=10000,
+                                                   backupCount=10)
+    handler.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    app.logger.addHandler(handler)
     app.run(host=args.host, port=args.port)
     exit(0)
 
