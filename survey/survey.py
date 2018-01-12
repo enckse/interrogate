@@ -76,9 +76,12 @@ def _get_questions(index, defaults=None):
         anon = meta['anon']
 
         questions = conf['questions']
-        question_set = []
+        question_idx = {}
         q_id = 0
         for question in questions:
+            idx = q_id
+            if "numbered" in question:
+                idx = int(question["numbered"])
             q_type = question['type']
             q_text = question['text']
             q_desc = question['desc']
@@ -89,13 +92,19 @@ def _get_questions(index, defaults=None):
                 q_opts = question[q_opt_key]
             if defaults and q_text in defaults:
                 q_val = defaults[q_text]
-            question_set.append({'q_type': q_type,
-                                 Q_TEXT: q_text,
-                                 'q_desc': q_desc,
-                                 'q_opts': q_opts,
-                                 'q_val': q_val,
-                                 Q_ID: str(q_id)})
+            obj = {'q_type': q_type,
+                   Q_TEXT: q_text,
+                   'q_desc': q_desc,
+                   'q_opts': q_opts,
+                   'q_val': q_val,
+                   Q_ID: str(q_id)}
+            if idx in question_idx:
+                raise Exception("duplicate question index")
+            question_idx[idx] = obj
             q_id = q_id + 1
+        question_set = []
+        for item in sorted(question_idx.keys()):
+            question_set.append(question_idx[item])
         return (title, anon, question_set)
 
 
