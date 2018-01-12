@@ -1,4 +1,4 @@
-FILES=$(shell find . -type f | grep "\.py")
+FILES=$(shell find . -type f | grep "\.py" | grep -E "\.\/(setup|survey)")
 
 dependencies:
 	git submodule update --init

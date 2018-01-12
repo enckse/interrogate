@@ -22,10 +22,10 @@
 
         function do_save(){
             // NOTE: force-change the window at this point
-            useUrl = "/completed"
+            useUrl = "/completed{{qparams}}"
             if ({{do_follow}})
             {
-                useUrl = "/{{follow}}/{{session_id}}"
+                useUrl = "/{{follow}}/{{session_id}}{{qparams}}"
             }
 
             do_submit('save', useUrl)
@@ -73,7 +73,7 @@
                     <input class="u-full-width" type="hidden" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
                 {% endif %}
                 {% if question.q_type == "input" %}
-                    <input class="u-full-width" type="text" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
+                <input class="u-full-width" value="{{question.q_val}}" type="text" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
                 {% endif %}
                 {% if question.q_type == "long" %}
                     <textarea class="u-full-width" name="{{question.q_id}}" style="min-height: 105px;"placeholder="" id="{{ question.q_text }}"></textarea>

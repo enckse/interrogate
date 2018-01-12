@@ -12,6 +12,7 @@ import time
 import random
 import string
 import threading
+import urllib.parse
 import survey.version as ver
 from flask import Flask, redirect, render_template, url_for, request, jsonify
 app = Flask(__name__)
@@ -51,7 +52,7 @@ def _get_config_path(index):
     return questions_in
 
 
-def _get_questions(index):
+def _get_questions(index, defaults=None):
     """Get question set."""
     question_in = _get_config_path(index)
     with open(question_in, 'r') as f:
@@ -70,13 +71,16 @@ def _get_questions(index):
             q_desc = question['desc']
             q_opts = []
             q_opt_key = "options"
+            q_val = ""
             if q_opt_key in question:
                 q_opts = question[q_opt_key]
-
+            if defaults and q_text in defaults:
+                q_val = defaults[q_text]
             question_set.append({'q_type': q_type,
                                  Q_TEXT: q_text,
                                  'q_desc': q_desc,
                                  'q_opts': q_opts,
+                                 'q_val': q_val,
                                  Q_ID: str(q_id)})
             q_id = q_id + 1
         return (title, anon, question_set)
@@ -85,19 +89,41 @@ def _get_questions(index):
 @app.route('/')
 def home():
     """Home shows a simple 'begin' page."""
-    return render_template('begin.html')
+    query_params = _get_query_params()
+    return render_template('begin.html', qparams=query_params)
+
+
+def _get_query_params():
+    """Get query parameters."""
+    params = []
+    if request.args:
+        for item in request.args:
+            val = request.args.get(item)
+            params.append("{}={}".format(urllib.parse.quote(item),
+                                         urllib.parse.quote(val)))
+    query_params = ""
+    if len(params) > 0:
+        query_params = "?{}".format("&".join(params))
+    return query_params
 
 
 @app.route('/begin')
 def begin():
     """Redirection wrapper to create the uuid for the session."""
-    return redirect(url_for('survey', uuid=str(uuid.uuid4()), idx=0))
+    query_params = _get_query_params()
+    return redirect(url_for('survey',
+                            uuid=str(uuid.uuid4()),
+                            idx=0) + query_params)
 
 
 @app.route('/<int:idx>/<uuid>')
 def survey(idx, uuid):
     """Survey started."""
-    q = _get_questions(idx)
+    params = {}
+    if request.args:
+        for arg in request.args:
+            params[arg] = request.args.get(arg)
+    q = _get_questions(idx, params)
     do_follow = len(app.config[QUESTION_KEY]) > idx + 1
     follow = None
     if do_follow:
@@ -110,7 +136,8 @@ def survey(idx, uuid):
                            idx=idx,
                            do_follow=str(do_follow).lower(),
                            follow=follow,
-                           snapshot_at=app.config[SNAPTIME_KEY])
+                           snapshot_at=app.config[SNAPTIME_KEY],
+                           qparams=_get_query_params())
 
 
 @app.route("/<mode>/<int:idx>", methods=['POST'])
@@ -122,7 +149,7 @@ def snapshot(mode, idx):
 @app.route("/completed")
 def completed():
     """Survey completed."""
-    return render_template('complete.html')
+    return render_template('complete.html', qparams=_get_query_params())
 
 
 @app.route("/admin/<code>/<mode>")
