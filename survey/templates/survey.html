@@ -65,7 +65,10 @@
                     </div>
                 </div>
             {% endif %}
-            {% for question in questions %}
+            {% for question in questions if question.q_type == "hidden" %}
+                <input type="hidden" value="{{question.q_val}}" name="{{question.q_id}}" id="{{question.q_text}}">
+            {% endfor %}
+            {% for question in questions if question.q_type != "hidden" %}
             <div class="row">
                 <label for="{{ question.q_text }}">{{ question.q_text }}</label>
                 <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
