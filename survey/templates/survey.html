@@ -57,11 +57,11 @@
                 <div class="row">
                     <div class="six columns">
                         <label for="name">Your name</label>
-                        <input class="u-full-width" name="name" type="text" placeholder="Leeroy Jenkins" id="name">
+                        <input class="u-full-width" name="name" type="text" placeholder="Leeroy Jenkins" id="name" required>
                     </div>
                     <div class="six columns">
                         <label for="email">Your email</label>
-                        <input class="u-full-width" name="email" type="email" placeholder="test@mailbox.com" id="email">
+                        <input class="u-full-width" name="email" type="email" placeholder="test@mailbox.com" id="email" required>
                     </div>
                 </div>
             {% endif %}
@@ -76,7 +76,7 @@
                     <input class="u-full-width" type="hidden" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
                 {% endif %}
                 {% if question.q_type == "input" %}
-                <input class="u-full-width" value="{{question.q_val}}" type="text" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
+                <input class="u-full-width" value="{{question.q_val}}" type="text" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}" {{question.q_req}}>
                 {% endif %}
                 {% if question.q_type == "long" %}
                     <textarea class="u-full-width" name="{{question.q_id}}" style="min-height: 105px;"placeholder="" id="{{ question.q_text }}"></textarea>

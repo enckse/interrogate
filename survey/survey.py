@@ -80,8 +80,13 @@ def _get_questions(index, defaults=None):
         q_id = 0
         for question in questions:
             idx = q_id
+            is_required = ""
             if "numbered" in question:
                 idx = int(question["numbered"])
+            if "attrs" in question:
+                attrs = question["attrs"]
+                if "required" in attrs:
+                    is_required = "required"
             q_type = question['type']
             q_text = question['text']
             q_desc = question['desc']
@@ -97,7 +102,8 @@ def _get_questions(index, defaults=None):
                    'q_desc': q_desc,
                    'q_opts': q_opts,
                    'q_val': q_val,
-                   Q_ID: str(q_id)}
+                   Q_ID: str(q_id),
+                   'q_req': is_required}
             if idx in question_idx:
                 raise Exception("duplicate question index")
             question_idx[idx] = obj
