@@ -1,5 +1,8 @@
 FILES=$(shell find . -type f | grep "\.py" | grep -E "\.\/(setup|survey)")
 
+nodeapp:
+	cd app && make
+
 dependencies:
 	git submodule update --init
 	curl https://code.jquery.com/jquery-3.2.1.min.js > survey/static/jquery.min.js
