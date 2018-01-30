@@ -4,15 +4,34 @@
   "description": "A minimal application for survey deployment",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "build"
   },
   "repository": "https://github.com/epiphyte/survey",
   "keywords": [
     "survey"
   ],
-  "author": "Sean Enck",
+  "author": "Sean Enck <enckse@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "electron": "~1.7.8"
+    "electron": "~1.7.8",
+    "electron-builder": "^11.7.0"
+  },
+  "build": {
+    "appId": "survey",
+    "category": "Network",
+    "electronVersion": "1.7.9",
+    "asar": false,
+    "dereference": true,
+    "files": [
+      "node_modules/**",
+      "main.js"
+    ],
+    "linux": {
+      "target": "pacman"
+    },
+    "win": {
+      "target": "portable"
+    }
   }
 }
