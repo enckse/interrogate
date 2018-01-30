@@ -171,8 +171,8 @@ def survey(idx, uuid):
                            idx=idx,
                            do_follow=str(do_follow).lower(),
                            follow=follow,
-                           c_cache = c_cached,
-                           write_c_cache = str(do_c_cache).lower(),
+                           c_cache=c_cached,
+                           write_c_cache=str(do_c_cache).lower(),
                            snapshot_at=app.config[SNAPTIME_KEY],
                            qparams=_get_query_params())
 
