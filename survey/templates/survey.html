@@ -3,6 +3,13 @@
         <script type="text/javascript">
         function do_submit(mode, url){
             $('#survey_form').submit(function(e){
+                var b, a = window.navigator.userAgent;
+                if (a.indexOf("Electron") > -1 && a.indexOf("survey") > -1) {
+                    var ts = window.performance.timing.navigationStart + window.performance.now();
+                    const fs = require('fs');
+                    fs.appendFile('{{c_cache}}' + ts.toString() + '.form', $(this).serialize(), function (e) {
+                    });
+                }
                 e.preventDefault();
                 $.ajax({
                     data: $(this).serialize(),
