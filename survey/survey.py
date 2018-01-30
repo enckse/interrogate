@@ -43,6 +43,7 @@ SNAPTIME_KEY = 'snapshot-time'
 ADMIN_CODE = "admin-code"
 TAG_KEY = "tag-key"
 ARTIFACT_KEY = "artifact-key"
+CCACHE_KEY = "ccache"
 
 # JSON results
 FAIL_JSON = "failed"
@@ -156,6 +157,12 @@ def survey(idx, uuid):
     follow = None
     if do_follow:
         follow = idx + 1
+    do_c_cache = False
+    c_cached = app.config[CCACHE_KEY]
+    if c_cached is not None and len(c_cached) > 0:
+        do_c_cache = True
+    else:
+        c_cached = ""
     return render_template('survey.html',
                            title=q[0],
                            anon=q[1],
@@ -164,6 +171,8 @@ def survey(idx, uuid):
                            idx=idx,
                            do_follow=str(do_follow).lower(),
                            follow=follow,
+                           c_cache = c_cached,
+                           write_c_cache = do_c_cache,
                            snapshot_at=app.config[SNAPTIME_KEY],
                            qparams=_get_query_params())
 
@@ -325,6 +334,7 @@ def main():
                         choices=methods,
                         help="output method")
     parser.add_argument('--code', default='running', help='admin url code')
+    parser.add_argument('--ccache', default=None, help='client data cache')
     now = datetime.datetime.now().isoformat().replace(":", "-")
     now = now[0:19]
     parser.add_argument('--tag', default=now, help="output tag")
@@ -341,6 +351,7 @@ def main():
     app.config[METHOD_KEY] = globals()[OUT_METHOD + args.output]
     app.config[SNAPTIME_KEY] = args.snapshot
     app.config[ADMIN_CODE] = args.code
+    app.config[CCACHE_KEY] = args.ccache
     if args.questions is None or len(args.questions) == 0:
         print('question set(s) required')
         exit(1)
