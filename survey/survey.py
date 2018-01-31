@@ -346,6 +346,7 @@ def main():
                         help="survey config files")
     parser.add_argument('--threaded',
                         default=True,
+                        type=bool,
                         help="enable backend threading")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
