@@ -1,5 +1,7 @@
 DIST=dist/
 
+all: clean win linux
+
 makedepends:
 	pacman -S electron npm
 
@@ -14,8 +16,8 @@ clean:
 windepends:
 	pacman -S wine
 
-win: clean
+win:
 	npm run windows
 
-linux: clean
+linux:
 	npm run linux
