@@ -3,6 +3,7 @@ makedepends:
 
 depends:
 	npm install
+	npm install electron-builder
 
 windepends:
 	pacman -S wine
