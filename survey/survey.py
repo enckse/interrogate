@@ -344,6 +344,9 @@ def main():
     parser.add_argument('--config',
                         default="/etc/survey/",
                         help="survey config files")
+    parser.add_argument('--threaded',
+                        default=True,
+                        help="enable backend threading")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
     app.config[ARTIFACT_KEY] = args.store
@@ -370,7 +373,7 @@ def main():
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     app.logger.addHandler(handler)
-    app.run(host=args.host, port=args.port)
+    app.run(host=args.host, port=args.port, threaded=args.threaded)
     exit(0)
 
 
