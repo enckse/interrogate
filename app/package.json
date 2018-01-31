@@ -32,7 +32,7 @@
       "target": "pacman"
     },
     "win": {
-      "target": "portable"
+      "target": "nsis"
     }
   }
 }
