@@ -7,7 +7,6 @@ makedepends:
 
 depends:
 	npm install
-	npm install electron-builder
 
 clean:
 	rm -rf $(DIST)
