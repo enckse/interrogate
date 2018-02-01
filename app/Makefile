@@ -3,7 +3,7 @@ DIST=dist/
 all: clean win linux
 
 makedepends:
-	pacman -S electron npm
+	pacman -S electron npm wine
 
 depends:
 	npm install
@@ -12,9 +12,6 @@ depends:
 clean:
 	rm -rf $(DIST)
 	mkdir -p $(DIST)
-
-windepends:
-	pacman -S wine
 
 win:
 	npm run windows
