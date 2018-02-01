@@ -16,6 +16,17 @@ pacman -S survey
 * by default data is saved to `/var/db/survey/`
 * configuration is in `/etc/survey/`
 
+### app
+
+The `app/` folder contains a deployable electron-based client.
+
+The URL for the survey can be put in `%APPDATA%` for windows or `.config/survey/` in linux:
+```
+vim survey.txt
+---
+http://192.168.1.2:8080
+```
+
 ## run
 
 to run
