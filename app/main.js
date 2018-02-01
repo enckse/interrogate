@@ -8,7 +8,7 @@ function createWindow () {
   let config = path.join(app.getPath('userData'), 'survey.txt')
   let url = undefined
   if (fs.existsSync(config)) {
-      url = fs.readFileSync(config).replace(/[^\x00-\x7F]/g, "")
+      url = fs.readFileSync(config, 'utf8').replace(/[^\x00-\x7F]/g, "")
   }
   if (!url || url.length === 0 || url === undefined) {
     url = "http://localhost:8080"
