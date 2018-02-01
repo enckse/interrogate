@@ -45,9 +45,6 @@ TAG_KEY = "tag-key"
 ARTIFACT_KEY = "artifact-key"
 CCACHE_KEY = "ccache"
 
-# JSON results
-FAIL_JSON = "failed"
-
 # Logging output
 _LOG_FILE = "/var/log/survey.log"
 
@@ -189,38 +186,6 @@ def completed():
     return render_template('complete.html', qparams=_get_query_params())
 
 
-@app.route("/admin/<code>/<mode>")
-def admin(code, mode):
-    """Administrate the survey."""
-    results = {FAIL_JSON: "unknown"}
-    store = None
-    with LOCK:
-        store = app.config[ARTIFACT_KEY]
-    if app.config[ADMIN_CODE] == code:
-        if mode == "reload":
-            exit(10)
-        elif mode == "shutdown":
-            exit(0)
-        elif mode == "results":
-            with LOCK:
-                files = [f for f in
-                         os.listdir(store)
-                         if os.path.isfile(os.path.join(store, f))]
-                files = [f for f in files if f.startswith(app.config[TAG_KEY])]
-                results = files
-        else:
-            with LOCK:
-                artifact_obj = os.path.join(store, mode)
-                if os.path.exists(artifact_obj):
-                    with open(artifact_obj) as f:
-                        results = json.loads(f.read())
-                else:
-                    results[FAIL_JSON] = "command? {}".format(mode)
-    else:
-        results[FAIL_JSON] = "code? {}".format(code)
-    return jsonify(results)
-
-
 def _clean(value):
     """Clean invalid path chars from variables."""
     return "".join(c for c in value if c.isalnum() or c == '-')
@@ -333,7 +298,6 @@ def main():
     parser.add_argument('--output', default="disk",
                         choices=methods,
                         help="output method")
-    parser.add_argument('--code', default='running', help='admin url code')
     parser.add_argument('--ccache', default=None, help='client data cache')
     now = datetime.datetime.now().isoformat().replace(":", "-")
     now = now[0:19]
@@ -354,7 +318,6 @@ def main():
     app.config[TAG_KEY] = _clean(args.tag)
     app.config[METHOD_KEY] = globals()[OUT_METHOD + args.output]
     app.config[SNAPTIME_KEY] = args.snapshot
-    app.config[ADMIN_CODE] = args.code
     app.config[CCACHE_KEY] = args.ccache
     if args.questions is None or len(args.questions) == 0:
         print('question set(s) required')
