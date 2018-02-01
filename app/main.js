@@ -3,7 +3,6 @@ const app = electron.app
 const BrowserWindow = electron.BrowserWindow
 const path = require('path')
 const fs = require('fs')
-import { session } from 'electron';
 let mainWindow
 function createWindow () {
   session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
@@ -19,7 +18,7 @@ function createWindow () {
     url = "http://localhost:8080"
   }
   mainWindow = new BrowserWindow({width: 1024, height: 768})
-  mainWindow.loadURL(url)
+  mainWindow.loadURL(url, { userAgent: "electron-survey" })
   mainWindow.on('closed', function () {
     mainWindow = null
   })
