@@ -13,7 +13,7 @@ function createWindow () {
   if (!url || url.length === 0 || url === undefined) {
     url = "http://localhost:8080"
   }
-  mainWindow = new BrowserWindow({width: 800, height: 600})
+  mainWindow = new BrowserWindow({width: 1024, height: 768})
   mainWindow.loadURL(url)
   mainWindow.on('closed', function () {
     mainWindow = null
