@@ -20,7 +20,7 @@ pacman -S survey
 
 The `app/` folder contains a deployable electron-based client.
 
-The URL for the survey can be put in `%APPDATA%` for windows or `.config/survey/` in linux:
+The URL for the survey can be put in `%APPDATA%/survey/` for windows or `.config/survey/` in linux:
 ```
 vim survey.txt
 ---
