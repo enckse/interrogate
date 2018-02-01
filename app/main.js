@@ -3,8 +3,13 @@ const app = electron.app
 const BrowserWindow = electron.BrowserWindow
 const path = require('path')
 const fs = require('fs')
+import { session } from 'electron';
 let mainWindow
 function createWindow () {
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    details.requestHeaders['User-Agent'] = 'electron-survey';
+    callback({ cancel: false, requestHeaders: details.requestHeaders });
+  });
   let config = path.join(app.getPath('userData'), 'survey.txt')
   let url = undefined
   if (fs.existsSync(config)) {
