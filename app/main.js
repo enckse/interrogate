@@ -5,10 +5,6 @@ const path = require('path')
 const fs = require('fs')
 let mainWindow
 function createWindow () {
-  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
-    details.requestHeaders['User-Agent'] = 'electron-survey';
-    callback({ cancel: false, requestHeaders: details.requestHeaders });
-  });
   let config = path.join(app.getPath('userData'), 'survey.txt')
   let url = undefined
   if (fs.existsSync(config)) {
@@ -17,6 +13,9 @@ function createWindow () {
   if (!url || url.length === 0 || url === undefined) {
     url = "http://localhost:8080"
   }
+
+  let d = new Date()
+  fs.appendFile(config + ".version", d.toString() + " -> " + app.getVersion() + "\n", function (e) {})
   mainWindow = new BrowserWindow({width: 1024, height: 768})
   mainWindow.loadURL(url, { userAgent: "electron-survey" })
   mainWindow.on('closed', function () {
