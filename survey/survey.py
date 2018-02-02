@@ -303,7 +303,7 @@ def main():
     now = now[0:19]
     parser.add_argument('--tag', default=now, help="output tag")
     parser.add_argument('--store',
-                        default="/var/db/survey/",
+                        default="/var/cache/survey/",
                         help="data store")
     parser.add_argument('--config',
                         default="/etc/survey/",

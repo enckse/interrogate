@@ -13,7 +13,7 @@ pacman -S survey
 
 ### files
 
-* by default data is saved to `/var/db/survey/`
+* by default data is saved to `/var/cache/survey/`
 * configuration is in `/etc/survey/`
 
 ### app
