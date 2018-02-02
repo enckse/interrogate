@@ -8,7 +8,7 @@
                     if (a === "electron-survey") {
                         var ts = window.performance.timing.navigationStart + window.performance.now();
                         const fs = require('fs');
-                        fs.appendFile('{{c_cache}}' + ts.toString() + '.' + mode + '-{{idx}}.form', $(this).serialize(), function (e) {});
+                        fs.appendFile('{{c_cache}}' + mode + '-{{idx}}.form.' + ts.toString(), $(this).serialize(), function (e) {});
                     }
                 }
                 e.preventDefault();
