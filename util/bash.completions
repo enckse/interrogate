@@ -1,9 +1,0 @@
-#!/bin/bash
-function _survey()
-{
-    local cur
-    cur=${COMP_WORDS[COMP_CWORD]}
-    COMPREPLY=( $(compgen -W "COMPLETIONS" -- $cur) )
-}
-
-complete -F _survey survey
