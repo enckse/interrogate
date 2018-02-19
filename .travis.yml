@@ -2,6 +2,7 @@ language: go
 
 script:
     - make
+    - make format
 
 notifications:
     email:
