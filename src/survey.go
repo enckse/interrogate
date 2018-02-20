@@ -102,7 +102,7 @@ func fakeData(pd *PageData) {
 	pd.Questions = append(pd.Questions, Field{Explanation: true})
 	pd.Questions = append(pd.Questions, Field{Check: true})
 	pd.Questions = append(pd.Questions, Field{Number: true})
-	pd.Questions = append(pd.Questions, Field{Option: true})
+    pd.Questions = append(pd.Questions, Field{Option: true, Options: []string{"TEST"}})
 	pd.Questions = append(pd.Questions, Field{Slider: true, SlideId: template.JS("slide1"), SlideHideId: template.JS("shide1"), Id: 1})
 }
 
