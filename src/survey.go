@@ -47,14 +47,14 @@ func readTemplate(directory string, tmpl string) *template.Template {
 }
 
 type Context struct {
-	snapshot   int
-	tag        string
-	store      string
-	config     string
-	lock       *sync.Mutex
-	beginTmpl  *template.Template
-	surveyTmpl *template.Template
-    completeTmpl *template.Template
+	snapshot     int
+	tag          string
+	store        string
+	config       string
+	lock         *sync.Mutex
+	beginTmpl    *template.Template
+	surveyTmpl   *template.Template
+	completeTmpl *template.Template
 }
 
 type Field struct {
@@ -94,13 +94,13 @@ func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageD
 
 func homeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd := NewPageData(req)
-    pd.Session = getSession()
+	pd.Session = getSession()
 	handleTemplate(resp, ctx.beginTmpl, pd)
 }
 
 func completeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-    pd := NewPageData(req)
-    handleTemplate(resp, ctx.completeTmpl, pd)
+	pd := NewPageData(req)
+	handleTemplate(resp, ctx.completeTmpl, pd)
 }
 
 func getSession() string {
@@ -144,16 +144,16 @@ func main() {
 	ctx.config = *config
 	ctx.beginTmpl = readTemplate(*static, "begin.html")
 	ctx.surveyTmpl = readTemplate(*static, "survey.html")
-    ctx.completeTmpl = readTemplate(*static, "complete.html")
+	ctx.completeTmpl = readTemplate(*static, "complete.html")
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
 	})
 	http.HandleFunc(surveyURL, func(resp http.ResponseWriter, req *http.Request) {
 		surveyEndpoint(resp, req, ctx)
 	})
-    http.HandleFunc("/completed", func(resp http.ResponseWriter, req *http.Request) {
-        completeEndpoint(resp, req, ctx)
-    })
+	http.HandleFunc("/completed", func(resp http.ResponseWriter, req *http.Request) {
+		completeEndpoint(resp, req, ctx)
+	})
 	staticPath := filepath.Join(*static, staticURL)
 	log.Print(staticPath)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
