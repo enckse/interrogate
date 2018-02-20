@@ -54,6 +54,7 @@ type Context struct {
 	lock       *sync.Mutex
 	beginTmpl  *template.Template
 	surveyTmpl *template.Template
+    completeTmpl *template.Template
 }
 
 type Field struct {
@@ -93,7 +94,13 @@ func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageD
 
 func homeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd := NewPageData(req)
+    pd.Session = getSession()
 	handleTemplate(resp, ctx.beginTmpl, pd)
+}
+
+func completeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+    pd := NewPageData(req)
+    handleTemplate(resp, ctx.completeTmpl, pd)
 }
 
 func getSession() string {
@@ -137,21 +144,16 @@ func main() {
 	ctx.config = *config
 	ctx.beginTmpl = readTemplate(*static, "begin.html")
 	ctx.surveyTmpl = readTemplate(*static, "survey.html")
+    ctx.completeTmpl = readTemplate(*static, "complete.html")
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
-	})
-	http.HandleFunc(beginURL, func(resp http.ResponseWriter, req *http.Request) {
-		rawQuery := req.URL.RawQuery
-		if len(rawQuery) > 0 {
-			rawQuery = fmt.Sprintf("?%s", rawQuery)
-		}
-		surveyEnd := fmt.Sprintf(surveyClientURL, 0, getSession())
-		log.Print(surveyEnd)
-		http.Redirect(resp, req, fmt.Sprintf("%s%s", surveyEnd, rawQuery), http.StatusSeeOther)
 	})
 	http.HandleFunc(surveyURL, func(resp http.ResponseWriter, req *http.Request) {
 		surveyEndpoint(resp, req, ctx)
 	})
+    http.HandleFunc("/completed", func(resp http.ResponseWriter, req *http.Request) {
+        completeEndpoint(resp, req, ctx)
+    })
 	staticPath := filepath.Join(*static, staticURL)
 	log.Print(staticPath)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
