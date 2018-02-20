@@ -69,38 +69,38 @@ window.onload=function(){
     {{ range $key, $question := .Questions }}
     <div class="row">
         <label for="{{ $question.Text }}">{{ $question.Text }}</label>
-        <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
-        {% if question.q_type == "explanation" %}
-            <input class="u-full-width" type="hidden" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
-        {% endif %}
-        {% if question.q_type == "input" %}
-        <input class="u-full-width" value="{{question.q_val}}" type="text" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}" {{question.q_req}}>
-        {% endif %}
-        {% if question.q_type == "long" %}
-            <textarea class="u-full-width" name="{{question.q_id}}" style="min-height: 105px;"placeholder="" id="{{ question.q_text }}"></textarea>
-        {% endif %}
-        {% if question.q_type == "label" %}
-            <input class="u-full-width" type="hidden" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
-        {% endif %}
-        {% if question.q_type == "checkbox" %}
-            <input class="" type="checkbox" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
-        {% endif %}
-        {% if question.q_type == "number" %}
-            <input class="u-full-width" type="number" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
-        {% endif %}
-        {% if question.q_type == "option" %}
-              <select class="u-full-width" id="{{ question.q_text }}" name="{{question.q_id}}">
-                {% for option in question.q_opts %}
-                    <option value="{{ option }}"> {{ option }}</option>
-                {% endfor %}
+        <p style="margin-bottom: 1rem;">{{ $question.Description }}</p>
+        {{ if $question.Eexplanation }}
+            <input class="u-full-width" type="hidden" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
+        {{ end }}
+        {{ if $question.Input }}
+        <input class="u-full-width" value="{{ $question.Value }}" type="text" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}" {{ $question.Required }}>
+        {{ end }}
+        {{ if $question.Long }}
+            <textarea class="u-full-width" name="{{ $question.Id}}" style="min-height: 105px;"placeholder="" id="{{ $question.Text }}"></textarea>
+        {{ end }}
+        {{ if $question.Label }}
+            <input class="u-full-width" type="hidden" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
+        {{ end }}
+        {{ if $question.Check }}
+            <input class="" type="checkbox" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
+        {{ end }}
+        {{ if $question.Number }}
+            <input class="u-full-width" type="number" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
+        {{ end }}
+        {{ if $question.Option }}
+              <select class="u-full-width" id="{{ $question.Text }}" name="{{ $question.Id }}">
+                {{ range $kopt, $option := $question.Options }}
+                    <option value="{{ $option }}"> {{ $option }}</option>
+                {{ end }}
               </select>
-        {% endif %}
-        {{ if question.q_type == "slide" %}}
-            <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="{{ 'slide' + question.q_id }}"></div>
-            <input type="hidden" name="{{ question.q_id }}" value="" id="{{ 'hidden' + question.q_id }}" />
+        {{ end }}
+        {{ if $question.Slider }}}
+            <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="slide{{ $question.Id }}"></div>
+            <input type="hidden" name="{{ $question.Id }}" value="" id="hidden{{ $question.Id }}" />
             <script>
-                var {{ 'slide' + question.q_id }} = document.getElementById('{{ 'slide' + question.q_id }}');
-                noUiSlider.create({{ 'slide' + question.q_id }}, {
+                var slide{{ $question.Id }} = document.getElementById(slide{{ $question.Id }}');
+                noUiSlider.create(slide{{ $question.Id }}, {
                     start: 50,
                     range: {
                         min: 0,
@@ -115,9 +115,9 @@ window.onload=function(){
                         }
                 });
 
-                var {{ 'slidehide' + question.q_id }} = document.getElementById('{{ 'hidden' + question.q_id }}');
-                {{ 'slide' + question.q_id }}.noUiSlider.on('update', function( values, handle ) {
-                    {{ 'slidehide' + question.q_id }}.value = values[handle];
+                var slidehide{{ $question.Id }} = document.getElementById('hidden{{ $question.Id }}');
+                slide{{ $question.Id }}.noUiSlider.on('update', function( values, handle ) {
+                    slidehide{{ $question.Id }}.value = values[handle];
                 });
             </script>
         {{ end }}
@@ -126,7 +126,7 @@ window.onload=function(){
     <hr />
     <div style="position:relative; z-index:2;">
         <div style="position:absolute; top:-1em; left:-1em; right:-1em; bottom:-1em;">
-    <button class="button-primary" id="submit_form" onclick="do_save();">{% if follow %}Next{% else %}Submit{% endif %}</button>
+    <button class="button-primary" id="submit_form" onclick="do_save();">{{ if .Follow }}Next{{ else }}Submit{{ end }}</button>
         </div>
     </div>
 </form>

@@ -17,7 +17,8 @@ import (
 
 const Version = "2.0.0"
 const staticURL = "/static/"
-const surveyURL = "/survey/%d/%s"
+const surveyURL = "/survey/"
+const surveyClientURL = surveyURL + "%d/%s"
 const alphaNum = "abcdefghijklmnopqrstuvwxyz0123456789"
 const beginURL = "/begin/"
 
@@ -55,9 +56,20 @@ type Context struct {
 	surveyTmpl *template.Template
 }
 
+type Field struct {
+}
+
 type PageData struct {
 	QueryParams string
 	Title       string
+	Index       int
+	Following   bool
+	Follow      int
+	Session     string
+	Snapshot    int
+	Anonymous   bool
+	Hidden      []Field
+	Questions   []Field
 }
 
 func NewPageData(req *http.Request) *PageData {
@@ -95,8 +107,8 @@ func getSession() string {
 }
 
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	//pd := NewPageData(req)
-	//handleTemplate(resp, ctx.surveyTmpl, pd)
+	pd := NewPageData(req)
+	handleTemplate(resp, ctx.surveyTmpl, pd)
 }
 
 func main() {
@@ -133,7 +145,12 @@ func main() {
 		if len(rawQuery) > 0 {
 			rawQuery = fmt.Sprintf("?%s", rawQuery)
 		}
-		http.Redirect(resp, req, fmt.Sprintf(surveyURL+"%s", 0, getSession(), rawQuery), http.StatusSeeOther)
+		surveyEnd := fmt.Sprintf(surveyClientURL, 0, getSession())
+		log.Print(surveyEnd)
+		http.Redirect(resp, req, fmt.Sprintf("%s%s", surveyEnd, rawQuery), http.StatusSeeOther)
+	})
+	http.HandleFunc(surveyURL, func(resp http.ResponseWriter, req *http.Request) {
+		surveyEndpoint(resp, req, ctx)
 	})
 	staticPath := filepath.Join(*static, staticURL)
 	log.Print(staticPath)
