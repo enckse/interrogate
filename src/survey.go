@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -127,7 +128,7 @@ func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageD
 
 func homeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd := NewPageData(req, ctx)
-	pd.Session = getSession()
+	pd.Session = getSession(20)
 	handleTemplate(resp, ctx.beginTmpl, pd)
 }
 
@@ -139,7 +140,11 @@ func completeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context)
 func getTuple(req *http.Request, strPos int, intPos int) (string, int, bool) {
 	path := req.URL.Path
 	parts := strings.Split(path, "/")
-	if len(parts) < 3 {
+	required := strPos
+	if intPos > strPos {
+		required = intPos
+	}
+	if len(parts) < required+1 {
 		log.Print("warning, invalid url")
 		log.Print(path)
 		return "", 0, false
@@ -153,26 +158,61 @@ func getTuple(req *http.Request, strPos int, intPos int) (string, int, bool) {
 	return parts[strPos], idx, true
 }
 
-func saveData(data map[string][]string, ctx *Context, mode string, idx int) {
+func writeString(file *os.File, line string) {
+	if _, err := file.WriteString(line); err != nil {
+		log.Print("file append error")
+		log.Print(err)
+	}
+}
+
+func saveData(data map[string][]string, ctx *Context, mode string, idx int, client string, session string) {
+	// TODO: directory needs to exist before we ever see this path
+	name := ""
+	for _, c := range strings.ToLower(fmt.Sprintf("%s_%s_%s", client, getSession(6), session)) {
+		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_') {
+			name = name + string(c)
+		}
+	}
+	filename := filepath.Join(ctx.store, fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name))
+	log.Print(filename)
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		log.Print("result writing error")
+		log.Print(err)
+		return
+	}
+	defer f.Close()
+	// TODO: need to map questions back from input results
+	for k, v := range data {
+		writeString(f, fmt.Sprintf("#### %s\n\n", k))
+		for _, value := range v {
+			writeString(f, fmt.Sprintf("%s\n", value))
+		}
+		writeString(f, fmt.Sprintf("\n\n", k))
+	}
 }
 
 func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	mode, idx, valid := getTuple(req, 2, 3)
+	mode, idx, valid := getTuple(req, 1, 2)
 	if !valid {
 		return
 	}
 	req.ParseForm()
 	datum := make(map[string][]string)
+	sess := ""
 	for k, v := range req.Form {
 		datum[k] = v
+		if k == "session" && len(v) > 0 {
+			sess = v[0]
+		}
 	}
 
-	go saveData(datum, ctx, mode, idx)
+	go saveData(datum, ctx, mode, idx, req.RemoteAddr, sess)
 }
 
-func getSession() string {
+func getSession(length int) string {
 	alphaNumeric := []rune(alphaNum)
-	b := make([]rune, 20)
+	b := make([]rune, length)
 	runes := len(alphaNumeric)
 	for i := range b {
 		b[i] = alphaNumeric[rand.Intn(runes)]
@@ -234,6 +274,9 @@ func main() {
 	})
 	http.HandleFunc("/completed", func(resp http.ResponseWriter, req *http.Request) {
 		completeEndpoint(resp, req, ctx)
+	})
+	http.HandleFunc("/snapshot/", func(resp http.ResponseWriter, req *http.Request) {
+		saveEndpoint(resp, req, ctx)
 	})
 	staticPath := filepath.Join(*static, staticURL)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
