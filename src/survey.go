@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+    "encoding/json"
 	"sync"
 	"time"
 )
@@ -58,9 +59,9 @@ type Context struct {
 	surveyTmpl   *template.Template
 	completeTmpl *template.Template
 	pages        int
-	questions    []map[string]Field
-	title        string
-	anon         bool
+	questions    [][]Field
+    titles       []string
+    anons        []bool
 }
 
 type Field struct {
@@ -80,6 +81,7 @@ type Field struct {
 	Options     []string
 	SlideId     template.JS
 	SlideHideId template.JS
+    hidden      bool
 }
 
 type PageData struct {
@@ -96,21 +98,109 @@ type PageData struct {
 	set         int
 }
 
+func (ctx *Context) newSet(configFile string, position int) error {
+    jfile, err := os.Open(configFile)
+    if err != nil {
+        return err
+    }
+
+    defer jfile.Close()
+    data, err := ioutil.ReadAll(jfile)
+    if err != nil {
+        return err
+    }
+    var config Config
+    err = json.Unmarshal(data, &config)
+    if err != nil {
+        return err
+    }
+    ctx.titles = append(ctx.titles, config.Metadata.Title)
+    ctx.anons = append(ctx.anons, config.Metadata.Title != "FALSE")
+    var mapping []Field
+    number := 0
+    for _, q := range config.Questions {
+        k := number
+        number = number + 1
+        if q.Numbered > 0 {
+            k = q.Numbered
+        }
+        field := &Field{}
+        for _, attr := range q.Attributes {
+            if attr == "required" {
+                field.Required = attr
+            }
+        }
+        field.Id = k
+        field.Text = q.Text
+        field.Description = q.Description
+        switch q.Type {
+        case "input":
+            field.Input = true
+        case "hidden":
+            field.hidden = true
+        case "long":
+            field.Long = true
+        case "option":
+            field.Option = true
+            field.Options = q.Options
+        case "label":
+            field.Label = true
+        case "checkbox":
+            field.Check = true
+        case "number":
+            field.Number = true
+        case "slide":
+            field.Slider = true
+            field.SlideId = template.JS(fmt.Sprintf("slide%d", k))
+            field.SlideHideId = template.JS(fmt.Sprintf("shide%d", k))
+        default:
+            panic("unknown question type: "+q.Type)
+        }
+        mapping = append(mapping, *field)
+    }
+    ctx.questions = append(ctx.questions, mapping)
+    return nil
+}
+
+type Config struct {
+    Metadata Meta `json:"meta"`
+    Questions []Question `json:"questions"`
+}
+
+type Meta struct {
+    Title string `json:"title"`
+    Anon  string `json:"anon"`
+}
+
+type Question struct {
+    Text string `json:"text"`
+    Description string `json:"desc"`
+    Type string `json:"type"`
+    Attributes []string `json:"attrs"`
+    Options []string `json:"options"`
+    Numbered int `json:"numbered"`
+}
+
 // NOTE this method is for translation only
-func fakeData(pd *PageData) {
-	pd.Title = "Survey"
-	pd.Hidden = []Field{}
-	pd.Questions = []Field{}
-	pd.Hidden = append(pd.Hidden, Field{})
-	pd.Hidden = append(pd.Hidden, Field{})
-	pd.Questions = append(pd.Questions, Field{Input: true})
-	pd.Questions = append(pd.Questions, Field{Label: true})
-	pd.Questions = append(pd.Questions, Field{Long: true})
-	pd.Questions = append(pd.Questions, Field{Explanation: true})
-	pd.Questions = append(pd.Questions, Field{Check: true})
-	pd.Questions = append(pd.Questions, Field{Number: true})
-	pd.Questions = append(pd.Questions, Field{Option: true, Options: []string{"TEST"}})
-	pd.Questions = append(pd.Questions, Field{Slider: true, SlideId: template.JS("slide1"), SlideHideId: template.JS("shide1"), Id: 1})
+func (ctx *Context) load(questions strFlagSlice) {
+    if len(questions) == 0 {
+        log.Print("no question sets given")
+        panic("no questions!")
+    }
+
+    pos := 0
+    for _, q := range questions {
+        conf := filepath.Join(ctx.config, q + ".config")
+        err := ctx.newSet(conf, pos)
+        pos = pos + 1
+        if err != nil {
+            log.Print("unable to load question set")
+            log.Print(conf)
+            log.Print(err)
+            panic("invalid question set")
+        }
+    }
+    ctx.pages = pos
 }
 
 func NewPageData(req *http.Request, ctx *Context) *PageData {
@@ -121,7 +211,6 @@ func NewPageData(req *http.Request, ctx *Context) *PageData {
 	if len(pd.QueryParams) > 0 {
 		pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
 	}
-	fakeData(pd)
 	return pd
 }
 
@@ -234,6 +323,7 @@ func getSession(length int) string {
 }
 
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+    // TODO: map query parameters to question set/default
 	sess, idx, valid := getTuple(req, 3, 2)
 	if !valid {
 		return
@@ -242,6 +332,19 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd.Session = sess
 	pd.Index = idx
 	pd.Follow = idx + 1
+
+    if idx >= 0 && idx < len(ctx.questions) {
+        questions := ctx.questions[idx]
+        for _, q := range questions {
+            if q.hidden {
+                pd.Hidden = append(pd.Hidden, q)
+            } else {
+                pd.Questions = append(pd.Questions, q)
+            }
+        }
+        pd.Title = ctx.titles[idx]
+        pd.Anonymous = ctx.anons[idx]
+    }
 	if req.Method == "POST" {
 		req.ParseForm()
 		for k, _ := range req.Form {
@@ -250,6 +353,17 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	} else {
 		handleTemplate(resp, ctx.surveyTmpl, pd)
 	}
+}
+
+type strFlagSlice []string
+
+func (s *strFlagSlice) Set(str string) error {
+	*s = append(*s, str)
+	return nil
+}
+
+func (s *strFlagSlice) String() string {
+	return fmt.Sprintf("%v", *s)
 }
 
 func main() {
@@ -269,6 +383,8 @@ func main() {
 	store := flag.String("store", storagePath, "storage path for results")
 	config := flag.String("config", configFile, "configuration path")
 	static := flag.String("static", tmpl, "static resource location")
+    var questions strFlagSlice
+    flag.Var(&questions, "questions", "question set (multiple allowed)")
 	flag.Parse()
 	ctx := &Context{}
 	ctx.lock = &sync.Mutex{}
@@ -279,6 +395,7 @@ func main() {
 	ctx.beginTmpl = readTemplate(*static, "begin.html")
 	ctx.surveyTmpl = readTemplate(*static, "survey.html")
 	ctx.completeTmpl = readTemplate(*static, "complete.html")
+    ctx.load(questions)
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
 	})

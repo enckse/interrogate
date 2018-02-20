@@ -23,7 +23,7 @@ function do_save(){
     useUrl = "/completed{{ .QueryParams }}"
     if ({{ .Following }})
     {
-        useUrl = "/{{ .Follow}}/{{ .Session }}{{ .QueryParams }}"
+        useUrl = "/survey/{{ .Follow}}/{{ .Session }}{{ .QueryParams }}"
     }
 
     do_submit('save', useUrl)

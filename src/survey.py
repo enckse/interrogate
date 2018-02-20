@@ -32,34 +32,15 @@ def _get_questions(index, defaults=None):
     """Get question set."""
     question_in = _get_config_path(index)
     with open(question_in, 'r') as f:
-        conf = json.loads(f.read())
-
-        meta = conf['meta']
-        title = meta['title']
-        anon = meta['anon']
-
-        questions = conf['questions']
-        question_idx = {}
         q_id = 0
         for question in questions:
             idx = q_id
-            is_required = ""
-            if "numbered" in question:
-                idx = int(question["numbered"])
-            if "attrs" in question:
-                attrs = question["attrs"]
-                if "required" in attrs:
-                    is_required = "required"
             q_type = question['type']
             q_text = question['text']
             q_desc = question['desc']
             q_opts = []
             q_opt_key = "options"
             q_val = ""
-            if q_opt_key in question:
-                q_opts = question[q_opt_key]
-            if defaults and q_text in defaults:
-                q_val = defaults[q_text]
             obj = {'q_type': q_type,
                    Q_TEXT: q_text,
                    'q_desc': q_desc,
