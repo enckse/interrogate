@@ -2,18 +2,21 @@ BIN=bin/
 SRC=$(shell find src/ -type f | grep "\.go$$")
 CMD=go build -o $(BIN)survey $(SRC)
 
+build-objects = mkdir -p $(BIN)$1/$2; \
+				GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey $(SRC)
+
 all: clean build
 
 build: arm8 linux windows
 
 windows:
-	GOOS=windows GOARCH=amd64 $(CMD)
+	$(call build-objects,windows,amd64)
 
 linux:
-	GOOS=linux GOARCH=amd64 $(CMD)
+	$(call build-objects,linux,amd64)
 
 arm8:
-	GOOS=linux GOARCH=arm64 $(CMD)
+	$(call build-objects,linux,arm64)
 
 clean:
 	rm -rf $(BIN)
