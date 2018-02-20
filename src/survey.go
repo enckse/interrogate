@@ -264,8 +264,7 @@ func writeString(file *os.File, line string) {
 }
 
 func saveData(data map[string][]string, ctx *Context, mode string, idx int, client string, session string) {
-	// TODO: directory needs to exist before we ever see this path
-	name := ""
+    name := ""
 	for _, c := range strings.ToLower(fmt.Sprintf("%s_%s_%s", client, getSession(6), session)) {
 		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_') {
 			name = name + string(c)
@@ -323,7 +322,6 @@ func getSession(length int) string {
 }
 
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	// TODO: map query parameters to question set/default
 	sess, idx, valid := getTuple(req, 3, 2)
 	if !valid {
 		return
@@ -400,6 +398,12 @@ func main() {
 	ctx.beginTmpl = readTemplate(*static, "begin.html")
 	ctx.surveyTmpl = readTemplate(*static, "survey.html")
 	ctx.completeTmpl = readTemplate(*static, "complete.html")
+    err := os.MkdirAll(ctx.store, 0644)
+    if err != nil {
+        log.Print("unable to create storage directory")
+        log.Print(err)
+        return
+    }
 	ctx.load(questions)
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
@@ -417,7 +421,7 @@ func main() {
 	}
 	staticPath := filepath.Join(*static, staticURL)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
-	err := http.ListenAndServe(*bind, nil)
+	err = http.ListenAndServe(*bind, nil)
 	if err != nil {
 		log.Print("unable to start survey process")
 		log.Print(err)
