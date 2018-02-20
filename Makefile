@@ -14,4 +14,4 @@ format:
 	exit $(shell gofmt -l $(SRC) | wc -l)
 
 dependencies:
-	curl https://code.jquery.com/jquery-3.2.1.min.js > survey/static/jquery.min.js
+	curl https://code.jquery.com/jquery-3.2.1.min.js > templates/static/jquery.min.js
