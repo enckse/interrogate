@@ -58,6 +58,22 @@ type Context struct {
 }
 
 type Field struct {
+    Value string
+    Id int
+    Text string
+    Input bool
+    Long bool
+    Label bool
+    Check bool
+    Number bool
+    Explanation bool
+    Description string
+    Option bool
+    Slider bool
+    Required string
+    Options []string
+    SlideId template.JS
+    SlideHideId template.JS
 }
 
 type PageData struct {
@@ -73,14 +89,30 @@ type PageData struct {
 	Questions   []Field
 }
 
+// NOTE this method is for translation only
+func fakeData(pd *PageData) {
+	pd.Title = "Survey"
+    pd.Hidden = []Field{}
+    pd.Questions = []Field{}
+    pd.Hidden = append(pd.Hidden, Field{})
+    pd.Hidden = append(pd.Hidden, Field{})
+    pd.Questions = append(pd.Questions, Field{Input: true})
+    pd.Questions = append(pd.Questions, Field{Label: true})
+    pd.Questions = append(pd.Questions, Field{Long: true})
+    pd.Questions = append(pd.Questions, Field{Explanation: true})
+    pd.Questions = append(pd.Questions, Field{Check: true})
+    pd.Questions = append(pd.Questions, Field{Number: true})
+    pd.Questions = append(pd.Questions, Field{Option: true})
+    pd.Questions = append(pd.Questions, Field{Slider: true, SlideId: template.JS("slide1"), SlideHideId: template.JS("shide1"), Id: 1})
+}
+
 func NewPageData(req *http.Request, ctx *Context) *PageData {
 	pd := &PageData{}
 	pd.QueryParams = req.URL.RawQuery
 	if len(pd.QueryParams) > 0 {
 		pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
 	}
-	// TODO: handle title
-	pd.Title = "Survey"
+    fakeData(pd)
 	return pd
 }
 
@@ -155,7 +187,6 @@ func main() {
 		completeEndpoint(resp, req, ctx)
 	})
 	staticPath := filepath.Join(*static, staticURL)
-	log.Print(staticPath)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
 	err := http.ListenAndServe(*bind, nil)
 	if err != nil {

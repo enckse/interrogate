@@ -70,7 +70,7 @@ window.onload=function(){
     <div class="row">
         <label for="{{ $question.Text }}">{{ $question.Text }}</label>
         <p style="margin-bottom: 1rem;">{{ $question.Description }}</p>
-        {{ if $question.Eexplanation }}
+        {{ if $question.Explanation }}
             <input class="u-full-width" type="hidden" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
         {{ end }}
         {{ if $question.Input }}
@@ -95,12 +95,12 @@ window.onload=function(){
                 {{ end }}
               </select>
         {{ end }}
-        {{ if $question.Slider }}}
+        {{ if $question.Slider }}
             <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="slide{{ $question.Id }}"></div>
             <input type="hidden" name="{{ $question.Id }}" value="" id="hidden{{ $question.Id }}" />
             <script>
-                var slide{{ $question.Id }} = document.getElementById(slide{{ $question.Id }}');
-                noUiSlider.create(slide{{ $question.Id }}, {
+                var {{$question.SlideId}} = document.getElementById('{{ $question.SlideId }}');
+                noUiSlider.create({{$question.SlideId}}, {
                     start: 50,
                     range: {
                         min: 0,
@@ -115,9 +115,9 @@ window.onload=function(){
                         }
                 });
 
-                var slidehide{{ $question.Id }} = document.getElementById('hidden{{ $question.Id }}');
-                slide{{ $question.Id }}.noUiSlider.on('update', function( values, handle ) {
-                    slidehide{{ $question.Id }}.value = values[handle];
+                var {{$question.SlideHideId}} = document.getElementById('hidden{{ $question.Id }}');
+                {{ $question.SlideId }}.noUiSlider.on('update', function( values, handle ) {
+                    {{ $question.SlideHideId }}.value = values[handle];
                 });
             </script>
         {{ end }}
