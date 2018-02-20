@@ -2,17 +2,17 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 	"time"
-    "fmt"
-    "math/rand"
 )
 
 const Version = "2.0.0"
@@ -44,13 +44,13 @@ func readTemplate(directory string, tmpl string) *template.Template {
 }
 
 type Context struct {
-	snapshot int
-	tag      string
-	store    string
-	config   string
-	lock     *sync.Mutex
-    beginTmpl *template.Template
-    surveyTmpl *template.Template
+	snapshot   int
+	tag        string
+	store      string
+	config     string
+	lock       *sync.Mutex
+	beginTmpl  *template.Template
+	surveyTmpl *template.Template
 }
 
 type PageData struct {
@@ -61,42 +61,42 @@ type PageData struct {
 func NewPageData(req *http.Request) *PageData {
 	pd := &PageData{}
 	pd.QueryParams = req.URL.RawQuery
-    if len(pd.QueryParams) > 0 {
-        pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
-    }
+	if len(pd.QueryParams) > 0 {
+		pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
+	}
 	// TODO: handle title
 	pd.Title = "Survey"
 	return pd
 }
 
 func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageData) {
-    err := tmpl.Execute(resp, pd)
-    if err != nil {
-        log.Print("error executing template")
-        log.Print(err)
-    }
+	err := tmpl.Execute(resp, pd)
+	if err != nil {
+		log.Print("error executing template")
+		log.Print(err)
+	}
 }
 
 func homeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-    pd := NewPageData(req)
-    handleTemplate(resp, ctx.beginTmpl, pd)
+	pd := NewPageData(req)
+	handleTemplate(resp, ctx.beginTmpl, pd)
 }
 
 const alphaNum = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 func getSession() string {
-    alphaNumeric := []rune(alphaNum)
-    b := make([]rune, 20)
-    runes := len(alphaNumeric)
-    for i := range b {
-        b[i] = alphaNumeric[rand.Intn(runes)]
-    }
-    return string(b)
+	alphaNumeric := []rune(alphaNum)
+	b := make([]rune, 20)
+	runes := len(alphaNumeric)
+	for i := range b {
+		b[i] = alphaNumeric[rand.Intn(runes)]
+	}
+	return string(b)
 }
 
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-    //pd := NewPageData(req)
-    //handleTemplate(resp, ctx.surveyTmpl, pd)
+	//pd := NewPageData(req)
+	//handleTemplate(resp, ctx.surveyTmpl, pd)
 }
 
 func main() {
@@ -109,7 +109,7 @@ func main() {
 		configFile = basePath + "config\\"
 		tmpl = basePath + "static\\"
 	}
-    rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UnixNano())
 	bind := flag.String("bind", "0.0.0.0:8080", "binding (ip:port)")
 	snapshot := flag.Int("snapshot", 15, "auto snapshot (<= 0 is disabled)")
 	tag := flag.String("tag", time.Now().Format("2006-01-02"), "output tag")
@@ -123,18 +123,18 @@ func main() {
 	ctx.tag = *tag
 	ctx.store = *store
 	ctx.config = *config
-    ctx.beginTmpl = readTemplate(*static, "begin.html")
-    //ctx.surveyTmpl = readTemplate(*static, "survey.html")
+	ctx.beginTmpl = readTemplate(*static, "begin.html")
+	//ctx.surveyTmpl = readTemplate(*static, "survey.html")
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
-        homeEndpoint(resp, req, ctx)
+		homeEndpoint(resp, req, ctx)
 	})
-    http.HandleFunc("/begin", func(resp http.ResponseWriter, req *http.Request) {
-        rawQuery := req.URL.RawQuery
-        if len(rawQuery) > 0 {
-            rawQuery = fmt.Sprintf("?%s", rawQuery)
-        }
-        http.Redirect(resp, req, fmt.Sprintf(surveyURL + "%s", 0, getSession(), rawQuery), http.StatusSeeOther)
-    })
+	http.HandleFunc("/begin", func(resp http.ResponseWriter, req *http.Request) {
+		rawQuery := req.URL.RawQuery
+		if len(rawQuery) > 0 {
+			rawQuery = fmt.Sprintf("?%s", rawQuery)
+		}
+		http.Redirect(resp, req, fmt.Sprintf(surveyURL+"%s", 0, getSession(), rawQuery), http.StatusSeeOther)
+	})
 	staticPath := filepath.Join(*static, staticURL)
 	log.Print(staticPath)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
