@@ -1,10 +1,19 @@
 BIN=bin/
 SRC=$(shell find src/ -type f | grep "\.go$$")
+CMD=go build -o $(BIN)survey $(SRC)
 
 all: clean build
 
-build:
-	go build -o $(BIN)survey $(SRC)
+build: arm8 linux windows
+
+windows:
+	GOOS=windows GOARCH=amd64 $(CMD)
+
+linux:
+	GOOS=linux GOARCH=amd64 $(CMD)
+
+arm8:
+	GOOS=linux GOARCH=arm64 $(CMD)
 
 clean:
 	rm -rf $(BIN)
