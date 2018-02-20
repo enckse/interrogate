@@ -18,6 +18,8 @@ import (
 const Version = "2.0.0"
 const staticURL = "/static/"
 const surveyURL = "/survey/%d/%s"
+const alphaNum = "abcdefghijklmnopqrstuvwxyz0123456789"
+const beginURL = "/begin/"
 
 func readContent(directory string, name string) string {
 	file := filepath.Join(directory, name)
@@ -82,8 +84,6 @@ func homeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	handleTemplate(resp, ctx.beginTmpl, pd)
 }
 
-const alphaNum = "abcdefghijklmnopqrstuvwxyz0123456789"
-
 func getSession() string {
 	alphaNumeric := []rune(alphaNum)
 	b := make([]rune, 20)
@@ -128,7 +128,7 @@ func main() {
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
 	})
-	http.HandleFunc("/begin", func(resp http.ResponseWriter, req *http.Request) {
+	http.HandleFunc(beginURL, func(resp http.ResponseWriter, req *http.Request) {
 		rawQuery := req.URL.RawQuery
 		if len(rawQuery) > 0 {
 			rawQuery = fmt.Sprintf("?%s", rawQuery)
