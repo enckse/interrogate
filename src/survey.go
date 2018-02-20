@@ -3,33 +3,33 @@ package main
 import (
 	"flag"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
-    "strings"
-    "io/ioutil"
 )
 
 const Version = "2.0.0"
 
 func readContent(directory string, name string) string {
-    file := filepath.Join(directory, name)
-    b, err := ioutil.ReadFile(file)
-    if err != nil {
-        log.Print("unable to read file: " + file)
-        log.Print(err)
-        panic("bad file")
-    }
-    return string(b)
+	file := filepath.Join(directory, name)
+	b, err := ioutil.ReadFile(file)
+	if err != nil {
+		log.Print("unable to read file: " + file)
+		log.Print(err)
+		panic("bad file")
+	}
+	return string(b)
 }
 
 func readTemplate(directory string, tmpl string) *template.Template {
-    base := readContent(directory, "base.html")
-    file := readContent(directory, tmpl)
-    def := strings.Replace(base, "{{CONTENT}}", file, -1)
+	base := readContent(directory, "base.html")
+	file := readContent(directory, tmpl)
+	def := strings.Replace(base, "{{CONTENT}}", file, -1)
 	t, err := template.New("t").Parse(def)
 	if err != nil {
 		log.Print("Unable to read template: " + file)
@@ -49,14 +49,14 @@ type Context struct {
 
 type PageData struct {
 	QueryParams string
-    Title string
+	Title       string
 }
 
 func NewPageData(req *http.Request) *PageData {
 	pd := &PageData{}
 	pd.QueryParams = req.URL.RawQuery
-    // TODO: handle title
-    pd.Title = "Survey"
+	// TODO: handle title
+	pd.Title = "Survey"
 	return pd
 }
 
@@ -93,9 +93,9 @@ func main() {
 			log.Print(err)
 		}
 	})
-    staticPath := filepath.Join(*static, staticURL)
-    log.Print(staticPath)
-    http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
+	staticPath := filepath.Join(*static, staticURL)
+	log.Print(staticPath)
+	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
 	err := http.ListenAndServe(*bind, nil)
 	if err != nil {
 		log.Print("unable to start survey process")
