@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -289,7 +290,14 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	metaNum := 1
 	mapping := ctx.questionMaps[idx]
 	var metaSet []string
-	for k, v := range data {
+	data["client"] = []string{client}
+	var keys []string
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		v := data[k]
 		useNumber := 0
 		questionType := k
 		qType, ok := mapping[k]
