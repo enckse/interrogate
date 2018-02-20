@@ -57,6 +57,10 @@ type Context struct {
 	beginTmpl    *template.Template
 	surveyTmpl   *template.Template
 	completeTmpl *template.Template
+	pages        int
+	questions    []map[string]Field
+	title        string
+	anon         bool
 }
 
 type Field struct {
@@ -89,6 +93,7 @@ type PageData struct {
 	Anonymous   bool
 	Hidden      []Field
 	Questions   []Field
+	set         int
 }
 
 // NOTE this method is for translation only
@@ -111,6 +116,8 @@ func fakeData(pd *PageData) {
 func NewPageData(req *http.Request, ctx *Context) *PageData {
 	pd := &PageData{}
 	pd.QueryParams = req.URL.RawQuery
+	pd.Snapshot = ctx.snapshot
+	pd.set = ctx.pages
 	if len(pd.QueryParams) > 0 {
 		pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
 	}
@@ -119,6 +126,7 @@ func NewPageData(req *http.Request, ctx *Context) *PageData {
 }
 
 func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageData) {
+	pd.Following = pd.Follow < pd.set
 	err := tmpl.Execute(resp, pd)
 	if err != nil {
 		log.Print("error executing template")
@@ -129,6 +137,7 @@ func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageD
 func homeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd := NewPageData(req, ctx)
 	pd.Session = getSession(20)
+	pd.Index = 0
 	handleTemplate(resp, ctx.beginTmpl, pd)
 }
 
@@ -279,9 +288,11 @@ func main() {
 	http.HandleFunc("/completed", func(resp http.ResponseWriter, req *http.Request) {
 		completeEndpoint(resp, req, ctx)
 	})
-	http.HandleFunc("/snapshot/", func(resp http.ResponseWriter, req *http.Request) {
-		saveEndpoint(resp, req, ctx)
-	})
+	for _, v := range []string{"save", "snapshot"} {
+		http.HandleFunc(fmt.Sprintf("/%s/", v), func(resp http.ResponseWriter, req *http.Request) {
+			saveEndpoint(resp, req, ctx)
+		})
+	}
 	staticPath := filepath.Join(*static, staticURL)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
 	err := http.ListenAndServe(*bind, nil)

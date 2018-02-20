@@ -12,9 +12,6 @@ OUT_METHOD = "_out_method_"
 Q_ID = 'q_id'
 Q_TEXT = 'q_text'
 
-# used in the locations we need to prevent multiple threads from interacting
-LOCK = threading.RLock()
-
 # Store the input question sets into the app context
 app.config[QUESTION_KEY] = None
 
@@ -23,9 +20,6 @@ ADMIN_CODE = "admin-code"
 TAG_KEY = "tag-key"
 ARTIFACT_KEY = "artifact-key"
 CCACHE_KEY = "ccache"
-
-# Logging output
-_LOG_FILE = "/var/log/survey.log"
 
 
 def _get_config_path(index):
@@ -117,23 +111,8 @@ def survey(idx, uuid):
 
 def main():
     """Main entry point."""
-    parser = argparse.ArgumentParser(description='Survey')
-    parser.add_argument('--host', type=str, default="0.0.0.0",
-                        help='host name')
-    parser.add_argument('--snapshot', type=int, default=15,
-                        help='auto snapshot (<= 0 is disabled)')
-    parser.add_argument('--port', type=int, default=8080,
-                        help='port to operate on')
     parser.add_argument('--questions', nargs='+', type=str,
                         help='a json file expressing questions')
-    methods = [x.replace(OUT_METHOD,
-                         "") for x in dir() if x.startswith(OUT_METHOD)]
-    parser.add_argument('--output', default="disk",
-                        choices=methods,
-                        help="output method")
-    parser.add_argument('--ccache', default=None, help='client data cache')
-    now = datetime.datetime.now().isoformat().replace(":", "-")
-    now = now[0:19]
     parser.add_argument('--tag', default=now, help="output tag")
     parser.add_argument('--store',
                         default="/var/cache/survey/",
@@ -141,10 +120,6 @@ def main():
     parser.add_argument('--config',
                         default="/etc/survey/",
                         help="survey config files")
-    parser.add_argument('--threaded',
-                        default=True,
-                        type=bool,
-                        help="enable backend threading")
     args = parser.parse_args()
     app.config[QUESTION_KEY] = []
     app.config[ARTIFACT_KEY] = args.store
