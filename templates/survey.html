@@ -1,19 +1,11 @@
 <script type="text/javascript">
 function do_submit(mode, url){
     $('#survey_form').submit(function(e){
-        if ({{write_c_cache}}) {
-            var b, a = window.navigator.userAgent;
-            if (a === "electron-survey") {
-                var ts = window.performance.timing.navigationStart + window.performance.now();
-                const fs = require('fs');
-                fs.appendFile('{{c_cache}}' + mode + '-{{idx}}.form.' + ts.toString(), $(this).serialize(), function (e) {});
-            }
-        }
         e.preventDefault();
         $.ajax({
             data: $(this).serialize(),
             type: $(this).attr('method'),
-            url: "/" + mode + "/{{idx}}",
+            url: "/" + mode + "/{{ .Index }}",
             success: function(response) {
                 // NOTE: throwing out response because we don't care
                 if (url)
@@ -28,10 +20,10 @@ function do_submit(mode, url){
 
 function do_save(){
     // NOTE: force-change the window at this point
-    useUrl = "/completed{{qparams}}"
-    if ({{do_follow}})
+    useUrl = "/completed{{ .QueryParams }}"
+    if ({{ .Following }})
     {
-        useUrl = "/{{follow}}/{{session_id}}{{qparams}}"
+        useUrl = "/{{ .Follow}}/{{ .Session }}{{ .QueryParams }}"
     }
 
     do_submit('save', useUrl)
@@ -42,7 +34,7 @@ $(document).ready(function() {
 });
 
 window.onload=function(){
-    if ({{snapshot_at}} > 0) {
+    if ({{ .Snapshot }} > 0) {
         var auto = setTimeout(function(){ autoRefresh(); }, 100);
         function submitform(){
             $('#survey_form').submit()
@@ -56,10 +48,10 @@ window.onload=function(){
     }
 }
 </script>
-<h4>{{ title }}</h4>
+<h4>{{ .Title }}</h4>
 <form name="survey_form" id="survey_form" action="/snapshot" method='POST'>
-    <input type="hidden" name="session" value="{{session_id}}" />
-    {% if anon == "FALSE" %}
+    <input type="hidden" name="session" value="{{ .Session }}" />
+    {{ if .Anonymous }}
         <div class="row">
             <div class="six columns">
                 <label for="name">Your name</label>
@@ -70,13 +62,13 @@ window.onload=function(){
                 <input class="u-full-width" name="email" type="email" placeholder="test@mailbox.com" id="email" required>
             </div>
         </div>
-    {% endif %}
-    {% for question in questions if question.q_type == "hidden" %}
-        <input type="hidden" value="{{question.q_val}}" name="{{question.q_id}}" id="{{question.q_text}}">
-    {% endfor %}
-    {% for question in questions if question.q_type != "hidden" %}
+    {{ end }}
+    {{ range $key, $question := .Hidden }}
+        <input type="hidden" value="{{ $question.Value }}" name="{{ $question.Id }}" id="{{ $question.Text }}">
+    {{ end }}
+    {{ range $key, $question := .Questions }}
     <div class="row">
-        <label for="{{ question.q_text }}">{{ question.q_text }}</label>
+        <label for="{{ $question.Text }}">{{ $question.Text }}</label>
         <p style="margin-bottom: 1rem;">{{ question.q_desc}}</p>
         {% if question.q_type == "explanation" %}
             <input class="u-full-width" type="hidden" placeholder="" name="{{question.q_id}}" id="{{ question.q_text }}">
@@ -103,7 +95,7 @@ window.onload=function(){
                 {% endfor %}
               </select>
         {% endif %}
-        {% if question.q_type == "slide" %}
+        {{ if question.q_type == "slide" %}}
             <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="{{ 'slide' + question.q_id }}"></div>
             <input type="hidden" name="{{ question.q_id }}" value="" id="{{ 'hidden' + question.q_id }}" />
             <script>
@@ -128,9 +120,9 @@ window.onload=function(){
                     {{ 'slidehide' + question.q_id }}.value = values[handle];
                 });
             </script>
-        {% endif %}
+        {{ end }}
     </div>
-    {% endfor %}
+    {{ end }}
     <hr />
     <div style="position:relative; z-index:2;">
         <div style="position:absolute; top:-1em; left:-1em; right:-1em; bottom:-1em;">

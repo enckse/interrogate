@@ -124,7 +124,7 @@ func main() {
 	ctx.store = *store
 	ctx.config = *config
 	ctx.beginTmpl = readTemplate(*static, "begin.html")
-	//ctx.surveyTmpl = readTemplate(*static, "survey.html")
+	ctx.surveyTmpl = readTemplate(*static, "survey.html")
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
 	})
