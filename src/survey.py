@@ -1,24 +1,3 @@
-#!/usr/bin/python
-
-"""Questionnaire app."""
-
-import argparse
-import json
-import uuid
-import datetime
-import os
-import hashlib
-import time
-import random
-import string
-import threading
-import urllib.parse
-import logging
-import logging.handlers
-import survey.version as ver
-from flask import Flask, redirect, render_template, url_for, request, jsonify
-app = Flask(__name__)
-
 # where questions are stored and file naming for them
 CONFIG_FILE_EXT = '.config'
 
@@ -47,14 +26,6 @@ CCACHE_KEY = "ccache"
 
 # Logging output
 _LOG_FILE = "/var/log/survey.log"
-
-
-@app.errorhandler(Exception)
-def handle_exceptions(e):
-    """Generic exception handler."""
-    app.logger.error("an exception has been caught")
-    app.logger.error(e)
-    return "an error has been encountered"
 
 
 def _get_config_path(index):
@@ -110,36 +81,6 @@ def _get_questions(index, defaults=None):
         for item in sorted(question_idx.keys()):
             question_set.append(question_idx[item])
         return (title, anon, question_set)
-
-
-@app.route('/')
-def home():
-    """Home shows a simple 'begin' page."""
-    query_params = _get_query_params()
-    return render_template('begin.html', qparams=query_params)
-
-
-def _get_query_params():
-    """Get query parameters."""
-    params = []
-    if request.args:
-        for item in request.args:
-            val = request.args.get(item)
-            params.append("{}={}".format(urllib.parse.quote(item),
-                                         urllib.parse.quote(val)))
-    query_params = ""
-    if len(params) > 0:
-        query_params = "?{}".format("&".join(params))
-    return query_params
-
-
-@app.route('/begin')
-def begin():
-    """Redirection wrapper to create the uuid for the session."""
-    query_params = _get_query_params()
-    return redirect(url_for('survey',
-                            uuid=str(uuid.uuid4()),
-                            idx=0) + query_params)
 
 
 @app.route('/<int:idx>/<uuid>')
@@ -237,12 +178,6 @@ class SaveObject(object):
         self.session = session
         self.method = method
         self.questions_in = questions_in
-
-
-def _out_method_off(obj):
-    """for demo purposes."""
-    pass
-
 
 def _create_simple_id():
     """Create a simple id."""

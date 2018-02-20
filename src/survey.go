@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -102,7 +103,7 @@ func fakeData(pd *PageData) {
 	pd.Questions = append(pd.Questions, Field{Explanation: true})
 	pd.Questions = append(pd.Questions, Field{Check: true})
 	pd.Questions = append(pd.Questions, Field{Number: true})
-    pd.Questions = append(pd.Questions, Field{Option: true, Options: []string{"TEST"}})
+	pd.Questions = append(pd.Questions, Field{Option: true, Options: []string{"TEST"}})
 	pd.Questions = append(pd.Questions, Field{Slider: true, SlideId: template.JS("slide1"), SlideHideId: template.JS("shide1"), Id: 1})
 }
 
@@ -135,6 +136,40 @@ func completeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context)
 	handleTemplate(resp, ctx.completeTmpl, pd)
 }
 
+func getTuple(req *http.Request, strPos int, intPos int) (string, int, bool) {
+	path := req.URL.Path
+	parts := strings.Split(path, "/")
+	if len(parts) < 3 {
+		log.Print("warning, invalid url")
+		log.Print(path)
+		return "", 0, false
+	}
+	idx, err := strconv.Atoi(parts[intPos])
+	if err != nil {
+		log.Print("invalid int value")
+		log.Print(path)
+		return "", 0, false
+	}
+	return parts[strPos], idx, true
+}
+
+func saveData(data map[string][]string, ctx *Context, mode string, idx int) {
+}
+
+func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+	mode, idx, valid := getTuple(req, 2, 3)
+	if !valid {
+		return
+	}
+	req.ParseForm()
+	datum := make(map[string][]string)
+	for k, v := range req.Form {
+		datum[k] = v
+	}
+
+	go saveData(datum, ctx, mode, idx)
+}
+
 func getSession() string {
 	alphaNumeric := []rune(alphaNum)
 	b := make([]rune, 20)
@@ -146,8 +181,22 @@ func getSession() string {
 }
 
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+	sess, idx, valid := getTuple(req, 3, 2)
+	if !valid {
+		return
+	}
 	pd := NewPageData(req, ctx)
-	handleTemplate(resp, ctx.surveyTmpl, pd)
+	pd.Session = sess
+	pd.Index = idx
+	pd.Follow = idx + 1
+	if req.Method == "POST" {
+		req.ParseForm()
+		for k, _ := range req.Form {
+			log.Print(k)
+		}
+	} else {
+		handleTemplate(resp, ctx.surveyTmpl, pd)
+	}
 }
 
 func main() {
