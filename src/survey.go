@@ -175,7 +175,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	}
 	filename := filepath.Join(ctx.store, fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name))
 	log.Print(filename)
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0600)
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
 		log.Print("result writing error")
 		log.Print(err)
@@ -183,12 +183,13 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	}
 	defer f.Close()
 	// TODO: need to map questions back from input results
+	// TODO: Translate checkboxes
 	for k, v := range data {
 		writeString(f, fmt.Sprintf("#### %s\n\n", k))
 		for _, value := range v {
 			writeString(f, fmt.Sprintf("%s\n", value))
 		}
-		writeString(f, fmt.Sprintf("\n\n", k))
+		writeString(f, fmt.Sprintf("\n\n"))
 	}
 }
 
