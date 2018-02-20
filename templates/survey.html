@@ -77,7 +77,7 @@ window.onload=function(){
         <input class="u-full-width" value="{{ $question.Value }}" type="text" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}" {{ $question.Required }}>
         {{ end }}
         {{ if $question.Long }}
-            <textarea class="u-full-width" name="{{ $question.Id}}" style="min-height: 105px;"placeholder="" id="{{ $question.Text }}"></textarea>
+            <textarea class="u-full-width" name="{{ $question.Id}}" style="min-height: 105px;" placeholder="" id="{{ $question.Text }}"></textarea>
         {{ end }}
         {{ if $question.Label }}
             <input class="u-full-width" type="hidden" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
