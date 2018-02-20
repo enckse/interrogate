@@ -185,11 +185,14 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	// TODO: need to map questions back from input results
 	// TODO: Translate checkboxes
 	for k, v := range data {
-		writeString(f, fmt.Sprintf("#### %s\n\n", k))
+		writeString(f, fmt.Sprintf("#### %s\n\n```", k))
 		for _, value := range v {
+			if len(strings.TrimSpace(value)) == 0 {
+				continue
+			}
 			writeString(f, fmt.Sprintf("%s\n", value))
 		}
-		writeString(f, fmt.Sprintf("\n\n"))
+		writeString(f, fmt.Sprintf("```\n\n"))
 	}
 }
 
