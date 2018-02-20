@@ -1,5 +1,5 @@
 BIN=bin/
-SRC=$(shell find survey/ -type f | grep "\.go$$")
+SRC=$(shell find src/ -type f | grep "\.go$$")
 
 all: clean build
 
