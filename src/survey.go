@@ -73,7 +73,7 @@ type PageData struct {
 	Questions   []Field
 }
 
-func NewPageData(req *http.Request) *PageData {
+func NewPageData(req *http.Request, ctx *Context) *PageData {
 	pd := &PageData{}
 	pd.QueryParams = req.URL.RawQuery
 	if len(pd.QueryParams) > 0 {
@@ -93,13 +93,13 @@ func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageD
 }
 
 func homeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	pd := NewPageData(req)
+	pd := NewPageData(req, ctx)
 	pd.Session = getSession()
 	handleTemplate(resp, ctx.beginTmpl, pd)
 }
 
 func completeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	pd := NewPageData(req)
+	pd := NewPageData(req, ctx)
 	handleTemplate(resp, ctx.completeTmpl, pd)
 }
 
@@ -114,7 +114,7 @@ func getSession() string {
 }
 
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	pd := NewPageData(req)
+	pd := NewPageData(req, ctx)
 	handleTemplate(resp, ctx.surveyTmpl, pd)
 }
 
