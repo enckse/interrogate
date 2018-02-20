@@ -62,6 +62,7 @@ type Context struct {
 	questions    [][]Field
 	titles       []string
 	anons        []bool
+	questionMaps []map[string]string
 }
 
 type Field struct {
@@ -117,6 +118,7 @@ func (ctx *Context) newSet(configFile string, position int) error {
 	ctx.titles = append(ctx.titles, config.Metadata.Title)
 	ctx.anons = append(ctx.anons, config.Metadata.Anon != "FALSE")
 	var mapping []Field
+	questionMap := make(map[string]string)
 	number := 0
 	for _, q := range config.Questions {
 		k := number
@@ -132,6 +134,7 @@ func (ctx *Context) newSet(configFile string, position int) error {
 		}
 		field.Id = k
 		field.Text = q.Text
+		questionMap[strconv.Itoa(k)] = fmt.Sprintf("%s (%s)", q.Text, q.Type)
 		field.Description = q.Description
 		switch q.Type {
 		case "input":
@@ -158,6 +161,7 @@ func (ctx *Context) newSet(configFile string, position int) error {
 		}
 		mapping = append(mapping, *field)
 	}
+	ctx.questionMaps = append(ctx.questionMaps, questionMap)
 	ctx.questions = append(ctx.questions, mapping)
 	return nil
 }
@@ -264,7 +268,7 @@ func writeString(file *os.File, line string) {
 }
 
 func saveData(data map[string][]string, ctx *Context, mode string, idx int, client string, session string) {
-    name := ""
+	name := ""
 	for _, c := range strings.ToLower(fmt.Sprintf("%s_%s_%s", client, getSession(6), session)) {
 		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_') {
 			name = name + string(c)
@@ -281,15 +285,48 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	defer f.Close()
 	// TODO: need to map questions back from input results
 	// TODO: Translate checkboxes
+	questionNum := 1
+	metaNum := 1
+	mapping := ctx.questionMaps[idx]
+	var metaSet []string
 	for k, v := range data {
-		writeString(f, fmt.Sprintf("#### %s\n\n```", k))
+		useNumber := 0
+		questionType := k
+		qType, ok := mapping[k]
+		if ok {
+			useNumber = questionNum
+			questionType = qType
+			questionNum += 1
+		} else {
+			useNumber = metaNum
+			questionType = fmt.Sprintf("system (%s)", k)
+			metaNum += 1
+		}
+
+		var localLines []string
+		localLines = append(localLines, fmt.Sprintf("#### %d. %s\n\n```\n", useNumber, questionType))
+		noAnswer := true
 		for _, value := range v {
 			if len(strings.TrimSpace(value)) == 0 {
 				continue
 			}
-			writeString(f, fmt.Sprintf("%s\n", value))
+			noAnswer = false
+			localLines = append(localLines, fmt.Sprintf("%s\n", value))
 		}
-		writeString(f, fmt.Sprintf("```\n\n"))
+		if noAnswer {
+			localLines = append(localLines, "<no response>\n")
+		}
+		localLines = append(localLines, fmt.Sprintf("```\n\n"))
+		for _, l := range localLines {
+			if ok {
+				writeString(f, l)
+			} else {
+				metaSet = append(metaSet, l)
+			}
+		}
+	}
+	for _, l := range metaSet {
+		writeString(f, l)
 	}
 }
 
@@ -398,12 +435,12 @@ func main() {
 	ctx.beginTmpl = readTemplate(*static, "begin.html")
 	ctx.surveyTmpl = readTemplate(*static, "survey.html")
 	ctx.completeTmpl = readTemplate(*static, "complete.html")
-    err := os.MkdirAll(ctx.store, 0644)
-    if err != nil {
-        log.Print("unable to create storage directory")
-        log.Print(err)
-        return
-    }
+	err := os.MkdirAll(ctx.store, 0644)
+	if err != nil {
+		log.Print("unable to create storage directory")
+		log.Print(err)
+		return
+	}
 	ctx.load(questions)
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
