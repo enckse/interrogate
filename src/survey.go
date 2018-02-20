@@ -61,6 +61,9 @@ type PageData struct {
 func NewPageData(req *http.Request) *PageData {
 	pd := &PageData{}
 	pd.QueryParams = req.URL.RawQuery
+    if len(pd.QueryParams) > 0 {
+        pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
+    }
 	// TODO: handle title
 	pd.Title = "Survey"
 	return pd
@@ -126,7 +129,11 @@ func main() {
         homeEndpoint(resp, req, ctx)
 	})
     http.HandleFunc("/begin", func(resp http.ResponseWriter, req *http.Request) {
-        http.Redirect(resp, req, fmt.Sprintf(surveyURL, 0, getSession()), http.StatusSeeOther)
+        rawQuery := req.URL.RawQuery
+        if len(rawQuery) > 0 {
+            rawQuery = fmt.Sprintf("?%s", rawQuery)
+        }
+        http.Redirect(resp, req, fmt.Sprintf(surveyURL + "%s", 0, getSession(), rawQuery), http.StatusSeeOther)
     })
 	staticPath := filepath.Join(*static, staticURL)
 	log.Print(staticPath)
