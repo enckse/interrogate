@@ -284,8 +284,6 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 		return
 	}
 	defer f.Close()
-	// TODO: need to map questions back from input results
-	// TODO: Translate checkboxes
 	questionNum := 1
 	metaNum := 1
 	mapping := ctx.questionMaps[idx]
