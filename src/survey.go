@@ -115,7 +115,7 @@ func (ctx *Context) newSet(configFile string, position int) error {
 		return err
 	}
 	ctx.titles = append(ctx.titles, config.Metadata.Title)
-	ctx.anons = append(ctx.anons, config.Metadata.Title != "FALSE")
+	ctx.anons = append(ctx.anons, config.Metadata.Anon != "FALSE")
 	var mapping []Field
 	number := 0
 	for _, q := range config.Questions {
@@ -332,14 +332,19 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd.Session = sess
 	pd.Index = idx
 	pd.Follow = idx + 1
-
 	if idx >= 0 && idx < len(ctx.questions) {
 		questions := ctx.questions[idx]
+		query := req.URL.Query()
 		for _, q := range questions {
-			if q.hidden {
-				pd.Hidden = append(pd.Hidden, q)
+			obj := q
+			value, ok := query[q.Text]
+			if ok && len(value) == 1 {
+				obj.Value = value[0]
+			}
+			if obj.hidden {
+				pd.Hidden = append(pd.Hidden, obj)
 			} else {
-				pd.Questions = append(pd.Questions, q)
+				pd.Questions = append(pd.Questions, obj)
 			}
 		}
 		pd.Title = ctx.titles[idx]

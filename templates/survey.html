@@ -51,7 +51,7 @@ window.onload=function(){
 <h4>{{ .Title }}</h4>
 <form name="survey_form" id="survey_form" action="/snapshot" method='POST'>
     <input type="hidden" name="session" value="{{ .Session }}" />
-    {{ if .Anonymous }}
+    {{ if not .Anonymous }}
         <div class="row">
             <div class="six columns">
                 <label for="name">Your name</label>
