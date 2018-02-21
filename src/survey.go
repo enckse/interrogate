@@ -134,14 +134,16 @@ func doUpload(addr string, filename string, data []string) {
 	jBytes := bytes.NewBuffer(j)
 	tries := 0
 	for {
-		if tries >= 3 {
-			log.Print("giving up...")
-			break
-		}
 		if uploadRequest(addr, jBytes) {
 			log.Print("uploaded")
 			break
 		}
+		if tries >= 3 {
+			log.Print("giving up...")
+			break
+		}
+        sleep := time.Duration(rand.Intn(5))
+        time.Sleep(sleep * time.Second)
 		tries += 1
 	}
 }
