@@ -64,6 +64,7 @@ type Context struct {
 	titles       []string
 	anons        []bool
 	questionMaps []map[string]string
+    upload       string
 }
 
 type Field struct {
@@ -429,6 +430,7 @@ func main() {
 	store := flag.String("store", storagePath, "storage path for results")
 	config := flag.String("config", configFile, "configuration path")
 	static := flag.String("static", tmpl, "static resource location")
+    upload := flag.String("upload", "", "upload address (ip:port)")
 	var questions strFlagSlice
 	flag.Var(&questions, "questions", "question set (multiple allowed)")
 	flag.Parse()
@@ -438,6 +440,7 @@ func main() {
 	ctx.tag = *tag
 	ctx.store = *store
 	ctx.config = *config
+    ctx.upload = *upload
 	ctx.beginTmpl = readTemplate(*static, "begin.html")
 	ctx.surveyTmpl = readTemplate(*static, "survey.html")
 	ctx.completeTmpl = readTemplate(*static, "complete.html")

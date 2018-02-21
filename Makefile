@@ -7,7 +7,7 @@ build-objects = mkdir -p $(BIN)$1/$2; \
 
 all: clean build
 
-build: arm8 linux windows
+build: linux arm8 windows
 
 windows:
 	$(call build-objects,windows,amd64)
