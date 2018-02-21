@@ -100,7 +100,7 @@ func writeString(file *os.File, line string, upload []string) []string {
 		log.Print("file append error")
 		log.Print(err)
 	}
-    return upload
+	return upload
 }
 
 func uploadRequest(addr string, datum io.Reader) bool {
@@ -115,13 +115,13 @@ func uploadRequest(addr string, datum io.Reader) bool {
 		return false
 	}
 	defer resp.Body.Close()
-    if resp.StatusCode == 200 {
-        return true
-    } else {
+	if resp.StatusCode == 200 {
+		return true
+	} else {
 		body, _ := ioutil.ReadAll(resp.Body)
-        log.Print(body)
-        return false
-    }
+		log.Print(body)
+		return false
+	}
 }
 
 func doUpload(addr string, filename string, data []string) {
