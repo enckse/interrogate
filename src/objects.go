@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
-    "io"
 )
 
 type strFlagSlice []string
@@ -102,9 +102,9 @@ type Question struct {
 }
 
 func DecodeUpload(reader io.Reader) (*UploadData, error) {
-    var uploaded UploadData
-    err := json.NewDecoder(reader).Decode(&uploaded)
-    return &uploaded, err
+	var uploaded UploadData
+	err := json.NewDecoder(reader).Decode(&uploaded)
+	return &uploaded, err
 }
 
 func NewUpload(filename string, data []string) ([]byte, error) {
