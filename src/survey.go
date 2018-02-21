@@ -324,12 +324,12 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 func main() {
 	storagePath := "/var/cache/survey/"
 	configFile := "/etc/survey/"
-	tmpl := "/usr/share/survey/static/"
+	tmpl := "/usr/share/survey/resources/"
 	if runtime.GOOS == "windows" {
 		basePath := "C:\\survey\\"
 		storagePath = basePath + "results\\"
 		configFile = basePath + "config\\"
-		tmpl = basePath + "static\\"
+		tmpl = basePath + "resources\\"
 	}
 	rand.Seed(time.Now().UnixNano())
 	bind := flag.String("bind", "0.0.0.0:8080", "binding (ip:port)")
