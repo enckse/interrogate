@@ -39,7 +39,7 @@ type Context struct {
 	anons        []bool
 	questionMaps []map[string]string
 	upload       string
-    uploading bool
+	uploading    bool
 }
 
 type Field struct {
@@ -77,8 +77,8 @@ type PageData struct {
 }
 
 type UploadData struct {
-    FileName string
-    Data []string
+	FileName string
+	Data     []string
 }
 
 type Config struct {
@@ -98,6 +98,11 @@ type Question struct {
 	Attributes  []string `json:"attrs"`
 	Options     []string `json:"options"`
 	Numbered    int      `json:"numbered"`
+}
+
+func NewUpload(filename string, data []string) ([]byte, error) {
+	datum := &UploadData{FileName: filename, Data: data}
+	return json.Marshal(datum)
 }
 
 func (ctx *Context) newSet(configFile string, position int) error {

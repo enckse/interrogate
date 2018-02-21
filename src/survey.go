@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -24,6 +26,7 @@ const surveyURL = "/survey/"
 const surveyClientURL = surveyURL + "%d/%s"
 const alphaNum = "abcdefghijklmnopqrstuvwxyz0123456789"
 const beginURL = "/begin/"
+const uploadURL = "/upload"
 
 func readContent(directory string, name string) string {
 	file := filepath.Join(directory, name)
@@ -92,14 +95,53 @@ func getTuple(req *http.Request, strPos int, intPos int) (string, int, bool) {
 }
 
 func writeString(file *os.File, line string, upload []string) {
-    upload = append(upload, line)
+	upload = append(upload, line)
 	if _, err := file.WriteString(line); err != nil {
 		log.Print("file append error")
 		log.Print(err)
 	}
 }
 
+func uploadRequest(addr string, datum io.Reader) bool {
+	req, err := http.NewRequest("POST", fmt.Sprintf("http://%s%s", addr, uploadURL), datum)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Print("unable to upload")
+		log.Print(err)
+		return false
+	}
+	defer resp.Body.Close()
+
+	fmt.Println("response Status:", resp.Status)
+	fmt.Println("response Headers:", resp.Header)
+	body, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("response Body:", string(body))
+	return true
+}
+
 func doUpload(addr string, filename string, data []string) {
+	j, err := NewUpload(filename, data)
+	if err != nil {
+		log.Print("unable to upload data")
+		log.Print(err)
+		return
+	}
+	jBytes := bytes.NewBuffer(j)
+	tries := 0
+	for {
+		if tries >= 3 {
+			log.Print("giving up...")
+			break
+		}
+		if uploadRequest(addr, jBytes) {
+			log.Print("uploaded")
+			break
+		}
+		tries += 1
+	}
 }
 
 func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
@@ -112,7 +154,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 			name = name + string(c)
 		}
 	}
-    fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name)
+	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name)
 	filename := filepath.Join(ctx.store, fname)
 	log.Print(filename)
 	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
@@ -126,7 +168,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	metaNum := 1
 	mapping := ctx.questionMaps[idx]
 	var metaSet []string
-    var uploadSet []string
+	var uploadSet []string
 	data["client"] = []string{client}
 	var keys []string
 	for k := range data {
@@ -173,9 +215,9 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	for _, l := range metaSet {
 		writeString(f, l, uploadSet)
 	}
-    if ctx.uploading && len(uploadSet) > 0 {
-        go doUpload(ctx.upload, fname, uploadSet)
-    }
+	if ctx.uploading && len(uploadSet) > 0 {
+		go doUpload(ctx.upload, fname, uploadSet)
+	}
 }
 
 func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
@@ -271,7 +313,7 @@ func main() {
 	ctx.store = *store
 	ctx.config = *config
 	ctx.upload = *upload
-    ctx.uploading = len(ctx.upload) > 0
+	ctx.uploading = len(ctx.upload) > 0
 	ctx.beginTmpl = readTemplate(*static, "begin.html")
 	ctx.surveyTmpl = readTemplate(*static, "survey.html")
 	ctx.completeTmpl = readTemplate(*static, "complete.html")
@@ -291,9 +333,9 @@ func main() {
 	http.HandleFunc("/completed", func(resp http.ResponseWriter, req *http.Request) {
 		completeEndpoint(resp, req, ctx)
 	})
-    http.HandleFunc("/upload", func(resp http.ResponseWriter, req *http.Request) {
-        uploadEndpoint(resp, req, ctx)
-    })
+	http.HandleFunc(uploadURL, func(resp http.ResponseWriter, req *http.Request) {
+		uploadEndpoint(resp, req, ctx)
+	})
 	for _, v := range []string{"save", "snapshot"} {
 		http.HandleFunc(fmt.Sprintf("/%s/", v), func(resp http.ResponseWriter, req *http.Request) {
 			saveEndpoint(resp, req, ctx)
