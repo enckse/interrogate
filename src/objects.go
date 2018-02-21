@@ -39,6 +39,7 @@ type Context struct {
 	anons        []bool
 	questionMaps []map[string]string
 	upload       string
+    uploading bool
 }
 
 type Field struct {
@@ -73,6 +74,11 @@ type PageData struct {
 	Hidden      []Field
 	Questions   []Field
 	set         int
+}
+
+type UploadData struct {
+    FileName string
+    Data []string
 }
 
 type Config struct {

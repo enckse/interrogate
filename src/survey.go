@@ -91,11 +91,18 @@ func getTuple(req *http.Request, strPos int, intPos int) (string, int, bool) {
 	return parts[strPos], idx, true
 }
 
-func writeString(file *os.File, line string) {
+func writeString(file *os.File, line string, upload []string) {
+    upload = append(upload, line)
 	if _, err := file.WriteString(line); err != nil {
 		log.Print("file append error")
 		log.Print(err)
 	}
+}
+
+func doUpload(addr string, filename string, data []string) {
+}
+
+func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 }
 
 func saveData(data map[string][]string, ctx *Context, mode string, idx int, client string, session string) {
@@ -105,7 +112,8 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 			name = name + string(c)
 		}
 	}
-	filename := filepath.Join(ctx.store, fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name))
+    fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name)
+	filename := filepath.Join(ctx.store, fname)
 	log.Print(filename)
 	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err != nil {
@@ -118,6 +126,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	metaNum := 1
 	mapping := ctx.questionMaps[idx]
 	var metaSet []string
+    var uploadSet []string
 	data["client"] = []string{client}
 	var keys []string
 	for k := range data {
@@ -155,15 +164,18 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 		localLines = append(localLines, fmt.Sprintf("```\n\n"))
 		for _, l := range localLines {
 			if ok {
-				writeString(f, l)
+				writeString(f, l, uploadSet)
 			} else {
 				metaSet = append(metaSet, l)
 			}
 		}
 	}
 	for _, l := range metaSet {
-		writeString(f, l)
+		writeString(f, l, uploadSet)
 	}
+    if ctx.uploading && len(uploadSet) > 0 {
+        go doUpload(ctx.upload, fname, uploadSet)
+    }
 }
 
 func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
@@ -259,6 +271,7 @@ func main() {
 	ctx.store = *store
 	ctx.config = *config
 	ctx.upload = *upload
+    ctx.uploading = len(ctx.upload) > 0
 	ctx.beginTmpl = readTemplate(*static, "begin.html")
 	ctx.surveyTmpl = readTemplate(*static, "survey.html")
 	ctx.completeTmpl = readTemplate(*static, "complete.html")
@@ -278,6 +291,9 @@ func main() {
 	http.HandleFunc("/completed", func(resp http.ResponseWriter, req *http.Request) {
 		completeEndpoint(resp, req, ctx)
 	})
+    http.HandleFunc("/upload", func(resp http.ResponseWriter, req *http.Request) {
+        uploadEndpoint(resp, req, ctx)
+    })
 	for _, v := range []string{"save", "snapshot"} {
 		http.HandleFunc(fmt.Sprintf("/%s/", v), func(resp http.ResponseWriter, req *http.Request) {
 			saveEndpoint(resp, req, ctx)
