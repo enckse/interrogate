@@ -1,17 +1,28 @@
 package main
 
 import (
-    "sync"
-    "html/template"
-    "encoding/json"
-    "os"
-    "io/ioutil"
-    "log"
-    "path/filepath"
-    "strconv"
-    "fmt"
-    "net/http"
+	"encoding/json"
+	"fmt"
+	"html/template"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"sync"
 )
+
+type strFlagSlice []string
+
+func (s *strFlagSlice) Set(str string) error {
+	*s = append(*s, str)
+	return nil
+}
+
+func (s *strFlagSlice) String() string {
+	return fmt.Sprintf("%v", *s)
+}
 
 type Context struct {
 	snapshot     int
@@ -27,7 +38,7 @@ type Context struct {
 	titles       []string
 	anons        []bool
 	questionMaps []map[string]string
-    upload       string
+	upload       string
 }
 
 type Field struct {

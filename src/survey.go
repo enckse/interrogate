@@ -231,17 +231,6 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 }
 
-type strFlagSlice []string
-
-func (s *strFlagSlice) Set(str string) error {
-	*s = append(*s, str)
-	return nil
-}
-
-func (s *strFlagSlice) String() string {
-	return fmt.Sprintf("%v", *s)
-}
-
 func main() {
 	storagePath := "/var/cache/survey/"
 	configFile := "/etc/survey/"
@@ -259,7 +248,7 @@ func main() {
 	store := flag.String("store", storagePath, "storage path for results")
 	config := flag.String("config", configFile, "configuration path")
 	static := flag.String("static", tmpl, "static resource location")
-    upload := flag.String("upload", "", "upload address (ip:port)")
+	upload := flag.String("upload", "", "upload address (ip:port)")
 	var questions strFlagSlice
 	flag.Var(&questions, "questions", "question set (multiple allowed)")
 	flag.Parse()
@@ -269,7 +258,7 @@ func main() {
 	ctx.tag = *tag
 	ctx.store = *store
 	ctx.config = *config
-    ctx.upload = *upload
+	ctx.upload = *upload
 	ctx.beginTmpl = readTemplate(*static, "begin.html")
 	ctx.surveyTmpl = readTemplate(*static, "survey.html")
 	ctx.completeTmpl = readTemplate(*static, "complete.html")
