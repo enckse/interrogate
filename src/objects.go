@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+    "io"
 )
 
 type strFlagSlice []string
@@ -98,6 +99,12 @@ type Question struct {
 	Attributes  []string `json:"attrs"`
 	Options     []string `json:"options"`
 	Numbered    int      `json:"numbered"`
+}
+
+func DecodeUpload(reader io.Reader) (*UploadData, error) {
+    var uploaded UploadData
+    err := json.NewDecoder(reader).Decode(&uploaded)
+    return &uploaded, err
 }
 
 func NewUpload(filename string, data []string) ([]byte, error) {

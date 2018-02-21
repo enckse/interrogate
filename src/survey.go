@@ -146,7 +146,41 @@ func doUpload(addr string, filename string, data []string) {
 	}
 }
 
+func newFile(filename string, ctx *Context) (*os.File, error) {
+    fname := filepath.Join(ctx.store, filename)
+	log.Print(fname)
+    return os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+}
+
+func responseBadRequest(resp http.ResponseWriter, message string, err error) {
+    log.Print(message)
+    if err != nil {
+        log.Print(err)
+    }
+	http.Error(resp, message, 400)
+}
+
 func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+	if req.Body == nil {
+        responseBadRequest(resp, "no request body", nil)
+		return
+	}
+    upload, err := DecodeUpload(req.Body)
+	if err != nil {
+        responseBadRequest(resp, "invalid json", err)
+		return
+    }
+    f, err := newFile(fmt.Sprintf("%s_%s_upload_%s", ctx.tag, upload.FileName, getSession(6)), ctx)
+    if err != nil {
+        responseBadRequest(resp, "file io", err)
+    }
+    defer f.Close()
+    for _, d := range upload.Data {
+		if _, err := f.WriteString(d); err != nil {
+			log.Print("file append error")
+			log.Print(err)
+		}
+    }
 }
 
 func saveData(data map[string][]string, ctx *Context, mode string, idx int, client string, session string) {
@@ -157,9 +191,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 		}
 	}
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name)
-	filename := filepath.Join(ctx.store, fname)
-	log.Print(filename)
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+    f, err := newFile(fname, ctx)
 	if err != nil {
 		log.Print("result writing error")
 		log.Print(err)
