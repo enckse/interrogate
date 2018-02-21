@@ -94,12 +94,13 @@ func getTuple(req *http.Request, strPos int, intPos int) (string, int, bool) {
 	return parts[strPos], idx, true
 }
 
-func writeString(file *os.File, line string, upload []string) {
+func writeString(file *os.File, line string, upload []string) []string {
 	upload = append(upload, line)
 	if _, err := file.WriteString(line); err != nil {
 		log.Print("file append error")
 		log.Print(err)
 	}
+    return upload
 }
 
 func uploadRequest(addr string, datum io.Reader) bool {
@@ -114,12 +115,13 @@ func uploadRequest(addr string, datum io.Reader) bool {
 		return false
 	}
 	defer resp.Body.Close()
-
-	fmt.Println("response Status:", resp.Status)
-	fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(body))
-	return true
+    if resp.StatusCode == 200 {
+        return true
+    } else {
+		body, _ := ioutil.ReadAll(resp.Body)
+        log.Print(body)
+        return false
+    }
 }
 
 func doUpload(addr string, filename string, data []string) {
@@ -206,14 +208,14 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 		localLines = append(localLines, fmt.Sprintf("```\n\n"))
 		for _, l := range localLines {
 			if ok {
-				writeString(f, l, uploadSet)
+				uploadSet = writeString(f, l, uploadSet)
 			} else {
 				metaSet = append(metaSet, l)
 			}
 		}
 	}
 	for _, l := range metaSet {
-		writeString(f, l, uploadSet)
+		uploadSet = writeString(f, l, uploadSet)
 	}
 	if ctx.uploading && len(uploadSet) > 0 {
 		go doUpload(ctx.upload, fname, uploadSet)
