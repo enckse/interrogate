@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -271,7 +272,15 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		}
 	}
 
-	go saveData(datum, ctx, mode, idx, req.RemoteAddr, sess)
+	remoteAddress := req.RemoteAddr
+	host, _, err := net.SplitHostPort(remoteAddress)
+	if err == nil {
+		remoteAddress = host
+	} else {
+		log.Print("unable to read host port")
+		log.Print(err)
+	}
+	go saveData(datum, ctx, mode, idx, remoteAddress, sess)
 }
 
 func getSession(length int) string {
