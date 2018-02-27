@@ -174,7 +174,16 @@ func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		responseBadRequest(resp, "invalid json", err)
 		return
 	}
-	f, err := newFile(fmt.Sprintf("%s_%s_upload_%s", ctx.tag, getSession(6), upload.FileName), ctx)
+	fileName := fmt.Sprintf("%s_%s_upload_%s", ctx.tag, getSession(6), upload.FileName)
+	j, jerr := newFile(fileName+".json", ctx)
+	if jerr == nil {
+		defer j.Close()
+		j.Write([]byte(upload.Raw))
+	} else {
+		log.Print("unable to write json upload")
+		log.Print(jerr)
+	}
+	f, err := newFile(fileName+".md", ctx)
 	if err != nil {
 		responseBadRequest(resp, "file io", err)
 	}
