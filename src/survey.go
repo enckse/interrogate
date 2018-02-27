@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
@@ -125,8 +126,8 @@ func uploadRequest(addr string, datum io.Reader) bool {
 	}
 }
 
-func doUpload(addr string, filename string, data []string) {
-	j, err := NewUpload(filename, data)
+func doUpload(addr string, filename string, data []string, raw map[string][]string) {
+	j, err := NewUpload(filename, data, raw)
 	if err != nil {
 		log.Print("unable to upload data")
 		log.Print(err)
@@ -173,7 +174,7 @@ func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		responseBadRequest(resp, "invalid json", err)
 		return
 	}
-	f, err := newFile(fmt.Sprintf("%s_%s_upload_%s", ctx.tag, upload.FileName, getSession(6)), ctx)
+	f, err := newFile(fmt.Sprintf("%s_%s_upload_%s", ctx.tag, getSession(6), upload.FileName), ctx)
 	if err != nil {
 		responseBadRequest(resp, "file io", err)
 	}
@@ -193,8 +194,23 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 			name = name + string(c)
 		}
 	}
+	data["client"] = []string{client}
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name)
-	f, err := newFile(fname, ctx)
+	j, jerr := newFile(fname+".json", ctx)
+	if jerr == nil {
+		defer j.Close()
+		jsonString, merr := json.Marshal(data)
+		if merr == nil {
+			j.Write(jsonString)
+		} else {
+			log.Print("unable to write json")
+			log.Print(merr)
+		}
+	} else {
+		log.Print("result writing json output")
+		log.Print(jerr)
+	}
+	f, err := newFile(fname+".md", ctx)
 	if err != nil {
 		log.Print("result writing error")
 		log.Print(err)
@@ -206,7 +222,6 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	mapping := ctx.questionMaps[idx]
 	var metaSet []string
 	var uploadSet []string
-	data["client"] = []string{client}
 	var keys []string
 	for k := range data {
 		keys = append(keys, k)
@@ -253,7 +268,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 		uploadSet = writeString(f, l, uploadSet)
 	}
 	if ctx.uploading && len(uploadSet) > 0 {
-		go doUpload(ctx.upload, fname, uploadSet)
+		go doUpload(ctx.upload, fname, uploadSet, data)
 	}
 }
 

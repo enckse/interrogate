@@ -80,6 +80,7 @@ type PageData struct {
 type UploadData struct {
 	FileName string
 	Data     []string
+	Raw      string
 }
 
 type Config struct {
@@ -107,8 +108,12 @@ func DecodeUpload(reader io.Reader) (*UploadData, error) {
 	return &uploaded, err
 }
 
-func NewUpload(filename string, data []string) ([]byte, error) {
-	datum := &UploadData{FileName: filename, Data: data}
+func NewUpload(filename string, data []string, raw map[string][]string) ([]byte, error) {
+	rawString, err := json.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+	datum := &UploadData{FileName: filename, Data: data, Raw: string(rawString)}
 	return json.Marshal(datum)
 }
 
