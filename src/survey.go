@@ -134,6 +134,7 @@ func doUpload(addr string, filename string, data []string, raw map[string][]stri
 		return
 	}
 	jBytes := bytes.NewBuffer(j)
+	defer jBytes.Reset()
 	tries := 0
 	for {
 		if uploadRequest(addr, jBytes) {
