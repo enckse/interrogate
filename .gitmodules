@@ -4,3 +4,6 @@
 [submodule "templates/static/skeleton"]
 	path = templates/static/skeleton
 	url = https://github.com/dhg/Skeleton.git
+[submodule "modules/goutils"]
+	path = modules/goutils
+	url = https://github.com/epiphyte/goutils
