@@ -6,12 +6,13 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
+
+	"github.com/epiphyte/goutils"
 )
 
 type strFlagSlice []string
@@ -186,7 +187,7 @@ func (ctx *Context) newSet(configFile string, position int) error {
 
 func (ctx *Context) load(questions strFlagSlice) {
 	if len(questions) == 0 {
-		log.Print("no question sets given")
+		goutils.WriteInfo("no questions given!")
 		panic("no questions!")
 	}
 
@@ -195,10 +196,9 @@ func (ctx *Context) load(questions strFlagSlice) {
 		conf := filepath.Join(ctx.config, q+".config")
 		err := ctx.newSet(conf, pos)
 		pos = pos + 1
+		goutils.WriteDebug("config", conf)
 		if err != nil {
-			log.Print("unable to load question set")
-			log.Print(conf)
-			log.Print(err)
+			goutils.WriteError("unable to load question set", err)
 			panic("invalid question set")
 		}
 	}

@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/epiphyte/goutils"
 	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"net"
 	"net/http"
@@ -34,8 +34,7 @@ func readContent(directory string, name string) string {
 	file := filepath.Join(directory, name)
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
-		log.Print("unable to read file: " + file)
-		log.Print(err)
+		goutils.WriteError("unable to read file: "+file, err)
 		panic("bad file")
 	}
 	return string(b)
@@ -47,8 +46,7 @@ func readTemplate(directory string, tmpl string) *template.Template {
 	def := strings.Replace(base, "{{CONTENT}}", file, -1)
 	t, err := template.New("t").Parse(def)
 	if err != nil {
-		log.Print("Unable to read template: " + file)
-		log.Print(err)
+		goutils.WriteError("unable to read template: "+file, err)
 		panic("bad template")
 	}
 	return t
@@ -58,8 +56,7 @@ func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageD
 	pd.Following = pd.Follow < pd.set
 	err := tmpl.Execute(resp, pd)
 	if err != nil {
-		log.Print("error executing template")
-		log.Print(err)
+		goutils.WriteError("template execution error", err)
 	}
 }
 
@@ -83,14 +80,12 @@ func getTuple(req *http.Request, strPos int, intPos int) (string, int, bool) {
 		required = intPos
 	}
 	if len(parts) < required+1 {
-		log.Print("warning, invalid url")
-		log.Print(path)
+		goutils.WriteInfo("warning, invalid url", path)
 		return "", 0, false
 	}
 	idx, err := strconv.Atoi(parts[intPos])
 	if err != nil {
-		log.Print("invalid int value")
-		log.Print(path)
+		goutils.WriteInfo("warning, invalid int", path)
 		return "", 0, false
 	}
 	return parts[strPos], idx, true
@@ -99,8 +94,7 @@ func getTuple(req *http.Request, strPos int, intPos int) (string, int, bool) {
 func writeString(file *os.File, line string, upload []string) []string {
 	upload = append(upload, line)
 	if _, err := file.WriteString(line); err != nil {
-		log.Print("file append error")
-		log.Print(err)
+		goutils.WriteError("file append error", err)
 	}
 	return upload
 }
@@ -112,8 +106,7 @@ func uploadRequest(addr string, datum io.Reader) bool {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Print("unable to upload")
-		log.Print(err)
+		goutils.WriteError("upload error", err)
 		return false
 	}
 	defer resp.Body.Close()
@@ -121,7 +114,7 @@ func uploadRequest(addr string, datum io.Reader) bool {
 		return true
 	} else {
 		body, _ := ioutil.ReadAll(resp.Body)
-		log.Print(body)
+		goutils.WriteDebug(string(body))
 		return false
 	}
 }
@@ -129,8 +122,7 @@ func uploadRequest(addr string, datum io.Reader) bool {
 func doUpload(addr string, filename string, data []string, raw map[string][]string) {
 	j, err := NewUpload(filename, data, raw)
 	if err != nil {
-		log.Print("unable to upload data")
-		log.Print(err)
+		goutils.WriteError("unable to upload", err)
 		return
 	}
 	jBytes := bytes.NewBuffer(j)
@@ -138,11 +130,11 @@ func doUpload(addr string, filename string, data []string, raw map[string][]stri
 	tries := 0
 	for {
 		if uploadRequest(addr, jBytes) {
-			log.Print("uploaded")
+			goutils.WriteInfo("uploaded...")
 			break
 		}
 		if tries >= 3 {
-			log.Print("giving up...")
+			goutils.WriteInfo("giving up...")
 			break
 		}
 		sleep := time.Duration(rand.Intn(5))
@@ -153,14 +145,14 @@ func doUpload(addr string, filename string, data []string, raw map[string][]stri
 
 func newFile(filename string, ctx *Context) (*os.File, error) {
 	fname := filepath.Join(ctx.store, filename)
-	log.Print(fname)
+	goutils.WriteInfo("file name", fname)
 	return os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 }
 
 func responseBadRequest(resp http.ResponseWriter, message string, err error) {
-	log.Print(message)
+	goutils.WriteInfo("bad request")
 	if err != nil {
-		log.Print(err)
+		goutils.WriteError("request error", err)
 	}
 	http.Error(resp, message, 400)
 }
@@ -181,8 +173,7 @@ func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		defer j.Close()
 		j.Write([]byte(upload.Raw))
 	} else {
-		log.Print("unable to write json upload")
-		log.Print(jerr)
+		goutils.WriteError("json uploaded error", jerr)
 	}
 	f, err := newFile(fileName+".md", ctx)
 	if err != nil {
@@ -191,8 +182,7 @@ func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	defer f.Close()
 	for _, d := range upload.Data {
 		if _, err := f.WriteString(d); err != nil {
-			log.Print("file append error")
-			log.Print(err)
+			goutils.WriteError("file append error", err)
 		}
 	}
 }
@@ -213,17 +203,14 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 		if merr == nil {
 			j.Write(jsonString)
 		} else {
-			log.Print("unable to write json")
-			log.Print(merr)
+			goutils.WriteError("unable to write json", merr)
 		}
 	} else {
-		log.Print("result writing json output")
-		log.Print(jerr)
+		goutils.WriteError("result writing json output", jerr)
 	}
 	f, err := newFile(fname+".md", ctx)
 	if err != nil {
-		log.Print("result writing error")
-		log.Print(err)
+		goutils.WriteError("result error", err)
 		return
 	}
 	defer f.Close()
@@ -302,8 +289,7 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	if err == nil {
 		remoteAddress = host
 	} else {
-		log.Print("unable to read host port")
-		log.Print(err)
+		goutils.WriteError("unable to read host port", err)
 	}
 	go saveData(datum, ctx, mode, idx, remoteAddress, sess)
 }
@@ -345,14 +331,7 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		pd.Title = ctx.titles[idx]
 		pd.Anonymous = ctx.anons[idx]
 	}
-	if req.Method == "POST" {
-		req.ParseForm()
-		for k, _ := range req.Form {
-			log.Print(k)
-		}
-	} else {
-		handleTemplate(resp, ctx.surveyTmpl, pd)
-	}
+	handleTemplate(resp, ctx.surveyTmpl, pd)
 }
 
 func main() {
@@ -376,6 +355,7 @@ func main() {
 	var questions strFlagSlice
 	flag.Var(&questions, "questions", "question set (multiple allowed)")
 	flag.Parse()
+	goutils.ConfigureLogging(false, true, true, false)
 	ctx := &Context{}
 	ctx.lock = &sync.Mutex{}
 	ctx.snapshot = *snapshot
@@ -389,8 +369,7 @@ func main() {
 	ctx.completeTmpl = readTemplate(*static, "complete.html")
 	err := os.MkdirAll(ctx.store, 0644)
 	if err != nil {
-		log.Print("unable to create storage directory")
-		log.Print(err)
+		goutils.WriteError("unable to create storage dir", err)
 		return
 	}
 	ctx.load(questions)
@@ -415,8 +394,7 @@ func main() {
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
 	err = http.ListenAndServe(*bind, nil)
 	if err != nil {
-		log.Print("unable to start survey process")
-		log.Print(err)
+		goutils.WriteError("unable to start", err)
 		panic("failure")
 	}
 }

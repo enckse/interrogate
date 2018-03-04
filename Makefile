@@ -1,6 +1,7 @@
 BIN=bin/
 SRC=$(shell find src/ -type f | grep "\.go$$")
 CMD=go build -o $(BIN)survey $(SRC)
+export GOPATH := $(PWD)/vendor
 
 build-objects = mkdir -p $(BIN)$1/$2; \
 				GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey $(SRC)
