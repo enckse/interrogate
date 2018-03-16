@@ -3,7 +3,7 @@ SRC=$(shell find src/ -type f | grep "\.go$$")
 CMD=go build -o $(BIN)survey $(SRC)
 export GOPATH := $(PWD)/vendor
 
-build-objects = mkdir -p $(BIN)$1/$2; \
+build-objects = mkdir -p $(BIN)$1/$2 || exit 1; \
 				GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey $(SRC)
 
 all: clean build
@@ -26,6 +26,6 @@ clean:
 format:
 	exit $(shell gofmt -l $(SRC) | wc -l)
 
-dependencies:
+deps:
 	git submodule update --init
 	curl https://code.jquery.com/jquery-3.2.1.min.js > templates/static/jquery.min.js
