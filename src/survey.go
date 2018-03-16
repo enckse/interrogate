@@ -355,7 +355,9 @@ func main() {
 	var questions strFlagSlice
 	flag.Var(&questions, "questions", "question set (multiple allowed)")
 	flag.Parse()
-	goutils.ConfigureLogging(false, true, true, true, false)
+	logging := goutils.NewLogOptions()
+	logging.Info = true
+	goutils.ConfigureLogging(logging)
 	ctx := &Context{}
 	ctx.lock = &sync.Mutex{}
 	ctx.snapshot = *snapshot
