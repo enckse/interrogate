@@ -358,6 +358,17 @@ func main() {
 	logging := goutils.NewLogOptions()
 	logging.Info = true
 	goutils.ConfigureLogging(logging)
+	settingsFile := configFile + "settings.conf"
+	if !goutils.PathNotExists(settingsFile) {
+		conf, err := goutils.LoadConfig(settingsFile)
+		if err != nil {
+			goutils.WriteError("settings error", err)
+			panic("unable to read settings file")
+		}
+		for _, q := range conf.GetArrayOrEmpty("questions", " ") {
+			questions = append(questions, q)
+		}
+	}
 	ctx := &Context{}
 	ctx.lock = &sync.Mutex{}
 	ctx.snapshot = *snapshot
