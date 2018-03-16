@@ -6,7 +6,7 @@ export GOPATH := $(PWD)/vendor
 build-objects = mkdir -p $(BIN)$1/$2 || exit 1; \
 				GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey $(SRC)
 
-all: clean build
+all: clean build format
 
 build: linux arm8 windows
 
