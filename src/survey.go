@@ -372,9 +372,20 @@ func main() {
 		}
 	}
 	static := conf.GetStringOrDefault("static", *staticResources)
+	useSnap := conf.GetStringOrEmpty("snapshot")
+	snapValue := *snapshot
+	if len(useSnap) > 0 {
+		snap, err := strconv.Atoi(useSnap)
+		if err != nil {
+			goutils.WriteError("unable to use snapshot setting", err)
+			panic("unable to read snapshot setting")
+		}
+		snapValue = snap
+	}
+
 	ctx := &Context{}
 	ctx.lock = &sync.Mutex{}
-	ctx.snapshot = *snapshot
+	ctx.snapshot = snapValue
 	ctx.tag = conf.GetStringOrDefault("tag", *tag)
 	ctx.store = conf.GetStringOrDefault("store", *store)
 	ctx.config = *config
