@@ -3,7 +3,7 @@ Description=Survey host
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/survey-daemon
+ExecStart=/usr/bin/survey
 
 [Install]
 WantedBy=multi-user.target
