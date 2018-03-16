@@ -350,7 +350,7 @@ func main() {
 	tag := flag.String("tag", time.Now().Format("2006-01-02"), "output tag")
 	store := flag.String("store", storagePath, "storage path for results")
 	config := flag.String("config", configFile, "configuration path")
-	static := flag.String("static", tmpl, "static resource location")
+	staticResources := flag.String("static", tmpl, "static resource location")
 	upload := flag.String("upload", "", "upload address (ip:port)")
 	var questions strFlagSlice
 	flag.Var(&questions, "questions", "question set (multiple allowed)")
@@ -359,27 +359,30 @@ func main() {
 	logging.Info = true
 	goutils.ConfigureLogging(logging)
 	settingsFile := configFile + "settings.conf"
+	conf := &goutils.Config{}
 	if !goutils.PathNotExists(settingsFile) {
-		conf, err := goutils.LoadConfig(settingsFile)
+		c, err := goutils.LoadConfig(settingsFile)
 		if err != nil {
 			goutils.WriteError("settings error", err)
 			panic("unable to read settings file")
 		}
+		conf = c
 		for _, q := range conf.GetArrayOrEmpty("questions", " ") {
 			questions = append(questions, q)
 		}
 	}
+	static := conf.GetStringOrDefault("static", *staticResources)
 	ctx := &Context{}
 	ctx.lock = &sync.Mutex{}
 	ctx.snapshot = *snapshot
-	ctx.tag = *tag
-	ctx.store = *store
+	ctx.tag = conf.GetStringOrDefault("tag", *tag)
+	ctx.store = conf.GetStringOrDefault("store", *store)
 	ctx.config = *config
 	ctx.upload = *upload
 	ctx.uploading = len(ctx.upload) > 0
-	ctx.beginTmpl = readTemplate(*static, "begin.html")
-	ctx.surveyTmpl = readTemplate(*static, "survey.html")
-	ctx.completeTmpl = readTemplate(*static, "complete.html")
+	ctx.beginTmpl = readTemplate(static, "begin.html")
+	ctx.surveyTmpl = readTemplate(static, "survey.html")
+	ctx.completeTmpl = readTemplate(static, "complete.html")
 	err := os.MkdirAll(ctx.store, 0644)
 	if err != nil {
 		goutils.WriteError("unable to create storage dir", err)
@@ -403,9 +406,9 @@ func main() {
 			saveEndpoint(resp, req, ctx)
 		})
 	}
-	staticPath := filepath.Join(*static, staticURL)
+	staticPath := filepath.Join(static, staticURL)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
-	err = http.ListenAndServe(*bind, nil)
+	err = http.ListenAndServe(conf.GetStringOrDefault("bind", *bind), nil)
 	if err != nil {
 		goutils.WriteError("unable to start", err)
 		panic("failure")
