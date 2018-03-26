@@ -23,6 +23,7 @@ import (
 )
 
 var vers = "master"
+
 const staticURL = "/static/"
 const surveyURL = "/survey/"
 const surveyClientURL = surveyURL + "%d/%s"
