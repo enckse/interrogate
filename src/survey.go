@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-const Version = "2.0.0"
+var vers = "master"
 const staticURL = "/static/"
 const surveyURL = "/survey/"
 const surveyClientURL = surveyURL + "%d/%s"
@@ -358,6 +358,7 @@ func main() {
 	logging := goutils.NewLogOptions()
 	logging.Info = true
 	goutils.ConfigureLogging(logging)
+	goutils.WriteInfo(vers)
 	settingsFile := configFile + "settings.conf"
 	conf := &goutils.Config{}
 	if !goutils.PathNotExists(settingsFile) {
