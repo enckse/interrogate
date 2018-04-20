@@ -363,13 +363,13 @@ func main() {
 	settingsFile := configFile + "settings.conf"
 	conf := &goutils.Config{}
 	if !goutils.PathNotExists(settingsFile) {
-		c, err := goutils.LoadConfig(settingsFile)
+		c, err := goutils.LoadConfig(settingsFile, goutils.NewConfigSettings())
 		if err != nil {
 			goutils.WriteError("settings error", err)
 			panic("unable to read settings file")
 		}
 		conf = c
-		for _, q := range conf.GetArrayOrEmpty("questions", " ") {
+		for _, q := range conf.GetArrayOrEmpty("questions") {
 			questions = append(questions, q)
 		}
 	}
