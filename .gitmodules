@@ -1,9 +1,0 @@
-[submodule "templates/static/nouislider"]
-	path = templates/static/nouislider
-	url = https://github.com/leongersen/noUiSlider.git
-[submodule "templates/static/skeleton"]
-	path = templates/static/skeleton
-	url = https://github.com/dhg/Skeleton.git
-[submodule "modules/goutils"]
-	path = modules/goutils
-	url = https://github.com/epiphyte/goutils
