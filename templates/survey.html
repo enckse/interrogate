@@ -101,7 +101,7 @@ window.onload=function(){
             <script>
                 var {{$question.SlideId}} = document.getElementById('{{ $question.SlideId }}');
                 noUiSlider.create({{$question.SlideId}}, {
-                    start: 50,
+                    start: {{$question.Default}},
                     range: {
                         min: 0,
                         max: 100

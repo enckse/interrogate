@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/epiphyte/goutils"
@@ -62,6 +63,7 @@ type Field struct {
 	SlideId     template.JS
 	SlideHideId template.JS
 	hidden      bool
+	Default     string
 }
 
 type PageData struct {
@@ -101,6 +103,7 @@ type Question struct {
 	Attributes  []string `json:"attrs"`
 	Options     []string `json:"options"`
 	Numbered    int      `json:"numbered"`
+	Default     string   `json:"default"`
 }
 
 func DecodeUpload(reader io.Reader) (*UploadData, error) {
@@ -153,6 +156,7 @@ func (ctx *Context) newSet(configFile string, position int) error {
 		}
 		field.Id = k
 		field.Text = q.Text
+		field.Default = q.Default
 		questionMap[strconv.Itoa(k)] = fmt.Sprintf("%s (%s)", q.Text, q.Type)
 		field.Description = q.Description
 		switch q.Type {
@@ -175,6 +179,9 @@ func (ctx *Context) newSet(configFile string, position int) error {
 			field.Slider = true
 			field.SlideId = template.JS(fmt.Sprintf("slide%d", k))
 			field.SlideHideId = template.JS(fmt.Sprintf("shide%d", k))
+			if len(strings.TrimSpace(field.Default)) == 0 {
+				field.Default = "50"
+			}
 		default:
 			panic("unknown question type: " + q.Type)
 		}
