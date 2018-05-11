@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/epiphyte/goutils"
 )
@@ -32,7 +31,6 @@ type Context struct {
 	tag          string
 	store        string
 	config       string
-	lock         *sync.Mutex
 	beginTmpl    *template.Template
 	surveyTmpl   *template.Template
 	completeTmpl *template.Template
@@ -102,6 +100,11 @@ type Meta struct {
 	Anon  string `json:"anon"`
 }
 
+type Manifest struct {
+	Files   []string `json:"files"`
+	Clients []string `json:"clients"`
+}
+
 type Question struct {
 	Text        string   `json:"text"`
 	Description string   `json:"desc"`
@@ -127,6 +130,27 @@ func NewUpload(filename string, data []string, raw map[string][]string) ([]byte,
 	}
 	datum := &UploadData{FileName: filename, Data: data, Raw: string(rawString)}
 	return json.Marshal(datum)
+}
+
+func writeManifest(manifest *Manifest, filename string) {
+	datum, err := json.Marshal(manifest)
+	if err != nil {
+		goutils.WriteError("unable to marshal manifest", err)
+		return
+	}
+	err = ioutil.WriteFile(filename, datum, 0644)
+	if err != nil {
+		goutils.WriteError("manifest writing failure", err)
+	}
+}
+
+func readManifest(contents []byte) (*Manifest, error) {
+	var manifest Manifest
+	err := json.Unmarshal(contents, &manifest)
+	if err != nil {
+		return nil, err
+	}
+	return &manifest, nil
 }
 
 func (ctx *Context) newSet(configFile string, position int) error {

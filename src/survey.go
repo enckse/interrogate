@@ -22,7 +22,10 @@ import (
 	"time"
 )
 
-var vers = "master"
+var (
+	vers = "master"
+	lock = &sync.Mutex{}
+)
 
 const staticURL = "/static/"
 const surveyURL = "/survey/"
@@ -30,6 +33,7 @@ const surveyClientURL = surveyURL + "%d/%s"
 const alphaNum = "abcdefghijklmnopqrstuvwxyz0123456789"
 const beginURL = "/begin/"
 const uploadURL = "/upload"
+const indexFile = "index.manifest"
 
 func readContent(directory string, name string) string {
 	file := filepath.Join(directory, name)
@@ -144,8 +148,12 @@ func doUpload(addr string, filename string, data []string, raw map[string][]stri
 	}
 }
 
+func createPath(filename string, ctx *Context) string {
+	return filepath.Join(ctx.store, filename)
+}
+
 func newFile(filename string, ctx *Context) (*os.File, error) {
-	fname := filepath.Join(ctx.store, filename)
+	fname := createPath(filename, ctx)
 	goutils.WriteInfo("file name", fname)
 	return os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 }
@@ -156,6 +164,41 @@ func responseBadRequest(resp http.ResponseWriter, message string, err error) {
 		goutils.WriteError("request error", err)
 	}
 	http.Error(resp, message, 400)
+}
+
+func reindex(client, filename string, ctx *Context) {
+	lock.Lock()
+	defer lock.Unlock()
+	var existing *Manifest
+	fname := createPath(fmt.Sprintf("%s.%s", ctx.tag, indexFile), ctx)
+	if goutils.PathExists(fname) {
+		goutils.WriteInfo("reading index")
+		c, err := ioutil.ReadFile(fname)
+		if err != nil {
+			goutils.WriteError("unable to read index", err)
+			return
+		}
+		existing, err = readManifest(c)
+		if err != nil {
+			goutils.WriteError("corrupt index", err)
+		}
+	} else {
+		existing = &Manifest{}
+	}
+	handled := false
+	for i, c := range existing.Clients {
+		if c == client {
+			existing.Files[i] = filename
+			handled = true
+			break
+		}
+	}
+	if !handled {
+		existing.Clients = append(existing.Clients, client)
+		existing.Files = append(existing.Files, filename)
+	}
+	goutils.WriteInfo("writing new index", fname)
+	writeManifest(existing, fname)
 }
 
 func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
@@ -169,6 +212,7 @@ func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		return
 	}
 	fileName := fmt.Sprintf("%s_%s_upload_%s", ctx.tag, getSession(6), upload.FileName)
+	go reindex(getClient(req), fileName, ctx)
 	j, jerr := newFile(fileName+".json", ctx)
 	if jerr == nil {
 		defer j.Close()
@@ -197,6 +241,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	}
 	data["client"] = []string{client}
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name)
+	go reindex(client, fname, ctx)
 	j, jerr := newFile(fname+".json", ctx)
 	if jerr == nil {
 		defer j.Close()
@@ -270,6 +315,17 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	}
 }
 
+func getClient(req *http.Request) string {
+	remoteAddress := req.RemoteAddr
+	host, _, err := net.SplitHostPort(remoteAddress)
+	if err == nil {
+		remoteAddress = host
+	} else {
+		goutils.WriteError("unable to read host port", err)
+	}
+	return remoteAddress
+}
+
 func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	mode, idx, valid := getTuple(req, 1, 2)
 	if !valid {
@@ -285,14 +341,7 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		}
 	}
 
-	remoteAddress := req.RemoteAddr
-	host, _, err := net.SplitHostPort(remoteAddress)
-	if err == nil {
-		remoteAddress = host
-	} else {
-		goutils.WriteError("unable to read host port", err)
-	}
-	go saveData(datum, ctx, mode, idx, remoteAddress, sess)
+	go saveData(datum, ctx, mode, idx, getClient(req), sess)
 }
 
 func getSession(length int) string {
@@ -386,7 +435,6 @@ func main() {
 	}
 
 	ctx := &Context{}
-	ctx.lock = &sync.Mutex{}
 	ctx.snapshot = snapValue
 	ctx.tag = conf.GetStringOrDefault("tag", *tag)
 	ctx.store = conf.GetStringOrDefault("store", *store)
