@@ -43,6 +43,7 @@ type Context struct {
 	questionMaps []map[string]string
 	upload       string
 	uploading    bool
+	staticPath   string
 }
 
 type Field struct {
@@ -63,7 +64,12 @@ type Field struct {
 	SlideId     template.JS
 	SlideHideId template.JS
 	hidden      bool
-	Default     string
+	Basis       string
+	Image       bool
+	Video       bool
+	Audio       bool
+	Height      string
+	Width       string
 }
 
 type PageData struct {
@@ -103,7 +109,9 @@ type Question struct {
 	Attributes  []string `json:"attrs"`
 	Options     []string `json:"options"`
 	Numbered    int      `json:"numbered"`
-	Default     string   `json:"default"`
+	Basis       string   `json:"basis"`
+	Height      string   `json:"height"`
+	Width       string   `json:"width"`
 }
 
 func DecodeUpload(reader io.Reader) (*UploadData, error) {
@@ -156,9 +164,12 @@ func (ctx *Context) newSet(configFile string, position int) error {
 		}
 		field.Id = k
 		field.Text = q.Text
-		field.Default = q.Default
+		field.Basis = q.Basis
+		field.Height = q.Height
+		field.Width = q.Width
 		questionMap[strconv.Itoa(k)] = fmt.Sprintf("%s (%s)", q.Text, q.Type)
 		field.Description = q.Description
+		defaultDimensions := false
 		switch q.Type {
 		case "input":
 			field.Input = true
@@ -175,21 +186,42 @@ func (ctx *Context) newSet(configFile string, position int) error {
 			field.Check = true
 		case "number":
 			field.Number = true
+		case "image":
+			field.Image = true
+			defaultDimensions = true
+		case "audio":
+			field.Audio = true
+		case "video":
+			defaultDimensions = true
+			field.Video = true
 		case "slide":
 			field.Slider = true
 			field.SlideId = template.JS(fmt.Sprintf("slide%d", k))
 			field.SlideHideId = template.JS(fmt.Sprintf("shide%d", k))
-			if len(strings.TrimSpace(field.Default)) == 0 {
-				field.Default = "50"
-			}
+			field.Basis = getWhenEmpty(field.Basis, "50")
 		default:
 			panic("unknown question type: " + q.Type)
+		}
+		if field.Image || field.Audio || field.Video {
+			field.Basis = fmt.Sprintf("%s%s", ctx.staticPath, field.Basis)
+		}
+		if defaultDimensions {
+			field.Height = getWhenEmpty(field.Height, "250")
+			field.Width = getWhenEmpty(field.Width, "250")
 		}
 		mapping = append(mapping, *field)
 	}
 	ctx.questionMaps = append(ctx.questionMaps, questionMap)
 	ctx.questions = append(ctx.questions, mapping)
 	return nil
+}
+
+func getWhenEmpty(value, dflt string) string {
+	if len(strings.TrimSpace(value)) == 0 {
+		return dflt
+	} else {
+		return value
+	}
 }
 
 func (ctx *Context) load(questions strFlagSlice) {

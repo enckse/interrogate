@@ -101,7 +101,7 @@ window.onload=function(){
             <script>
                 var {{$question.SlideId}} = document.getElementById('{{ $question.SlideId }}');
                 noUiSlider.create({{$question.SlideId}}, {
-                    start: {{$question.Default}},
+                    start: {{$question.Basis}},
                     range: {
                         min: 0,
                         max: 100
@@ -120,6 +120,19 @@ window.onload=function(){
                     {{ $question.SlideHideId }}.value = values[handle];
                 });
             </script>
+        {{ end }}
+        {{ if $question.Image }}
+            <img src="{{ $question.Basis }}" height="{{ $question.Height }}" width="{{ $question.Width }}"> 
+        {{ end }}
+        {{ if $question.Audio }}
+            <audio controls>
+                <source src="{{ $question.Basis }}">
+            </audio>
+        {{ end }}
+        {{ if $question.Video }}
+            <video width="{{ $question.Width }}" height="{{ $question.Height }}" controls>
+                <source src="{{ $question.Basis }}">
+            </video>
         {{ end }}
     </div>
     {{ end }}

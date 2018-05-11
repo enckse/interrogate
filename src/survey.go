@@ -393,6 +393,7 @@ func main() {
 	ctx.config = *config
 	ctx.upload = *upload
 	ctx.uploading = len(ctx.upload) > 0
+	ctx.staticPath = staticURL
 	ctx.beginTmpl = readTemplate(static, "begin.html")
 	ctx.surveyTmpl = readTemplate(static, "survey.html")
 	ctx.completeTmpl = readTemplate(static, "complete.html")
