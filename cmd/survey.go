@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/epiphyte/goutils"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -20,6 +19,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/epiphyte/goutils"
 )
 
 var (

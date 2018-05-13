@@ -1,5 +1,5 @@
 BIN=bin/
-SRC=$(shell find src/ -type f | grep "\.go$$")
+SRC=$(shell find cmd/ -type f | grep "\.go$$")
 CMD=go build -o $(BIN)survey $(SRC)
 VERS=
 ifeq ($(VERS),)
@@ -27,7 +27,7 @@ clean:
 	mkdir -p $(BIN)
 
 format:
-	exit $(shell gofmt -l $(SRC) | wc -l)
+	exit $(shell goimports -l $(SRC) | wc -l)
 
 deps:
 	git submodule update --init
