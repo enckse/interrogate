@@ -39,8 +39,6 @@ to configure edit a json definition (examples in the `questions` folder) and pla
 clone and to build
 ```
 make
-# for deps
-make dependencies
 ```
 
 [![Build Status](https://travis-ci.org/epiphyte/survey.svg?branch=master)](https://travis-ci.org/epiphyte/survey)
