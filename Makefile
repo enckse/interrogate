@@ -1,25 +1,25 @@
-BIN=bin/
-SRC=$(shell find cmd/ -type f | grep "\.go$$")
-CMD=go build -o $(BIN)survey $(SRC)
-VERS=
-ifeq ($(VERS),)
-	VERS=master
-endif
+BIN     := bin/
+SRC     := $(shell find cmd/ -type f -name "*.go")
+VERS    := master
+LINUX   := linux
+ARM8    := arm8
+WINDOWS := windows
+TARGETS := $(LINUX) $(ARM8) $(WINDOWS)
+FLAGS   := -ldflags '-s -w -X main.vers=$(VERS)'
 
-build-objects = mkdir -p $(BIN)$1/$2 || exit 1; \
-				GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey -ldflags '-X main.vers=$(VERS)' $(SRC)
+build-objects =	GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey $(FLAGS) $(SRC)
 
 all: clean build format
 
-build: linux arm8 windows
+build: $(TARGETS)
 
-windows:
+$(WINDOWS):
 	$(call build-objects,windows,amd64)
 
-linux:
+$(LINUX):
 	$(call build-objects,linux,amd64)
 
-arm8:
+$(ARM8):
 	$(call build-objects,linux,arm64)
 
 clean:
