@@ -1,6 +1,6 @@
 BIN     := bin/
 SRC     := $(shell find cmd/ -type f -name "*.go")
-VERS    := master
+VERS    := $(shell git describe --long | sed "s/\([^-]*-g\)/r\1/;s/-/./g")
 LINUX   := linux
 ARM8    := arm8
 WINDOWS := windows
