@@ -7,20 +7,20 @@ WINDOWS := windows
 TARGETS := $(LINUX) $(ARM8) $(WINDOWS)
 FLAGS   := -ldflags '-s -w -X main.vers=$(VERS)'
 
-build-objects =	GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey $(FLAGS) $(SRC)
+build-objects =	GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey $(FLAGS) -buildmode=$3 $(SRC)
 
 all: clean build format
 
 build: $(TARGETS)
 
 $(WINDOWS):
-	$(call build-objects,windows,amd64)
+	$(call build-objects,windows,amd64,exe)
 
 $(LINUX):
-	$(call build-objects,linux,amd64)
+	$(call build-objects,linux,amd64,pie)
 
 $(ARM8):
-	$(call build-objects,linux,arm64)
+	$(call build-objects,linux,arm64,exe)
 
 clean:
 	rm -rf $(BIN)
