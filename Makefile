@@ -5,7 +5,7 @@ LINUX   := linux
 ARM8    := arm8
 WINDOWS := windows
 TARGETS := $(LINUX) $(ARM8) $(WINDOWS)
-FLAGS   := -ldflags '-s -w -X main.vers=$(VERS)'
+FLAGS   := -ldflags '-s -w -X main.vers=$(VERS)' -buildmode=pie
 
 build-objects =	GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey $(FLAGS) $(SRC)
 
