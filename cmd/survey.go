@@ -416,7 +416,13 @@ func main() {
 			questions = append(questions, q)
 		}
 	}
-	static := conf.GetStringOrDefault("static", *staticResources)
+	overrides := filepath.Join(configFile, "resources")
+	resourceLocation := *staticResources
+	if goutils.PathExists(overrides) {
+		goutils.WriteInfo("using override location", overrides)
+		resourceLocation = overrides
+	}
+	static := conf.GetStringOrDefault("static", resourceLocation)
 	useSnap := conf.GetStringOrEmpty("snapshot")
 	snapValue := *snapshot
 	if len(useSnap) > 0 {
