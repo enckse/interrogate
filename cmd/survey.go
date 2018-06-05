@@ -213,14 +213,14 @@ func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 	fileName := fmt.Sprintf("%s_%s_upload_%s", ctx.tag, getSession(6), upload.FileName)
 	go reindex(getClient(req), fileName, ctx)
-	j, jerr := newFile(fileName+".json", ctx)
+	j, jerr := newFile(fileName+JsonFile, ctx)
 	if jerr == nil {
 		defer j.Close()
 		j.Write([]byte(upload.Raw))
 	} else {
 		goutils.WriteError("json uploaded error", jerr)
 	}
-	f, err := newFile(fileName+".md", ctx)
+	f, err := newFile(fileName+MarkdownFile, ctx)
 	if err != nil {
 		responseBadRequest(resp, "file io", err)
 	}
@@ -242,7 +242,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	data["client"] = []string{client}
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name)
 	go reindex(client, fname, ctx)
-	j, jerr := newFile(fname+".json", ctx)
+	j, jerr := newFile(fname+JsonFile, ctx)
 	if jerr == nil {
 		defer j.Close()
 		jsonString, merr := json.Marshal(data)
@@ -254,7 +254,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	} else {
 		goutils.WriteError("result writing json output", jerr)
 	}
-	f, err := newFile(fname+".md", ctx)
+	f, err := newFile(fname+MarkdownFile, ctx)
 	if err != nil {
 		goutils.WriteError("result error", err)
 		return

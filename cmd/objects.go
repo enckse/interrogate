@@ -15,6 +15,11 @@ import (
 	"github.com/epiphyte/goutils"
 )
 
+const (
+	JsonFile     = ".json"
+	MarkdownFile = ".md"
+)
+
 type strFlagSlice []string
 
 func (s *strFlagSlice) Set(str string) error {
