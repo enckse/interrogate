@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -389,12 +388,6 @@ func main() {
 	storagePath := StoragePath
 	configFile := ConfigFile
 	tmpl := Resources
-	if runtime.GOOS == "windows" {
-		basePath := "C:\\survey\\"
-		storagePath = basePath + "results\\"
-		configFile = basePath + "config\\"
-		tmpl = basePath + "resources\\"
-	}
 	rand.Seed(time.Now().UnixNano())
 	bind := flag.String("bind", "0.0.0.0:8080", "binding (ip:port)")
 	snapshot := flag.Int("snapshot", 15, "auto snapshot (<= 0 is disabled)")
