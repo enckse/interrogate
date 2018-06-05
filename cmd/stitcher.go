@@ -10,6 +10,8 @@ import (
 	"github.com/epiphyte/goutils"
 )
 
+var vers = "master"
+
 func stitch(m *Manifest, ext, dir, out string) error {
 	if len(m.Clients) != len(m.Files) {
 		return errors.New("invalid manifest files!=clients")
@@ -54,6 +56,7 @@ func main() {
 	ext := flag.String("extension", JsonFile, "file extension for stitching")
 	out := flag.String("output", "results", "output results")
 	flag.Parse()
+	goutils.WriteInfo(vers)
 	extension := *ext
 	if extension != JsonFile && extension != MarkdownFile {
 		goutils.WriteWarn("unknown input extension", extension)
