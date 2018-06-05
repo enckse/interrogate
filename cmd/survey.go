@@ -386,9 +386,9 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 }
 
 func main() {
-	storagePath := "/var/cache/survey/"
-	configFile := "/etc/survey/"
-	tmpl := "/usr/share/survey/resources/"
+	storagePath := StoragePath
+	configFile := ConfigFile
+	tmpl := Resources
 	if runtime.GOOS == "windows" {
 		basePath := "C:\\survey\\"
 		storagePath = basePath + "results\\"

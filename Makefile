@@ -1,5 +1,6 @@
 BIN     := bin/
-SRC     := $(shell find cmd/ -type f -name "*.go")
+CMD     := cmd/
+SRC     := $(shell find $(CMD) -type f -name "*.go")
 VERS    := $(shell git describe --long | sed "s/\([^-]*-g\)/r\1/;s/-/./g")
 LINUX   := linux
 ARM8    := arm8
@@ -7,7 +8,7 @@ WINDOWS := windows
 TARGETS := $(LINUX) $(ARM8) $(WINDOWS)
 FLAGS   := -ldflags '-s -w -X main.vers=$(VERS)'
 
-build-objects =	GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey $(FLAGS) -buildmode=$3 $(SRC)
+build-objects =	GOOS=$1 GOARCH=$2 go build -o $(BIN)$1/$2/survey $(FLAGS) -buildmode=$3 $(CMD)objects.go $(CMD)common_$1_$2.go $(CMD)survey.go
 
 all: clean build format
 
