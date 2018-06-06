@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -79,6 +80,7 @@ type Field struct {
 type ManifestEntry struct {
 	Name   string
 	Client string
+	Mode   string
 }
 
 type ManifestData struct {
@@ -122,6 +124,21 @@ type Meta struct {
 type Manifest struct {
 	Files   []string `json:"files"`
 	Clients []string `json:"clients"`
+	Modes   []string `json:"modes"`
+}
+
+func (m *Manifest) Check() error {
+	valid := true
+	if len(m.Files) != len(m.Clients) {
+		valid = false
+	}
+	if len(m.Files) != len(m.Modes) {
+		valid = false
+	}
+	if valid {
+		return nil
+	}
+	return errors.New("corrupt index")
 }
 
 type Question struct {

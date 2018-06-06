@@ -18,8 +18,9 @@ func write(b *bytes.Buffer, text string) {
 }
 
 func stitch(m *Manifest, ext, dir, out string) error {
-	if len(m.Clients) != len(m.Files) {
-		return errors.New("invalid manifest files!=clients")
+	err := m.Check()
+	if err != nil {
+		return err
 	}
 	b := &bytes.Buffer{}
 	isJson := ext == JsonFile
@@ -29,15 +30,16 @@ func stitch(m *Manifest, ext, dir, out string) error {
 	}
 	for i, f := range m.Files {
 		client := m.Clients[i]
+		mode := m.Modes[i]
 		if isJson {
 			if i > 0 {
 				write(b, "\n,\n")
 			}
-			write(b, fmt.Sprintf("{\"%s\":", client))
+			write(b, fmt.Sprintf("{\"mode\": \"%s\", \"client\": \"%s\", \"data\":", mode, client))
 		}
 		if isMarkdown {
 			write(b, "---\n")
-			write(b, client)
+			write(b, fmt.Sprintf("%s (%s)", client, mode))
 			write(b, "\n---\n\n")
 		}
 		goutils.WriteInfo("stitching client", client)
@@ -69,6 +71,7 @@ func mergeManifests(files []string, workingFile string) (string, error) {
 		return files[0], nil
 	}
 	clients := make(map[string]string)
+	modes := make(map[string]string)
 	for _, manifest := range files {
 		if goutils.PathNotExists(manifest) {
 			return "", errors.New("invalid manifest file given for merge")
@@ -81,17 +84,20 @@ func mergeManifests(files []string, workingFile string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if len(read.Files) != len(read.Clients) {
-			return "", errors.New("not able to merge inconsistent manifest")
+		err = read.Check()
+		if err != nil {
+			return "", err
 		}
 		for i, c := range read.Clients {
 			clients[c] = read.Files[i]
+			modes[c] = read.Modes[i]
 		}
 	}
 	m := &Manifest{}
 	for k, v := range clients {
 		m.Files = append(m.Files, v)
 		m.Clients = append(m.Clients, k)
+		m.Modes = append(m.Modes, modes[k])
 	}
 	writeManifest(m, workingFile)
 	return workingFile, nil

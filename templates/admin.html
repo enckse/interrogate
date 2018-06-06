@@ -4,11 +4,13 @@
 <table>
     <tr>
         <th>client</th>
+        <th>mode</th>
         <th>file</th>
     </tr>
     {{ range $key, $file := .Manifest }}
     <tr>
         <td>{{ $file.Client }}</td>
+        <td>{{ $file.Mode }}</td>
         <td>{{ $file.Name }}</td>
     </tr>
     {{ end }}

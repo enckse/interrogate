@@ -182,7 +182,8 @@ func readManifestFile(ctx *Context) (string, *Manifest, error) {
 			goutils.WriteError("corrupt index", err)
 			return fname, nil, err
 		}
-		if len(existing.Files) != len(existing.Clients) {
+		err = existing.Check()
+		if err != nil {
 			goutils.WriteWarn("invalid index... (lengths)")
 			return fname, nil, errors.New("invalid index lengths")
 		}
@@ -190,7 +191,7 @@ func readManifestFile(ctx *Context) (string, *Manifest, error) {
 	return fname, existing, nil
 }
 
-func reindex(client, filename string, ctx *Context) {
+func reindex(client, filename string, ctx *Context, mode string) {
 	lock.Lock()
 	defer lock.Unlock()
 	handled := false
@@ -201,6 +202,7 @@ func reindex(client, filename string, ctx *Context) {
 	for i, c := range existing.Clients {
 		if c == client {
 			existing.Files[i] = filename
+			existing.Modes[i] = mode
 			handled = true
 			break
 		}
@@ -208,6 +210,7 @@ func reindex(client, filename string, ctx *Context) {
 	if !handled {
 		existing.Clients = append(existing.Clients, client)
 		existing.Files = append(existing.Files, filename)
+		existing.Modes = append(existing.Modes, mode)
 	}
 	goutils.WriteInfo("writing new index", fname)
 	writeManifest(existing, fname)
@@ -224,7 +227,7 @@ func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		return
 	}
 	fileName := fmt.Sprintf("%s_%s_upload_%s", ctx.tag, getSession(6), upload.FileName)
-	go reindex(getClient(req), fileName, ctx)
+	go reindex(getClient(req), fileName, ctx, "upload")
 	j, jerr := newFile(fileName+JsonFile, ctx)
 	if jerr == nil {
 		defer j.Close()
@@ -245,7 +248,7 @@ func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 }
 
 func timeString() string {
-	return time.Now().Format("2006-01-02T15-04-5")
+	return time.Now().Format("2006-01-02T15-04-05")
 }
 
 func saveData(data map[string][]string, ctx *Context, mode string, idx int, client string, session string) {
@@ -257,7 +260,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	}
 	data["client"] = []string{client}
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, timeString(), mode, name)
-	go reindex(client, fname, ctx)
+	go reindex(client, fname, ctx, mode)
 	j, jerr := newFile(fname+JsonFile, ctx)
 	if jerr == nil {
 		defer j.Close()
@@ -394,6 +397,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 			entry := &ManifestEntry{}
 			entry.Name = obj
 			entry.Client = m.Clients[i]
+			entry.Mode = m.Modes[i]
 			pd.Manifest = append(pd.Manifest, entry)
 		}
 	} else {
