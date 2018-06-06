@@ -4,6 +4,7 @@ Description=Survey host
 [Service]
 Type=simple
 ExecStart=/usr/bin/survey
+Restart=always
 
 [Install]
 WantedBy=multi-user.target

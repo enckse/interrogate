@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -166,26 +167,37 @@ func responseBadRequest(resp http.ResponseWriter, message string, err error) {
 	http.Error(resp, message, 400)
 }
 
-func reindex(client, filename string, ctx *Context) {
-	lock.Lock()
-	defer lock.Unlock()
-	var existing *Manifest
+func readManifestFile(ctx *Context) (string, *Manifest, error) {
+	existing := &Manifest{}
 	fname := createPath(fmt.Sprintf("%s.%s", ctx.tag, indexFile), ctx)
 	if goutils.PathExists(fname) {
 		goutils.WriteInfo("reading index")
 		c, err := ioutil.ReadFile(fname)
 		if err != nil {
 			goutils.WriteError("unable to read index", err)
-			return
+			return fname, nil, err
 		}
 		existing, err = readManifest(c)
 		if err != nil {
 			goutils.WriteError("corrupt index", err)
+			return fname, nil, err
 		}
-	} else {
-		existing = &Manifest{}
+		if len(existing.Files) != len(existing.Clients) {
+			goutils.WriteWarn("invalid index... (lengths)")
+			return fname, nil, errors.New("invalid index lengths")
+		}
 	}
+	return fname, existing, nil
+}
+
+func reindex(client, filename string, ctx *Context) {
+	lock.Lock()
+	defer lock.Unlock()
 	handled := false
+	fname, existing, err := readManifestFile(ctx)
+	if err != nil {
+		return
+	}
 	for i, c := range existing.Clients {
 		if c == client {
 			existing.Files[i] = filename
@@ -232,6 +244,10 @@ func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 }
 
+func timeString() string {
+	return time.Now().Format("2006-01-02T15-04-5")
+}
+
 func saveData(data map[string][]string, ctx *Context, mode string, idx int, client string, session string) {
 	name := ""
 	for _, c := range strings.ToLower(fmt.Sprintf("%s_%s_%s", client, getSession(6), session)) {
@@ -240,7 +256,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 		}
 	}
 	data["client"] = []string{client}
-	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, time.Now().Format("2006-01-02T15-04-05"), mode, name)
+	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, timeString(), mode, name)
 	go reindex(client, fname, ctx)
 	j, jerr := newFile(fname+JsonFile, ctx)
 	if jerr == nil {
@@ -354,6 +370,41 @@ func getSession(length int) string {
 	return string(b)
 }
 
+func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+	req.ParseForm()
+	for k, v := range req.Form {
+		if k == "restart" {
+			for _, val := range v {
+				if val == "on" {
+					goutils.WriteInfo("restart requested")
+					os.Exit(1)
+				}
+			}
+		}
+	}
+	lock.Lock()
+	defer lock.Unlock()
+	pd := &ManifestData{}
+	f, m, err := readManifestFile(ctx)
+	pd.Title = "Admin"
+	pd.Tag = ctx.tag
+	pd.File = f
+	if err == nil {
+		for i, obj := range m.Files {
+			entry := &ManifestEntry{}
+			entry.Name = obj
+			entry.Client = m.Clients[i]
+			pd.Manifest = append(pd.Manifest, entry)
+		}
+	} else {
+		pd.Warning = err.Error()
+	}
+	err = ctx.adminTmpl.Execute(resp, pd)
+	if err != nil {
+		goutils.WriteError("template execution error", err)
+	}
+}
+
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	sess, idx, valid := getTuple(req, 3, 2)
 	if !valid {
@@ -391,7 +442,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	bind := flag.String("bind", "0.0.0.0:8080", "binding (ip:port)")
 	snapshot := flag.Int("snapshot", 15, "auto snapshot (<= 0 is disabled)")
-	tag := flag.String("tag", time.Now().Format("2006-01-02"), "output tag")
+	tag := flag.String("tag", timeString(), "output tag")
 	store := flag.String("store", storagePath, "storage path for results")
 	config := flag.String("config", configFile, "configuration path")
 	staticResources := flag.String("static", tmpl, "static resource location")
@@ -445,6 +496,7 @@ func main() {
 	ctx.beginTmpl = readTemplate(static, "begin.html")
 	ctx.surveyTmpl = readTemplate(static, "survey.html")
 	ctx.completeTmpl = readTemplate(static, "complete.html")
+	ctx.adminTmpl = readTemplate(static, "admin.html")
 	err := os.MkdirAll(ctx.store, 0644)
 	if err != nil {
 		goutils.WriteError("unable to create storage dir", err)
@@ -462,6 +514,9 @@ func main() {
 	})
 	http.HandleFunc(uploadURL, func(resp http.ResponseWriter, req *http.Request) {
 		uploadEndpoint(resp, req, ctx)
+	})
+	http.HandleFunc("/admin", func(resp http.ResponseWriter, req *http.Request) {
+		adminEndpoint(resp, req, ctx)
 	})
 	for _, v := range []string{"save", "snapshot"} {
 		http.HandleFunc(fmt.Sprintf("/%s/", v), func(resp http.ResponseWriter, req *http.Request) {

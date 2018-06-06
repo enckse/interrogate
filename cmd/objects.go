@@ -39,6 +39,7 @@ type Context struct {
 	beginTmpl    *template.Template
 	surveyTmpl   *template.Template
 	completeTmpl *template.Template
+	adminTmpl    *template.Template
 	pages        int
 	questions    [][]Field
 	titles       []string
@@ -73,6 +74,19 @@ type Field struct {
 	Audio       bool
 	Height      string
 	Width       string
+}
+
+type ManifestEntry struct {
+	Name   string
+	Client string
+}
+
+type ManifestData struct {
+	Title    string
+	Tag      string
+	File     string
+	Manifest []*ManifestEntry
+	Warning  string
 }
 
 type PageData struct {
