@@ -50,8 +50,45 @@ func stitch(m *Manifest, ext, dir, out string) error {
 	return ioutil.WriteFile(out, b.Bytes(), 0644)
 }
 
+func mergeManifests(files []string, workingFile string) (string, error) {
+	if len(files) == 0 {
+		return "", errors.New("invalid manifest set")
+	}
+	if len(files) == 1 {
+		return files[0], nil
+	}
+	clients := make(map[string]string)
+	for _, manifest := range files {
+		if goutils.PathNotExists(manifest) {
+			return "", errors.New("invalid manifest file given for merge")
+		}
+		b, err := ioutil.ReadFile(manifest)
+		if err != nil {
+			return "", err
+		}
+		read, err := readManifest(b)
+		if err != nil {
+			return "", err
+		}
+		if len(read.Files) != len(read.Clients) {
+			return "", errors.New("not able to merge inconsistent manifest")
+		}
+		for i, c := range read.Clients {
+			clients[c] = read.Files[i]
+		}
+	}
+	m := &Manifest{}
+	for k, v := range clients {
+		m.Files = append(m.Files, v)
+		m.Clients = append(m.Clients, k)
+	}
+	writeManifest(m, workingFile)
+	return workingFile, nil
+}
+
 func main() {
-	manifest := flag.String("manifest", "", "input manifest file")
+	var manifests strFlagSlice
+	flag.Var(&manifests, "manifest", "input manifest files")
 	dir := flag.String("directory", StoragePath, "location of files to stitch")
 	ext := flag.String("extension", JsonFile, "file extension for stitching")
 	out := flag.String("output", "results", "output results")
@@ -62,7 +99,12 @@ func main() {
 		goutils.WriteWarn("unknown input extension", extension)
 		return
 	}
-	file := *manifest
+	manifest, err := mergeManifests(manifests, *out+".manifest")
+	if err != nil {
+		goutils.WriteError("unable to get a unique manifest", err)
+		return
+	}
+	file := manifest
 	if goutils.PathNotExists(file) {
 		goutils.WriteWarn("manifest file not found", file)
 		return
