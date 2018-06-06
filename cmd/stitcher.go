@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -12,25 +13,32 @@ import (
 
 var vers = "master"
 
+func write(b *bytes.Buffer, text string) {
+	b.Write([]byte(text))
+}
+
 func stitch(m *Manifest, ext, dir, out string) error {
 	if len(m.Clients) != len(m.Files) {
 		return errors.New("invalid manifest files!=clients")
 	}
-	var b bytes.Buffer
+	b := &bytes.Buffer{}
 	isJson := ext == JsonFile
 	isMarkdown := ext == MarkdownFile
 	if isJson {
-		b.Write([]byte("["))
+		write(b, "[\n")
 	}
 	for i, f := range m.Files {
-		if i > 0 {
-			b.Write([]byte(","))
-		}
 		client := m.Clients[i]
+		if isJson {
+			if i > 0 {
+				write(b, "\n,\n")
+			}
+			write(b, fmt.Sprintf("{\"%s\":", client))
+		}
 		if isMarkdown {
-			b.Write([]byte("---\n"))
-			b.Write([]byte(client))
-			b.Write([]byte("\n---\n\n"))
+			write(b, "---\n")
+			write(b, client)
+			write(b, "\n---\n\n")
 		}
 		goutils.WriteInfo("stitching client", client)
 		path := filepath.Join(dir, f+ext)
@@ -42,10 +50,13 @@ func stitch(m *Manifest, ext, dir, out string) error {
 			return rerr
 		}
 		b.Write(existing)
-		b.Write([]byte("\n"))
+		write(b, "\n")
+		if isJson {
+			write(b, "}\n")
+		}
 	}
 	if isJson {
-		b.Write([]byte("]"))
+		write(b, "]")
 	}
 	return ioutil.WriteFile(out, b.Bytes(), 0644)
 }
