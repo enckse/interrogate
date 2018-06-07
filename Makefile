@@ -9,16 +9,16 @@ WINDOWS := windows
 TARGETS := $(LINUX) $(ARM8) $(WINDOWS)
 FLAGS   := -ldflags '-s -w -X main.vers=$(VERS)'
 
-build-objects = GOOS=$1 GOARCH=$2 go build -o $(BIN)survey-$1-$2 $(FLAGS) -buildmode=$3 $(OBJS) $(CMD)common_$1_$2.go $(CMD)survey.go
+build-survey = GOOS=$1 GOARCH=$2 go build -o $(BIN)survey-$1-$2 $(FLAGS) -buildmode=$3 $(OBJS) $(CMD)common_$1_$2.go $(CMD)survey.go
 build-stitcher = GOOS=$1 GOARCH=$2 go build -o $(BIN)stitcher-$1-$2 $(FLAGS) -buildmode=$3 $(OBJS) $(CMD)common_$1_$2.go $(CMD)stitcher.go
-build-all = $(call build-objects,$1,$2,$3) && $(call build-stitcher,$1,$2,$3)
+build-all = $(call build-survey,$1,$2,$3) && $(call build-stitcher,$1,$2,$3)
 
 all: clean build format
 
 build: $(TARGETS)
 
 $(WINDOWS):
-	$(call build-objects,windows,amd64,exe)
+	$(call build-survey,windows,amd64,exe)
 
 $(LINUX):
 	$(call build-all,linux,amd64,pie)
