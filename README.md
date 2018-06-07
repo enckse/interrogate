@@ -34,6 +34,11 @@ edit the `/etc/survey/environment` file to set args for running as a service
 
 to configure edit a json definition (examples in the `questions` folder) and place them in `/etc/survey/` with a `.config` extension)
 
+### administration
+
+* the server hosts an admin endpoint `/admin` which will display current manifest information and allow for survey restarts
+* additionally the results of the ongoing survey may be rendered as html at `/results`
+
 ## development
 
 clone and to build
