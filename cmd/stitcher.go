@@ -1,67 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"flag"
-	"fmt"
 	"io/ioutil"
-	"path/filepath"
 
 	"github.com/epiphyte/goutils"
 )
 
 var vers = "master"
-
-func write(b *bytes.Buffer, text string) {
-	b.Write([]byte(text))
-}
-
-func stitch(m *Manifest, ext, dir, out string) error {
-	err := m.Check()
-	if err != nil {
-		return err
-	}
-	b := &bytes.Buffer{}
-	isJson := ext == JsonFile
-	isMarkdown := ext == MarkdownFile
-	if isJson {
-		write(b, "[\n")
-	}
-	for i, f := range m.Files {
-		client := m.Clients[i]
-		mode := m.Modes[i]
-		if isJson {
-			if i > 0 {
-				write(b, "\n,\n")
-			}
-			write(b, fmt.Sprintf("{\"mode\": \"%s\", \"client\": \"%s\", \"data\":", mode, client))
-		}
-		if isMarkdown {
-			write(b, "---\n")
-			write(b, fmt.Sprintf("%s (%s)", client, mode))
-			write(b, "\n---\n\n")
-		}
-		goutils.WriteInfo("stitching client", client)
-		path := filepath.Join(dir, f+ext)
-		if goutils.PathNotExists(path) {
-			return errors.New("missing file for client")
-		}
-		existing, rerr := ioutil.ReadFile(path)
-		if rerr != nil {
-			return rerr
-		}
-		b.Write(existing)
-		write(b, "\n")
-		if isJson {
-			write(b, "}\n")
-		}
-	}
-	if isJson {
-		write(b, "]")
-	}
-	return ioutil.WriteFile(out, b.Bytes(), 0644)
-}
 
 func mergeManifests(files []string, workingFile string) (string, error) {
 	if len(files) == 0 {

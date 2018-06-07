@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -313,4 +314,63 @@ func NewPageData(req *http.Request, ctx *Context) *PageData {
 		pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
 	}
 	return pd
+}
+
+func write(b *bytes.Buffer, text string) {
+	b.Write([]byte(text))
+}
+
+func stitch(m *Manifest, ext, dir, out string) error {
+	err := m.Check()
+	if err != nil {
+		return err
+	}
+	b := &bytes.Buffer{}
+	isJson := ext == JsonFile
+	isMarkdown := ext == MarkdownFile
+	if isJson {
+		write(b, "[\n")
+	}
+	for i, f := range m.Files {
+		client := m.Clients[i]
+		mode := m.Modes[i]
+		if isJson {
+			if i > 0 {
+				write(b, "\n,\n")
+			}
+			write(b, fmt.Sprintf("{\"mode\": \"%s\", \"client\": \"%s\", \"data\":", mode, client))
+		}
+		if isMarkdown {
+			write(b, "---\n")
+			write(b, fmt.Sprintf("%s (%s)", client, mode))
+			write(b, "\n---\n\n")
+		}
+		goutils.WriteInfo("stitching client", client)
+		path := filepath.Join(dir, f+ext)
+		if goutils.PathNotExists(path) {
+			return errors.New("missing file for client")
+		}
+		existing, rerr := ioutil.ReadFile(path)
+		if rerr != nil {
+			return rerr
+		}
+		b.Write(existing)
+		write(b, "\n")
+		if isJson {
+			write(b, "}\n")
+		}
+	}
+	if isJson {
+		write(b, "]")
+	}
+	err = ioutil.WriteFile(out, b.Bytes(), 0644)
+	if err != nil {
+		return err
+	}
+	if isMarkdown {
+		markdown := fmt.Sprintf("python -m markdown -x markdown.extensions.nl2br -x markdown.extensions.fenced_code -x markdown.extensions.tables %s > %s.html", out, out)
+		_, err = goutils.RunBashCommand(markdown)
+		return err
+	}
+	return nil
 }
