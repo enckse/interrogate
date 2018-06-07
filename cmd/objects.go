@@ -20,6 +20,7 @@ import (
 const (
 	JsonFile     = ".json"
 	MarkdownFile = ".md"
+	htmlFile     = ".html"
 )
 
 type strFlagSlice []string
@@ -38,10 +39,12 @@ type Context struct {
 	tag          string
 	store        string
 	config       string
+	temp         string
 	beginTmpl    *template.Template
 	surveyTmpl   *template.Template
 	completeTmpl *template.Template
 	adminTmpl    *template.Template
+	resultsTmpl  *template.Template
 	pages        int
 	questions    [][]Field
 	titles       []string
@@ -90,6 +93,7 @@ type ManifestData struct {
 	File     string
 	Manifest []*ManifestEntry
 	Warning  string
+	Rendered template.HTML
 }
 
 type PageData struct {
@@ -368,7 +372,7 @@ func stitch(m *Manifest, ext, dir, out string) error {
 		return err
 	}
 	if isMarkdown {
-		markdown := fmt.Sprintf("python -m markdown -x markdown.extensions.nl2br -x markdown.extensions.fenced_code -x markdown.extensions.tables %s > %s.html", out, out)
+		markdown := fmt.Sprintf("python -m markdown -x markdown.extensions.nl2br -x markdown.extensions.fenced_code -x markdown.extensions.tables %s > %s%s", out, out, htmlFile)
 		_, err = goutils.RunBashCommand(markdown)
 		return err
 	}

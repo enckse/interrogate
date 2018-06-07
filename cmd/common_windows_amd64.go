@@ -5,4 +5,5 @@ const (
 	StoragePath = basePath + "results\\"
 	ConfigFile  = basePath + "config\\"
 	Resources   = basePath + "resources\\"
+	TempDir     = basePath + "tmp\\"
 )

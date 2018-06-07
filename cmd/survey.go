@@ -409,6 +409,35 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 }
 
+func resultsEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+	lock.Lock()
+	defer lock.Unlock()
+	pd := &ManifestData{}
+	_, m, err := readManifestFile(ctx)
+	if err == nil {
+		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
+		err = stitch(m, MarkdownFile, ctx.store, results)
+		if err == nil {
+			data, err := ioutil.ReadFile(results + htmlFile)
+			if err == nil {
+				pd.Rendered = template.HTML(data)
+			} else {
+				goutils.WriteError("unable to read stitch results", err)
+				pd.Warning = err.Error()
+			}
+		} else {
+			goutils.WriteError("unable to stitch", err)
+			pd.Warning = err.Error()
+		}
+	} else {
+		pd.Warning = err.Error()
+	}
+	err = ctx.resultsTmpl.Execute(resp, pd)
+	if err != nil {
+		goutils.WriteError("template execution error", err)
+	}
+}
+
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	sess, idx, valid := getTuple(req, 3, 2)
 	if !valid {
@@ -448,6 +477,7 @@ func main() {
 	snapshot := flag.Int("snapshot", 15, "auto snapshot (<= 0 is disabled)")
 	tag := flag.String("tag", timeString(), "output tag")
 	store := flag.String("store", storagePath, "storage path for results")
+	temp := flag.String("temp", TempDir, "working/processing dir")
 	config := flag.String("config", configFile, "configuration path")
 	staticResources := flag.String("static", tmpl, "static resource location")
 	upload := flag.String("upload", "", "upload address (ip:port)")
@@ -493,6 +523,7 @@ func main() {
 	ctx.snapshot = snapValue
 	ctx.tag = conf.GetStringOrDefault("tag", *tag)
 	ctx.store = conf.GetStringOrDefault("store", *store)
+	ctx.temp = conf.GetStringOrDefault("temp", *temp)
 	ctx.config = *config
 	ctx.upload = *upload
 	ctx.uploading = len(ctx.upload) > 0
@@ -501,6 +532,7 @@ func main() {
 	ctx.surveyTmpl = readTemplate(static, "survey.html")
 	ctx.completeTmpl = readTemplate(static, "complete.html")
 	ctx.adminTmpl = readTemplate(static, "admin.html")
+	ctx.resultsTmpl = readTemplate(static, "results.html")
 	err := os.MkdirAll(ctx.store, 0644)
 	if err != nil {
 		goutils.WriteError("unable to create storage dir", err)
@@ -518,6 +550,9 @@ func main() {
 	})
 	http.HandleFunc(uploadURL, func(resp http.ResponseWriter, req *http.Request) {
 		uploadEndpoint(resp, req, ctx)
+	})
+	http.HandleFunc("/results", func(resp http.ResponseWriter, req *http.Request) {
+		resultsEndpoint(resp, req, ctx)
 	})
 	http.HandleFunc("/admin", func(resp http.ResponseWriter, req *http.Request) {
 		adminEndpoint(resp, req, ctx)
