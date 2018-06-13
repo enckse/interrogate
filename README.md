@@ -39,6 +39,8 @@ to configure edit a json definition (examples in the `questions` folder) and pla
 * the server hosts an admin endpoint `/admin` which will display current manifest information and allow for survey restarts
 * additionally the results of the ongoing survey may be rendered as html at `/results`
 
+Accessing these urls will require a token (e.g. `/results?token=123456`) that will be displayed at survey startup
+
 ## development
 
 clone and to build
