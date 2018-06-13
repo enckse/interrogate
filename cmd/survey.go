@@ -373,6 +373,22 @@ func getSession(length int) string {
 	return string(b)
 }
 
+func isAdmin(ctx *Context, req *http.Request) bool {
+	query := req.URL.Query()
+	v, ok := query["token"]
+	if !ok {
+		return false
+	}
+	if len(v) > 0 {
+		for _, value := range v {
+			if value == ctx.token {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	req.ParseForm()
 	for k, v := range req.Form {

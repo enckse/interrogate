@@ -53,6 +53,7 @@ type Context struct {
 	upload       string
 	uploading    bool
 	staticPath   string
+	token        string
 }
 
 type Field struct {
