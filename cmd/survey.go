@@ -390,6 +390,9 @@ func isAdmin(ctx *Context, req *http.Request) bool {
 }
 
 func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+	if !isAdmin(ctx, req) {
+		return
+	}
 	req.ParseForm()
 	for k, v := range req.Form {
 		if k == "restart" {
@@ -426,6 +429,9 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 }
 
 func resultsEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+	if !isAdmin(ctx, req) {
+		return
+	}
 	lock.Lock()
 	defer lock.Unlock()
 	pd := &ManifestData{}
@@ -549,6 +555,8 @@ func main() {
 	ctx.completeTmpl = readTemplate(static, "complete.html")
 	ctx.adminTmpl = readTemplate(static, "admin.html")
 	ctx.resultsTmpl = readTemplate(static, "results.html")
+	ctx.token = time.Now().Format("150405")
+	goutils.WriteInfo("admin token", ctx.token)
 	err := os.MkdirAll(ctx.store, 0644)
 	if err != nil {
 		goutils.WriteError("unable to create storage dir", err)
