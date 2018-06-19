@@ -1,6 +1,6 @@
 BIN     := bin/
 CMD     := cmd/
-OBJS    := $(CMD)objects.go
+OBJS    := $(CMD)common.go
 SRC     := $(shell find $(CMD) -type f -name "*.go")
 VERSION := $(shell git describe --long | sed "s/\([^-]*-g\)/r\1/;s/-/./g")
 LINUX   := linux
