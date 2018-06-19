@@ -8,8 +8,6 @@ import (
 	"github.com/epiphyte/goutils"
 )
 
-var vers = "master"
-
 func mergeManifests(files []string, workingFile string) (string, error) {
 	if len(files) == 0 {
 		return "", errors.New("invalid manifest set")

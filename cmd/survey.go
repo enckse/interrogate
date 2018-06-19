@@ -24,7 +24,6 @@ import (
 )
 
 var (
-	vers = "master"
 	lock = &sync.Mutex{}
 )
 

@@ -23,6 +23,8 @@ const (
 	htmlFile     = ".html"
 )
 
+var vers = "master"
+
 type strFlagSlice []string
 
 func (s *strFlagSlice) Set(str string) error {
