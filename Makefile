@@ -2,12 +2,12 @@ BIN     := bin/
 CMD     := cmd/
 OBJS    := $(CMD)objects.go
 SRC     := $(shell find $(CMD) -type f -name "*.go")
-VERS    := $(shell git describe --long | sed "s/\([^-]*-g\)/r\1/;s/-/./g")
+VERSION := $(shell git describe --long | sed "s/\([^-]*-g\)/r\1/;s/-/./g")
 LINUX   := linux
 ARM8    := arm8
 WINDOWS := windows
 TARGETS := $(LINUX) $(ARM8) $(WINDOWS)
-FLAGS   := -ldflags '-s -w -X main.vers=$(VERS)'
+FLAGS   := -ldflags '-s -w -X main.vers=$(VERSION)'
 
 build-object = GOOS=$1 GOARCH=$2 go build -o $(BIN)$4-$1-$2 $(FLAGS) -buildmode=$3 $(OBJS) $(CMD)common_$1_$2.go $(CMD)$4.go
 build-survey = $(call build-object,$1,$2,$3,survey)
