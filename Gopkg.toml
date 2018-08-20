@@ -1,5 +1,5 @@
 [[constraint]]
-  version = "v1.2.5"
+  version = "v1.2.7"
   name = "github.com/epiphyte/goutils"
 
 [prune]
