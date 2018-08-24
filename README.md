@@ -32,7 +32,7 @@ edit the `/etc/survey/environment` file to set args for running as a service
 
 ### configure
 
-to configure edit a json definition (examples in the `questions` folder) and place them in `/etc/survey/` with a `.config` extension)
+survey question definitions (json) are stored in `/etc/survey/` and must have a `.config` extension, examples are in the `questions/` folder in the repository
 
 ### administration
 
