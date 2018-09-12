@@ -1,5 +1,5 @@
 #!/bin/bash
-function _survey()
+_survey()
 {
     local cur opts 
     cur=${COMP_WORDS[COMP_CWORD]}
