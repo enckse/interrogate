@@ -48,4 +48,4 @@ clone and to build
 make
 ```
 
-[![Build Status](https://travis-ci.org/epiphyte/survey.svg?branch=master)](https://travis-ci.org/epiphyte/survey)
+![Build Status](https://git.epiphyte.network/cgit/survey.png)
