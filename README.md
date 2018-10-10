@@ -47,5 +47,3 @@ clone and to build
 ```
 make
 ```
-
-![Build Status](https://git.epiphyte.network/cgit/survey.png)
