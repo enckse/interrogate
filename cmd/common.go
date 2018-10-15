@@ -21,6 +21,7 @@ const (
 	JsonFile     = ".json"
 	MarkdownFile = ".md"
 	htmlFile     = ".html"
+	defaultStore = "/var/cache/survey/"
 )
 
 var vers = "master"

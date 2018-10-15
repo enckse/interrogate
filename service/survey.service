@@ -3,7 +3,7 @@ Description=Survey host
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/survey
+ExecStart=/usr/bin/survey --config /etc/survey/settings.conf
 Restart=always
 
 [Install]

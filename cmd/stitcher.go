@@ -51,7 +51,7 @@ func mergeManifests(files []string, workingFile string) (string, error) {
 func main() {
 	var manifests strFlagSlice
 	flag.Var(&manifests, "manifest", "input manifest files")
-	dir := flag.String("directory", StoragePath, "location of files to stitch")
+	dir := flag.String("directory", defaultStore, "location of files to stitch")
 	ext := flag.String("extension", JsonFile, "file extension for stitching")
 	out := flag.String("output", "results", "output results")
 	flag.Parse()

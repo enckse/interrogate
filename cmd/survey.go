@@ -490,61 +490,34 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 }
 
 func main() {
-	storagePath := StoragePath
-	configFile := ConfigFile
-	tmpl := Resources
 	rand.Seed(time.Now().UnixNano())
 	bind := flag.String("bind", "0.0.0.0:8080", "binding (ip:port)")
-	snapshot := flag.Int("snapshot", 15, "auto snapshot (<= 0 is disabled)")
 	tag := flag.String("tag", timeString(), "output tag")
-	store := flag.String("store", storagePath, "storage path for results")
-	temp := flag.String("temp", TempDir, "working/processing dir")
-	config := flag.String("config", configFile, "configuration path")
-	staticResources := flag.String("static", tmpl, "static resource location")
+	config := flag.String("config", "", "configuration path")
 	upload := flag.String("upload", "", "upload address (ip:port)")
-	var questions strFlagSlice
-	flag.Var(&questions, "questions", "question set (multiple allowed)")
 	flag.Parse()
+	configFile := *config
 	logging := goutils.NewLogOptions()
 	logging.Info = true
 	goutils.ConfigureLogging(logging)
 	goutils.WriteInfo(vers)
 	settingsFile := configFile + "settings.conf"
-	conf := &goutils.Config{}
-	if !goutils.PathNotExists(settingsFile) {
-		c, err := goutils.LoadConfig(settingsFile, goutils.NewConfigSettings())
-		if err != nil {
-			goutils.WriteError("settings error", err)
-			panic("unable to read settings file")
-		}
-		conf = c
-		for _, q := range conf.GetArrayOrEmpty("questions") {
-			questions = append(questions, q)
-		}
+	conf, err := goutils.LoadConfig(settingsFile, goutils.NewConfigSettings())
+	if err != nil {
+		goutils.Fatal("unable to load config", err)
 	}
-	overrides := filepath.Join(configFile, "resources")
-	resourceLocation := *staticResources
-	if goutils.PathExists(overrides) {
-		goutils.WriteInfo("using override location", overrides)
-		resourceLocation = overrides
+	questions := conf.GetArrayOrEmpty("questions")
+	if len(questions) == 0 {
+		goutils.WriteWarn("no questions")
+		return
 	}
-	static := conf.GetStringOrDefault("static", resourceLocation)
-	useSnap := conf.GetStringOrEmpty("snapshot")
-	snapValue := *snapshot
-	if len(useSnap) > 0 {
-		snap, err := strconv.Atoi(useSnap)
-		if err != nil {
-			goutils.WriteError("unable to use snapshot setting", err)
-			panic("unable to read snapshot setting")
-		}
-		snapValue = snap
-	}
-
+	static := conf.GetStringOrDefault("resources", "/usr/share/survey/resources/")
+	snapValue := conf.GetIntOrDefaultOnly("snapshot", 15)
 	ctx := &Context{}
 	ctx.snapshot = snapValue
 	ctx.tag = conf.GetStringOrDefault("tag", *tag)
-	ctx.store = conf.GetStringOrDefault("store", *store)
-	ctx.temp = conf.GetStringOrDefault("temp", *temp)
+	ctx.store = conf.GetStringOrDefault("storage", defaultStore)
+	ctx.temp = conf.GetStringOrDefault("temp", "/tmp/")
 	ctx.config = *config
 	ctx.upload = *upload
 	ctx.uploading = len(ctx.upload) > 0
@@ -556,10 +529,11 @@ func main() {
 	ctx.resultsTmpl = readTemplate(static, "results.html")
 	ctx.token = time.Now().Format("150405")
 	goutils.WriteInfo("admin token", ctx.token)
-	err := os.MkdirAll(ctx.store, 0644)
-	if err != nil {
-		goutils.WriteError("unable to create storage dir", err)
-		return
+	for _, d := range []string{ctx.store, ctx.temp} {
+		err = os.MkdirAll(d, 0644)
+		if err != nil {
+			goutils.Fatal("unable to create directory", err)
+		}
 	}
 	ctx.load(questions)
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
