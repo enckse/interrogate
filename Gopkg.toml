@@ -2,6 +2,11 @@
   version = "v1.3.0"
   name = "github.com/epiphyte/goutils"
 
+
+[[constraint]]
+  branch = "master"
+  name = "gitlab.com/golang-commonmark/markdown"
+
 [prune]
   go-tests = true
   unused-packages = true

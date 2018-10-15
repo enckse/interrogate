@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/epiphyte/goutils"
+	"gitlab.com/golang-commonmark/markdown"
 )
 
 const (
@@ -24,7 +25,15 @@ const (
 	defaultStore = "/var/cache/survey/"
 )
 
-var vers = "master"
+var (
+	vers = "master"
+	md   = markdown.New(
+		markdown.HTML(true),
+		markdown.Tables(true),
+		markdown.Linkify(true),
+		markdown.Typographer(true),
+	)
+)
 
 type strFlagSlice []string
 
@@ -372,14 +381,18 @@ func stitch(m *Manifest, ext, dir, out string) error {
 	if isJson {
 		write(b, "]")
 	}
-	err = ioutil.WriteFile(out, b.Bytes(), 0644)
+	datum := b.Bytes()
+	err = ioutil.WriteFile(out, datum, 0644)
 	if err != nil {
 		return err
 	}
 	if isMarkdown {
-		markdown := fmt.Sprintf("python -m markdown -x markdown.extensions.nl2br -x markdown.extensions.fenced_code -x markdown.extensions.tables %s > %s%s", out, out, htmlFile)
-		_, err = goutils.RunBashCommand(markdown)
-		return err
+		tokens := md.Parse(datum)
+		markdown := &bytes.Buffer{}
+		write(markdown, fmt.Sprintf("<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>%s</title></head><body>", out))
+		write(markdown, md.RenderTokensToString(tokens))
+		write(markdown, "</body></html>")
+		return ioutil.WriteFile(fmt.Sprintf("%s%s", out, htmlFile), markdown.Bytes(), 0644)
 	}
 	return nil
 }
