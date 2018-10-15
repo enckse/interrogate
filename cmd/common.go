@@ -300,8 +300,9 @@ func (ctx *Context) load(questions strFlagSlice) {
 	}
 
 	pos := 0
+	dir := filepath.Dir(ctx.config)
 	for _, q := range questions {
-		conf := filepath.Join(ctx.config, q+".config")
+		conf := filepath.Join(dir, q+".config")
 		err := ctx.newSet(conf, pos)
 		pos = pos + 1
 		goutils.WriteDebug("config", conf)

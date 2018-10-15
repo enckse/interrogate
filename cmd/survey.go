@@ -493,16 +493,14 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	bind := flag.String("bind", "0.0.0.0:8080", "binding (ip:port)")
 	tag := flag.String("tag", timeString(), "output tag")
-	config := flag.String("config", "", "configuration path")
+	config := flag.String("config", "settings.conf", "configuration path")
 	upload := flag.String("upload", "", "upload address (ip:port)")
 	flag.Parse()
-	configFile := *config
 	logging := goutils.NewLogOptions()
 	logging.Info = true
 	goutils.ConfigureLogging(logging)
 	goutils.WriteInfo(vers)
-	settingsFile := configFile + "settings.conf"
-	conf, err := goutils.LoadConfig(settingsFile, goutils.NewConfigSettings())
+	conf, err := goutils.LoadConfig(*config, goutils.NewConfigSettings())
 	if err != nil {
 		goutils.Fatal("unable to load config", err)
 	}
