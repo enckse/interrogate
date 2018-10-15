@@ -28,11 +28,9 @@ as a service
 systemctl enable survey.service
 ```
 
-edit the `/etc/survey/environment` file to set args for running as a service
-
 ### configure
 
-survey question definitions (json) are stored in `/etc/survey/` and must have a `.config` extension, examples are in the `questions/` folder in the repository
+survey question definitions (json) are stored in `/etc/survey/` and must have a `.config` extension, examples are in the `supporting/` folder in the repository
 
 ### administration
 
