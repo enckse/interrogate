@@ -33,6 +33,7 @@ const alphaNum = "abcdefghijklmnopqrstuvwxyz0123456789"
 const beginURL = "/begin/"
 const uploadURL = "/upload"
 const indexFile = "index.manifest"
+const questionFileName = "questions"
 
 func readContent(directory string, name string) string {
 	file := filepath.Join(directory, name)
@@ -382,19 +383,32 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		return
 	}
 	req.ParseForm()
+	restarting := false
 	for k, v := range req.Form {
-		if k == "restart" {
+		switch k {
+		case "questions":
+			q := filepath.Join(ctx.temp, questionFileName)
+			err := ioutil.WriteFile(q, []byte(v[0]), 0644)
+			if err != nil {
+				goutils.WriteError("unable to write question file and restart", err)
+			}
+		case "restart":
 			for _, val := range v {
 				if val == "on" {
-					goutils.WriteInfo("restart requested")
-					os.Exit(1)
+					restarting = true
 				}
 			}
 		}
 	}
+	if restarting {
+		goutils.WriteInfo("restart requested")
+		os.Exit(1)
+	}
 	lock.Lock()
 	defer lock.Unlock()
 	pd := &ManifestData{}
+	pd.Available = ctx.available
+	pd.Token = ctx.token
 	f, m, err := readManifestFile(ctx)
 	pd.Title = "Admin"
 	pd.Tag = ctx.tag
@@ -490,17 +504,17 @@ func main() {
 		goutils.Fatal("unable to load config", err)
 	}
 	tmp := conf.GetStringOrDefault("temp", "/tmp/")
-	questionFile := filepath.Join(tmp, "questions")
+	questionFile := filepath.Join(tmp, questionFileName)
 	existed := goutils.PathExists(questionFile)
 	questions := ""
 	if existed {
+		goutils.WriteInfo("loading question set input file", questionFile)
 		q, err := ioutil.ReadFile(questionFile)
 		if err != nil {
 			goutils.Fatal("unable to read question setting file", err)
 		}
-		questions = string(q) 
+		questions = string(q)
 	}
-	err = os.Remove(questionFile)
 	if err != nil {
 		if existed {
 			goutils.Fatal("unable to remove question file", err)
@@ -533,7 +547,11 @@ func runSurvey(conf *goutils.Config, configFile, bind, tag, upload, tmp, questio
 	ctx.completeTmpl = readTemplate(static, "complete.html")
 	ctx.adminTmpl = readTemplate(static, "admin.html")
 	ctx.resultsTmpl = readTemplate(static, "results.html")
-	ctx.token = time.Now().Format("150405")
+	ctx.token = conf.GetStringOrDefault("token", time.Now().Format("150405"))
+	ctx.available = []string{questions}
+	for _, a := range conf.GetArrayOrEmpty("available") {
+		ctx.available = append(ctx.available, a)
+	}
 	goutils.WriteInfo("admin token", ctx.token)
 	for _, d := range []string{ctx.store, ctx.temp} {
 		err := os.MkdirAll(d, 0755)

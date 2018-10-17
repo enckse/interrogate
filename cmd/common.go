@@ -64,6 +64,7 @@ type Context struct {
 	uploading    bool
 	staticPath   string
 	token        string
+	available    []string
 }
 
 type Field struct {
@@ -101,12 +102,14 @@ type ManifestEntry struct {
 }
 
 type ManifestData struct {
-	Title    string
-	Tag      string
-	File     string
-	Manifest []*ManifestEntry
-	Warning  string
-	Rendered template.HTML
+	Title     string
+	Tag       string
+	File      string
+	Manifest  []*ManifestEntry
+	Warning   string
+	Rendered  template.HTML
+	Available []string
+	Token     string
 }
 
 type PageData struct {
