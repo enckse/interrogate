@@ -537,18 +537,28 @@ func main() {
 	if strings.TrimSpace(questions) == "" {
 		panic("no question set?")
 	}
-	runSurvey(conf, cfg, *bind, *tag, *upload, tmp, questions, initialQuestions)
+	settingsFile := filepath.Join(filepath.Dir(cfg), questions)
+	runSurvey(conf, &initSurvey{bind: *bind, tag: *tag, upload: *upload, tmp: tmp, questions: settingsFile, inQuestions: initialQuestions})
 }
 
-func runSurvey(conf *goutils.Config, configFile, bind, tag, upload, tmp, questions, initialQuestions string) {
+type initSurvey struct {
+	bind        string
+	tag         string
+	upload      string
+	tmp         string
+	inQuestions string
+	questions   string
+}
+
+func runSurvey(conf *goutils.Config, settings *initSurvey) {
 	static := conf.GetStringOrDefault("resources", "/usr/share/survey/resources/")
 	snapValue := conf.GetIntOrDefaultOnly("snapshot", 15)
 	ctx := &Context{}
 	ctx.snapshot = snapValue
-	ctx.tag = conf.GetStringOrDefault("tag", tag)
+	ctx.tag = conf.GetStringOrDefault("tag", settings.tag)
 	ctx.store = conf.GetStringOrDefault("storage", defaultStore)
-	ctx.temp = tmp
-	ctx.upload = upload
+	ctx.temp = settings.tmp
+	ctx.upload = settings.upload
 	ctx.uploading = len(ctx.upload) > 0
 	ctx.staticPath = staticURL
 	ctx.beginTmpl = readTemplate(static, "begin.html")
@@ -557,7 +567,7 @@ func runSurvey(conf *goutils.Config, configFile, bind, tag, upload, tmp, questio
 	ctx.adminTmpl = readTemplate(static, "admin.html")
 	ctx.resultsTmpl = readTemplate(static, "results.html")
 	ctx.token = conf.GetStringOrDefault("token", time.Now().Format("150405"))
-	ctx.available = []string{initialQuestions}
+	ctx.available = []string{settings.inQuestions}
 	for _, a := range conf.GetArrayOrEmpty("available") {
 		ctx.available = append(ctx.available, a)
 	}
@@ -568,7 +578,7 @@ func runSurvey(conf *goutils.Config, configFile, bind, tag, upload, tmp, questio
 			goutils.Fatal("unable to create directory", err)
 		}
 	}
-	ctx.load(filepath.Join(filepath.Dir(configFile), questions+".config"))
+	ctx.load(settings.questions)
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
 	})
@@ -594,7 +604,7 @@ func runSurvey(conf *goutils.Config, configFile, bind, tag, upload, tmp, questio
 	}
 	staticPath := filepath.Join(static, staticURL)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
-	err := http.ListenAndServe(conf.GetStringOrDefault("bind", bind), nil)
+	err := http.ListenAndServe(conf.GetStringOrDefault("bind", settings.bind), nil)
 	if err != nil {
 		goutils.WriteError("unable to start", err)
 		panic("failure")
