@@ -334,7 +334,7 @@ func getClient(req *http.Request) string {
 }
 
 func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	mode, valid := getTuple(req, 0)
+	mode, valid := getTuple(req, 1)
 	if !valid {
 		return
 	}
