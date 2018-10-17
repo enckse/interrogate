@@ -480,11 +480,12 @@ func main() {
 	config := flag.String("config", "settings.conf", "configuration path")
 	upload := flag.String("upload", "", "upload address (ip:port)")
 	flag.Parse()
+	cfg := *config
 	logging := goutils.NewLogOptions()
 	logging.Info = true
 	goutils.ConfigureLogging(logging)
 	goutils.WriteInfo(vers)
-	conf, err := goutils.LoadConfig(*config, goutils.NewConfigSettings())
+	conf, err := goutils.LoadConfig(cfg, goutils.NewConfigSettings())
 	if err != nil {
 		goutils.Fatal("unable to load config", err)
 	}
@@ -513,10 +514,10 @@ func main() {
 	if strings.TrimSpace(questions) == "" {
 		panic("no question set?")
 	}
-	runSurvey(conf, *bind, *tag, *upload, tmp, questions)
+	runSurvey(conf, cfg, *bind, *tag, *upload, tmp, questions)
 }
 
-func runSurvey(conf *goutils.Config, bind, tag, upload, tmp, questions string) {
+func runSurvey(conf *goutils.Config, configFile, bind, tag, upload, tmp, questions string) {
 	static := conf.GetStringOrDefault("resources", "/usr/share/survey/resources/")
 	snapValue := conf.GetIntOrDefaultOnly("snapshot", 15)
 	ctx := &Context{}
@@ -540,7 +541,7 @@ func runSurvey(conf *goutils.Config, bind, tag, upload, tmp, questions string) {
 			goutils.Fatal("unable to create directory", err)
 		}
 	}
-	ctx.load(questions)
+	ctx.load(filepath.Join(filepath.Dir(configFile), questions+".config"))
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
 	})
