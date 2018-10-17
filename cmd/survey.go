@@ -15,7 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -67,7 +66,6 @@ func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageD
 func homeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd := NewPageData(req, ctx)
 	pd.Session = getSession(20)
-	pd.Index = 0
 	handleTemplate(resp, ctx.beginTmpl, pd)
 }
 
@@ -76,7 +74,7 @@ func completeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context)
 	handleTemplate(resp, ctx.completeTmpl, pd)
 }
 
-func getTuple(req *http.Request, strPos int, intPos int) (string, int, bool) {
+func getTuple(req *http.Request, strPos int, intPos int) (string, bool) {
 	path := req.URL.Path
 	parts := strings.Split(path, "/")
 	required := strPos
@@ -85,14 +83,9 @@ func getTuple(req *http.Request, strPos int, intPos int) (string, int, bool) {
 	}
 	if len(parts) < required+1 {
 		goutils.WriteInfo("warning, invalid url", path)
-		return "", 0, false
+		return "", false
 	}
-	idx, err := strconv.Atoi(parts[intPos])
-	if err != nil {
-		goutils.WriteInfo("warning, invalid int", path)
-		return "", 0, false
-	}
-	return parts[strPos], idx, true
+	return parts[strPos], true
 }
 
 func writeString(file *os.File, line string, upload []string) []string {
@@ -249,7 +242,7 @@ func timeString() string {
 	return time.Now().Format("2006-01-02T15-04-05")
 }
 
-func saveData(data map[string][]string, ctx *Context, mode string, idx int, client string, session string) {
+func saveData(data map[string][]string, ctx *Context, mode string, client string, session string) {
 	name := ""
 	for _, c := range strings.ToLower(fmt.Sprintf("%s_%s_%s", client, getSession(6), session)) {
 		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_') {
@@ -279,7 +272,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, idx int, clie
 	defer f.Close()
 	questionNum := 1
 	metaNum := 1
-	mapping := ctx.questionMaps[idx]
+	mapping := ctx.questionMap
 	var metaSet []string
 	var uploadSet []string
 	var keys []string
@@ -344,7 +337,7 @@ func getClient(req *http.Request) string {
 }
 
 func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	mode, idx, valid := getTuple(req, 1, 2)
+	mode, valid := getTuple(req, 1, 2)
 	if !valid {
 		return
 	}
@@ -358,7 +351,7 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		}
 	}
 
-	go saveData(datum, ctx, mode, idx, getClient(req), sess)
+	go saveData(datum, ctx, mode, getClient(req), sess)
 }
 
 func getSession(length int) string {
@@ -459,31 +452,27 @@ func resultsEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) 
 }
 
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	sess, idx, valid := getTuple(req, 3, 2)
+	sess, valid := getTuple(req, 3, 2)
 	if !valid {
 		return
 	}
 	pd := NewPageData(req, ctx)
 	pd.Session = sess
-	pd.Index = idx
-	if idx >= 0 && idx < len(ctx.questions) {
-		questions := ctx.questions[idx]
-		query := req.URL.Query()
-		for _, q := range questions {
-			obj := q
-			value, ok := query[q.Text]
-			if ok && len(value) == 1 {
-				obj.Value = value[0]
-			}
-			if obj.hidden {
-				pd.Hidden = append(pd.Hidden, obj)
-			} else {
-				pd.Questions = append(pd.Questions, obj)
-			}
+	query := req.URL.Query()
+	for _, q := range ctx.questions {
+		obj := q
+		value, ok := query[q.Text]
+		if ok && len(value) == 1 {
+			obj.Value = value[0]
 		}
-		pd.Title = ctx.titles[idx]
-		pd.Anonymous = ctx.anons[idx]
+		if obj.hidden {
+			pd.Hidden = append(pd.Hidden, obj)
+		} else {
+			pd.Questions = append(pd.Questions, obj)
+		}
 	}
+	pd.Title = ctx.title
+	pd.Anonymous = ctx.anon
 	handleTemplate(resp, ctx.surveyTmpl, pd)
 }
 

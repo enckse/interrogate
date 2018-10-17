@@ -5,7 +5,7 @@ function do_submit(mode, url){
         $.ajax({
             data: $(this).serialize(),
             type: $(this).attr('method'),
-            url: "/" + mode + "/{{ .Index }}",
+            url: "/" + mode,
             success: function(response) {
                 // NOTE: throwing out response because we don't care
                 if (url)

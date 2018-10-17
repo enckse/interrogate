@@ -57,10 +57,10 @@ type Context struct {
 	completeTmpl *template.Template
 	adminTmpl    *template.Template
 	resultsTmpl  *template.Template
-	questions    [][]Field
-	titles       []string
-	anons        []bool
-	questionMaps []map[string]string
+	questions    []Field
+	title        string
+	anon         bool
+	questionMap  map[string]string
 	upload       string
 	uploading    bool
 	staticPath   string
@@ -111,7 +111,6 @@ type ManifestData struct {
 type PageData struct {
 	QueryParams string
 	Title       string
-	Index       int
 	Session     string
 	Snapshot    int
 	Anonymous   bool
@@ -219,8 +218,8 @@ func (ctx *Context) newSet(configFile string, position int) error {
 	if err != nil {
 		return err
 	}
-	ctx.titles = append(ctx.titles, config.Metadata.Title)
-	ctx.anons = append(ctx.anons, config.Metadata.Anon != "FALSE")
+	ctx.title = config.Metadata.Title
+	ctx.anon = config.Metadata.Anon != "FALSE"
 	var mapping []Field
 	questionMap := make(map[string]string)
 	number := 0
@@ -285,8 +284,8 @@ func (ctx *Context) newSet(configFile string, position int) error {
 		}
 		mapping = append(mapping, *field)
 	}
-	ctx.questionMaps = append(ctx.questionMaps, questionMap)
-	ctx.questions = append(ctx.questions, mapping)
+	ctx.questionMap = questionMap
+	ctx.questions = mapping
 	return nil
 }
 
