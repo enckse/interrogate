@@ -91,6 +91,8 @@ type Field struct {
 	Audio       bool
 	Height      string
 	Width       string
+	CondStart   bool
+	CondEnd     bool
 }
 
 type ManifestEntry struct {
@@ -223,7 +225,10 @@ func (ctx *Context) newSet(configFile string, position int) error {
 	var mapping []Field
 	questionMap := make(map[string]string)
 	number := 0
+	inCond := false
+	condCount := 0
 	for _, q := range config.Questions {
+		condCount += 1
 		k := number
 		number = number + 1
 		if q.Numbered > 0 {
@@ -272,6 +277,18 @@ func (ctx *Context) newSet(configFile string, position int) error {
 			field.SlideId = template.JS(fmt.Sprintf("slide%d", k))
 			field.SlideHideId = template.JS(fmt.Sprintf("shide%d", k))
 			field.Basis = getWhenEmpty(field.Basis, "50")
+		case "conditional":
+			if inCond {
+				if condCount == 1 {
+					panic("conditional contains no questions")
+				}
+				field.CondEnd = true
+				inCond = false
+			} else {
+				condCount = 0
+				inCond = true
+				field.CondStart = true
+			}
 		default:
 			panic("unknown question type: " + q.Type)
 		}
@@ -283,6 +300,9 @@ func (ctx *Context) newSet(configFile string, position int) error {
 			field.Width = getWhenEmpty(field.Width, "250")
 		}
 		mapping = append(mapping, *field)
+	}
+	if inCond {
+		panic("unclosed conditional")
 	}
 	ctx.questionMap = questionMap
 	ctx.questions = mapping

@@ -74,13 +74,10 @@ func completeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context)
 	handleTemplate(resp, ctx.completeTmpl, pd)
 }
 
-func getTuple(req *http.Request, strPos int, intPos int) (string, bool) {
+func getTuple(req *http.Request, strPos int) (string, bool) {
 	path := req.URL.Path
 	parts := strings.Split(path, "/")
 	required := strPos
-	if intPos > strPos {
-		required = intPos
-	}
 	if len(parts) < required+1 {
 		goutils.WriteInfo("warning, invalid url", path)
 		return "", false
@@ -337,7 +334,7 @@ func getClient(req *http.Request) string {
 }
 
 func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	mode, valid := getTuple(req, 1, 2)
+	mode, valid := getTuple(req, 0)
 	if !valid {
 		return
 	}
@@ -452,7 +449,7 @@ func resultsEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) 
 }
 
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	sess, valid := getTuple(req, 3, 2)
+	sess, valid := getTuple(req, 2)
 	if !valid {
 		return
 	}
