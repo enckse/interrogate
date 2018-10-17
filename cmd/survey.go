@@ -528,7 +528,7 @@ func main() {
 	ctx.token = time.Now().Format("150405")
 	goutils.WriteInfo("admin token", ctx.token)
 	for _, d := range []string{ctx.store, ctx.temp} {
-		err = os.MkdirAll(d, 0644)
+		err = os.MkdirAll(d, 0755)
 		if err != nil {
 			goutils.Fatal("unable to create directory", err)
 		}
