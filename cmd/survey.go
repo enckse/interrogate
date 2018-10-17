@@ -488,16 +488,43 @@ func main() {
 	if err != nil {
 		goutils.Fatal("unable to load config", err)
 	}
-	questions := conf.GetStringOrEmpty("questions")
+	tmp := conf.GetStringOrDefault("temp", "/tmp/")
+	questionFile := filepath.Join(tmp, "questions")
+	existed := goutils.PathExists(questionFile)
+	questions := ""
+	if existed {
+		q, err := ioutil.ReadFile(questionFile)
+		if err != nil {
+			goutils.Fatal("unable to read question setting file", err)
+		}
+		questions = string(q) 
+	}
+	err = os.Remove(questionFile)
+	if err != nil {
+		if existed {
+			goutils.Fatal("unable to remove question file", err)
+		} else {
+			goutils.WriteDebug("unable to remove non-existing file")
+		}
+	}
+	if questions == "" {
+		questions = conf.GetStringOrEmpty("questions")
+	}
+	if strings.TrimSpace(questions) == "" {
+		panic("no question set?")
+	}
+	runSurvey(conf, *bind, *tag, *upload, tmp, questions)
+}
+
+func runSurvey(conf *goutils.Config, bind, tag, upload, tmp, questions string) {
 	static := conf.GetStringOrDefault("resources", "/usr/share/survey/resources/")
 	snapValue := conf.GetIntOrDefaultOnly("snapshot", 15)
 	ctx := &Context{}
 	ctx.snapshot = snapValue
-	ctx.tag = conf.GetStringOrDefault("tag", *tag)
+	ctx.tag = conf.GetStringOrDefault("tag", tag)
 	ctx.store = conf.GetStringOrDefault("storage", defaultStore)
-	ctx.temp = conf.GetStringOrDefault("temp", "/tmp/")
-	ctx.config = *config
-	ctx.upload = *upload
+	ctx.temp = tmp
+	ctx.upload = upload
 	ctx.uploading = len(ctx.upload) > 0
 	ctx.staticPath = staticURL
 	ctx.beginTmpl = readTemplate(static, "begin.html")
@@ -508,7 +535,7 @@ func main() {
 	ctx.token = time.Now().Format("150405")
 	goutils.WriteInfo("admin token", ctx.token)
 	for _, d := range []string{ctx.store, ctx.temp} {
-		err = os.MkdirAll(d, 0755)
+		err := os.MkdirAll(d, 0755)
 		if err != nil {
 			goutils.Fatal("unable to create directory", err)
 		}
@@ -539,7 +566,7 @@ func main() {
 	}
 	staticPath := filepath.Join(static, staticURL)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
-	err = http.ListenAndServe(conf.GetStringOrDefault("bind", *bind), nil)
+	err := http.ListenAndServe(conf.GetStringOrDefault("bind", bind), nil)
 	if err != nil {
 		goutils.WriteError("unable to start", err)
 		panic("failure")

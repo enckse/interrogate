@@ -50,7 +50,6 @@ type Context struct {
 	snapshot     int
 	tag          string
 	store        string
-	config       string
 	temp         string
 	beginTmpl    *template.Template
 	surveyTmpl   *template.Template
@@ -204,7 +203,7 @@ func readManifest(contents []byte) (*Manifest, error) {
 	return &manifest, nil
 }
 
-func (ctx *Context) newSet(configFile string, position int) error {
+func (ctx *Context) newSet(configFile string) error {
 	jfile, err := os.Open(configFile)
 	if err != nil {
 		return err
@@ -318,12 +317,8 @@ func getWhenEmpty(value, dflt string) string {
 }
 
 func (ctx *Context) load(q string) {
-	pos := 0
-	dir := filepath.Dir(ctx.config)
-	conf := filepath.Join(dir, q+".config")
-	err := ctx.newSet(conf, pos)
-	pos = pos + 1
-	goutils.WriteDebug("config", conf)
+	err := ctx.newSet(q)
+	goutils.WriteDebug("questions", q)
 	if err != nil {
 		goutils.WriteError("unable to load question set", err)
 		panic("invalid question set")
