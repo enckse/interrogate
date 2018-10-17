@@ -26,15 +26,17 @@ var (
 	lock = &sync.Mutex{}
 )
 
-const staticURL = "/static/"
-const surveyURL = "/survey/"
-const surveyClientURL = surveyURL + "%d/%s"
-const alphaNum = "abcdefghijklmnopqrstuvwxyz0123456789"
-const beginURL = "/begin/"
-const uploadURL = "/upload"
-const indexFile = "index.manifest"
-const questionFileName = "questions"
-const qReset = "RESET"
+const (
+	staticURL        = "/static/"
+	surveyURL        = "/survey/"
+	surveyClientURL  = surveyURL + "%d/%s"
+	alphaNum         = "abcdefghijklmnopqrstuvwxyz0123456789"
+	beginURL         = "/begin/"
+	uploadURL        = "/upload"
+	indexFile        = "index.manifest"
+	questionFileName = "questions"
+	qReset           = "RESET"
+)
 
 func readContent(directory string, name string) string {
 	file := filepath.Join(directory, name)
