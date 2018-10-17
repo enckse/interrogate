@@ -34,6 +34,7 @@ const beginURL = "/begin/"
 const uploadURL = "/upload"
 const indexFile = "index.manifest"
 const questionFileName = "questions"
+const qReset = "RESET"
 
 func readContent(directory string, name string) string {
 	file := filepath.Join(directory, name)
@@ -387,8 +388,12 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	for k, v := range req.Form {
 		switch k {
 		case "questions":
+			name := v[0]
+			if name == qReset {
+				name = ctx.available[0]
+			}
 			q := filepath.Join(ctx.temp, questionFileName)
-			err := ioutil.WriteFile(q, []byte(v[0]), 0644)
+			err := ioutil.WriteFile(q, []byte(name), 0644)
 			if err != nil {
 				goutils.WriteError("unable to write question file and restart", err)
 			}
@@ -408,6 +413,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	defer lock.Unlock()
 	pd := &ManifestData{}
 	pd.Available = ctx.available
+	pd.Available = append(pd.Available, qReset)
 	pd.Token = ctx.token
 	f, m, err := readManifestFile(ctx)
 	pd.Title = "Admin"
@@ -522,16 +528,17 @@ func main() {
 			goutils.WriteDebug("unable to remove non-existing file")
 		}
 	}
+	initialQuestions := conf.GetStringOrEmpty("questions")
 	if questions == "" {
-		questions = conf.GetStringOrEmpty("questions")
+		questions = initialQuestions
 	}
 	if strings.TrimSpace(questions) == "" {
 		panic("no question set?")
 	}
-	runSurvey(conf, cfg, *bind, *tag, *upload, tmp, questions)
+	runSurvey(conf, cfg, *bind, *tag, *upload, tmp, questions, initialQuestions)
 }
 
-func runSurvey(conf *goutils.Config, configFile, bind, tag, upload, tmp, questions string) {
+func runSurvey(conf *goutils.Config, configFile, bind, tag, upload, tmp, questions, initialQuestions string) {
 	static := conf.GetStringOrDefault("resources", "/usr/share/survey/resources/")
 	snapValue := conf.GetIntOrDefaultOnly("snapshot", 15)
 	ctx := &Context{}
@@ -548,7 +555,7 @@ func runSurvey(conf *goutils.Config, configFile, bind, tag, upload, tmp, questio
 	ctx.adminTmpl = readTemplate(static, "admin.html")
 	ctx.resultsTmpl = readTemplate(static, "results.html")
 	ctx.token = conf.GetStringOrDefault("token", time.Now().Format("150405"))
-	ctx.available = []string{questions}
+	ctx.available = []string{initialQuestions}
 	for _, a := range conf.GetArrayOrEmpty("available") {
 		ctx.available = append(ctx.available, a)
 	}
