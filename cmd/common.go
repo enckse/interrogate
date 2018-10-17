@@ -57,7 +57,6 @@ type Context struct {
 	completeTmpl *template.Template
 	adminTmpl    *template.Template
 	resultsTmpl  *template.Template
-	pages        int
 	questions    [][]Field
 	titles       []string
 	anons        []bool
@@ -113,14 +112,11 @@ type PageData struct {
 	QueryParams string
 	Title       string
 	Index       int
-	Following   bool
-	Follow      int
 	Session     string
 	Snapshot    int
 	Anonymous   bool
 	Hidden      []Field
 	Questions   []Field
-	set         int
 }
 
 type UploadData struct {
@@ -302,32 +298,23 @@ func getWhenEmpty(value, dflt string) string {
 	}
 }
 
-func (ctx *Context) load(questions strFlagSlice) {
-	if len(questions) == 0 {
-		goutils.WriteInfo("no questions given!")
-		panic("no questions!")
-	}
-
+func (ctx *Context) load(q string) {
 	pos := 0
 	dir := filepath.Dir(ctx.config)
-	for _, q := range questions {
-		conf := filepath.Join(dir, q+".config")
-		err := ctx.newSet(conf, pos)
-		pos = pos + 1
-		goutils.WriteDebug("config", conf)
-		if err != nil {
-			goutils.WriteError("unable to load question set", err)
-			panic("invalid question set")
-		}
+	conf := filepath.Join(dir, q+".config")
+	err := ctx.newSet(conf, pos)
+	pos = pos + 1
+	goutils.WriteDebug("config", conf)
+	if err != nil {
+		goutils.WriteError("unable to load question set", err)
+		panic("invalid question set")
 	}
-	ctx.pages = pos
 }
 
 func NewPageData(req *http.Request, ctx *Context) *PageData {
 	pd := &PageData{}
 	pd.QueryParams = req.URL.RawQuery
 	pd.Snapshot = ctx.snapshot
-	pd.set = ctx.pages
 	if len(pd.QueryParams) > 0 {
 		pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
 	}

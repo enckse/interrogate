@@ -58,7 +58,6 @@ func readTemplate(directory string, tmpl string) *template.Template {
 }
 
 func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageData) {
-	pd.Following = pd.Follow < pd.set
 	err := tmpl.Execute(resp, pd)
 	if err != nil {
 		goutils.WriteError("template execution error", err)
@@ -467,7 +466,6 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd := NewPageData(req, ctx)
 	pd.Session = sess
 	pd.Index = idx
-	pd.Follow = idx + 1
 	if idx >= 0 && idx < len(ctx.questions) {
 		questions := ctx.questions[idx]
 		query := req.URL.Query()
@@ -504,11 +502,7 @@ func main() {
 	if err != nil {
 		goutils.Fatal("unable to load config", err)
 	}
-	questions := conf.GetArrayOrEmpty("questions")
-	if len(questions) == 0 {
-		goutils.WriteWarn("no questions")
-		return
-	}
+	questions := conf.GetStringOrEmpty("questions")
 	static := conf.GetStringOrDefault("resources", "/usr/share/survey/resources/")
 	snapValue := conf.GetIntOrDefaultOnly("snapshot", 15)
 	ctx := &Context{}
