@@ -117,7 +117,6 @@ type PageData struct {
 	Title       string
 	Session     string
 	Snapshot    int
-	Anonymous   bool
 	Hidden      []Field
 	Questions   []Field
 }
@@ -135,7 +134,6 @@ type Config struct {
 
 type Meta struct {
 	Title string `json:"title"`
-	Anon  string `json:"anon"`
 }
 
 type Manifest struct {
@@ -223,7 +221,6 @@ func (ctx *Context) newSet(configFile string) error {
 		return err
 	}
 	ctx.title = config.Metadata.Title
-	ctx.anon = config.Metadata.Anon != "FALSE"
 	var mapping []Field
 	questionMap := make(map[string]string)
 	number := 0

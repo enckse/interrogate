@@ -491,7 +491,6 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		}
 	}
 	pd.Title = ctx.title
-	pd.Anonymous = ctx.anon
 	handleTemplate(resp, ctx.surveyTmpl, pd)
 }
 

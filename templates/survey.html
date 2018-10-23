@@ -50,18 +50,6 @@ window.onload=function(){
 <h4>{{ .Title }}</h4>
 <form name="survey_form" id="survey_form" action="/snapshot" method='POST'>
     <input type="hidden" name="session" value="{{ .Session }}" />
-    {{ if not .Anonymous }}
-        <div class="row">
-            <div class="six columns">
-                <label for="name">Your name</label>
-                <input class="u-full-width" name="name" type="text" placeholder="Leeroy Jenkins" id="name" required>
-            </div>
-            <div class="six columns">
-                <label for="email">Your email</label>
-                <input class="u-full-width" name="email" type="email" placeholder="test@mailbox.com" id="email" required>
-            </div>
-        </div>
-    {{- end -}}
     {{ range $key, $question := .Hidden }}
         <input type="hidden" value="{{ $question.Value }}" name="{{ $question.Id }}" id="{{ $question.Text }}">
     {{- end -}}
