@@ -5,7 +5,7 @@ a basic/primitive survey app for LAN-based survey completion.
 
 ## setup
 
-use the epiphyte [repository](https://github.com/epiphyte/repository) to install as a package
+use the epiphyte [repository](https://mirror.epiphyte.network/repos) to install as a package
 
 ```
 pacman -S survey
