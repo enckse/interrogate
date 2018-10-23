@@ -1,9 +1,0 @@
-#!/bin/bash
-_survey() {
-    local cur opts 
-    cur=${COMP_WORDS[COMP_CWORD]}
-    opts=$(survey --help 2>&1 | grep "^[ ]*-" | cut -d " " -f 3)
-    COMPREPLY=( $(compgen -W "$opts" -- $cur) )
-}
-
-complete -F _survey survey
