@@ -1,31 +1,38 @@
 BIN     := bin/
 CMD     := cmd/
-OBJS    := $(CMD)common.go
+OS      := linux
+ARCH    := amd64
+ADDED   := -linkmode external -extldflags '$(LDFLAGS)'
+TRIMS   := -gcflags=all=-trimpath=$(GOPATH) -asmflags=all=-trimpath=$(GOPATH)
+TARGET  := pie
 SRC     := $(shell find $(CMD) -type f -name "*.go")
 VERSION ?= $(shell git describe --long | sed "s/\([^-]*-g\)/r\1/;s/-/./g")
 LINUX   := linux
 ARM8    := arm8
 WINDOWS := windows
 TARGETS := $(LINUX) $(ARM8) $(WINDOWS)
-FLAGS   := -ldflags '-s -w -X main.vers=$(VERSION)'
-
-build-object = GOOS=$1 GOARCH=$2 go build -o $(BIN)$4-$1-$2 $(FLAGS) -buildmode=$3 $(OBJS) $(CMD)$4.go
-build-survey = $(call build-object,$1,$2,$3,survey)
-build-stitcher = $(call build-object,$1,$2,$3,stitcher)
-build-all = $(call build-survey,$1,$2,$3) && $(call build-stitcher,$1,$2,$3)
+FLAGS   := -ldflags '$(ADDED) -s -w -X main.vers=$(VERSION)' $(TRIMS)
+GOBUILD := GOOS=$(OS) GOARCH=$(ARCH) go build -o $(BIN)
+GOFLAGS := $(FLAGS) -buildmode=$(TARGET) $(CMD)common.go $(CMD)
+APPS    := survey stitcher
 
 all: clean build format
 
 build: $(TARGETS)
 
+target: $(APPS)
+
+$(APPS):
+	$(GOBUILD)$@-$(OS)-$(ARCH) $(GOFLAGS)$@.go
+
 $(WINDOWS):
-	$(call build-survey,windows,amd64,exe)
+	make target OS=windows TARGET=exe ADDED='' TRIM=''
 
 $(LINUX):
-	$(call build-all,linux,amd64,pie)
+	make target
 
 $(ARM8):
-	$(call build-all,linux,arm64,exe)
+	make target TARGET=exe ARCH=arm64 ADDED='' TRIM=''
 
 clean:
 	rm -rf $(BIN)
