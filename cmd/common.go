@@ -317,7 +317,7 @@ func getWhenEmpty(value, dflt string) string {
 }
 
 func (ctx *Context) load(q string) {
-	err := ctx.newSet(q)
+	err := ctx.newSet(fmt.Sprintf("%s.config", q))
 	goutils.WriteDebug("questions", q)
 	if err != nil {
 		goutils.WriteError("unable to load question set", err)
