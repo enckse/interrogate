@@ -536,8 +536,26 @@ func main() {
 	if strings.TrimSpace(questions) == "" {
 		panic("no question set?")
 	}
-	settingsFile := filepath.Join(filepath.Dir(cfg), questions)
-	runSurvey(conf, &initSurvey{bind: *bind, tag: *tag, upload: *upload, tmp: tmp, questions: settingsFile, inQuestions: initialQuestions})
+	dir := filepath.Dir(cfg)
+	preOver := conf.GetStringOrEmpty("pre")
+	if preOver != "" {
+		preOver = filepath.Join(dir, fmt.Sprintf("%s%s", preOver, questionConf))
+	}
+	postOver := conf.GetStringOrEmpty("post")
+	if postOver != "" {
+		postOver = filepath.Join(dir, fmt.Sprintf("%s%s", postOver, questionConf))
+	}
+	settingsFile := filepath.Join(dir, questions)
+	runSurvey(conf, &initSurvey{
+		bind:        *bind,
+		tag:         *tag,
+		upload:      *upload,
+		tmp:         tmp,
+		questions:   settingsFile,
+		inQuestions: initialQuestions,
+		preOverlay:  preOver,
+		postOverlay: postOver,
+	})
 }
 
 type initSurvey struct {
@@ -547,6 +565,8 @@ type initSurvey struct {
 	tmp         string
 	inQuestions string
 	questions   string
+	preOverlay  string
+	postOverlay string
 }
 
 func runSurvey(conf *goutils.Config, settings *initSurvey) {
@@ -577,7 +597,7 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 			goutils.Fatal("unable to create directory", err)
 		}
 	}
-	ctx.load(settings.questions)
+	ctx.load(settings.questions, settings.preOverlay, settings.postOverlay)
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
 	})

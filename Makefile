@@ -39,4 +39,4 @@ clean:
 	mkdir -p $(BIN)
 
 format:
-	exit $(shell goimports -l $(SRC) | wc -l)
+	exit $(shell gofmt -l $(SRC) | wc -l)

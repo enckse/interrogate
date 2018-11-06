@@ -9,7 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -23,6 +22,7 @@ const (
 	MarkdownFile = ".md"
 	htmlFile     = ".html"
 	defaultStore = "/var/cache/survey/"
+	questionConf = ".config"
 )
 
 var (
@@ -204,14 +204,8 @@ func readManifest(contents []byte) (*Manifest, error) {
 	return &manifest, nil
 }
 
-func (ctx *Context) newSet(configFile string) error {
-	jfile, err := os.Open(configFile)
-	if err != nil {
-		return err
-	}
-
-	defer jfile.Close()
-	data, err := ioutil.ReadAll(jfile)
+func (ctx *Context) newSet(configFile, pre, post string) error {
+	data, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return err
 	}
@@ -219,6 +213,36 @@ func (ctx *Context) newSet(configFile string) error {
 	err = json.Unmarshal(data, &config)
 	if err != nil {
 		return err
+	}
+	for idx, over := range []string{pre, post} {
+		if over == "" {
+			continue
+		}
+		if goutils.PathNotExists(over) {
+			panic("overlay file not found: " + over)
+		}
+		var c Config
+		oData, err := ioutil.ReadFile(over)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(oData, &c)
+		if err != nil {
+			return err
+		}
+		appending := c.Questions
+		switch idx {
+		case 0:
+			appending = config.Questions
+			config.Questions = c.Questions
+		case 1:
+			// this is valid but no-op
+		default:
+			panic("invalid overlay setting")
+		}
+		for _, oQuestion := range appending {
+			config.Questions = append(config.Questions, oQuestion)
+		}
 	}
 	ctx.title = config.Metadata.Title
 	var mapping []Field
@@ -316,8 +340,8 @@ func getWhenEmpty(value, dflt string) string {
 	}
 }
 
-func (ctx *Context) load(q string) {
-	err := ctx.newSet(fmt.Sprintf("%s.config", q))
+func (ctx *Context) load(q, pre, post string) {
+	err := ctx.newSet(fmt.Sprintf("%s%s", q, questionConf), pre, post)
 	goutils.WriteDebug("questions", q)
 	if err != nil {
 		goutils.WriteError("unable to load question set", err)
