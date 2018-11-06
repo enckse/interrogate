@@ -40,3 +40,13 @@ clean:
 
 format:
 	exit $(shell gofmt -l $(SRC) | wc -l)
+
+install:
+	install -Dm 755 -d $(DESTDIR)etc/survey
+	install -Dm 644 supporting/example.config $(DESTDIR)etc/survey/
+	install -Dm 644 supporting/settings.conf $(DESTDIR)etc/survey/
+	install -Dm 755 $(BIN)survey-linux-amd64 $(DESTDIR)usr/bin/survey
+	install -Dm 644 supporting/survey.service $(DESTDIR)lib/systemd/system/
+	install -Dm 644 -t templates/ $(DESTDIR)usr/share/survey/resources/
+	install -Dm 755 -d $(DESTDIR)var/cache/survey
+	install -Dm 755 -d $(DESTDIR)var/tmp/survey
