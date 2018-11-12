@@ -236,6 +236,9 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 				metaSet = append(metaSet, l)
 			}
 		}
+		for _, l := range metaSet {
+			writeString(f, l)
+		}
 	}
 }
 
