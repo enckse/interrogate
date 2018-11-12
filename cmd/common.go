@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -60,8 +59,6 @@ type Context struct {
 	title        string
 	anon         bool
 	questionMap  map[string]string
-	upload       string
-	uploading    bool
 	staticPath   string
 	token        string
 	available    []string
@@ -121,12 +118,6 @@ type PageData struct {
 	Questions   []Field
 }
 
-type UploadData struct {
-	FileName string
-	Data     []string
-	Raw      string
-}
-
 type Config struct {
 	Metadata  Meta       `json:"meta"`
 	Questions []Question `json:"questions"`
@@ -166,21 +157,6 @@ type Question struct {
 	Basis       string   `json:"basis"`
 	Height      string   `json:"height"`
 	Width       string   `json:"width"`
-}
-
-func DecodeUpload(reader io.Reader) (*UploadData, error) {
-	var uploaded UploadData
-	err := json.NewDecoder(reader).Decode(&uploaded)
-	return &uploaded, err
-}
-
-func NewUpload(filename string, data []string, raw map[string][]string) ([]byte, error) {
-	rawString, err := json.Marshal(raw)
-	if err != nil {
-		return nil, err
-	}
-	datum := &UploadData{FileName: filename, Data: data, Raw: string(rawString)}
-	return json.Marshal(datum)
 }
 
 func writeManifest(manifest *Manifest, filename string) {

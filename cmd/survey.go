@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"math/rand"
 	"net"
@@ -32,7 +30,6 @@ const (
 	surveyClientURL  = surveyURL + "%d/%s"
 	alphaNum         = "abcdefghijklmnopqrstuvwxyz0123456789"
 	beginURL         = "/begin/"
-	uploadURL        = "/upload"
 	indexFile        = "index.manifest"
 	questionFileName = "questions"
 	qReset           = "RESET"
@@ -89,55 +86,9 @@ func getTuple(req *http.Request, strPos int) (string, bool) {
 	return parts[strPos], true
 }
 
-func writeString(file *os.File, line string, upload []string) []string {
-	upload = append(upload, line)
+func writeString(file *os.File, line string) {
 	if _, err := file.WriteString(line); err != nil {
 		goutils.WriteError("file append error", err)
-	}
-	return upload
-}
-
-func uploadRequest(addr string, datum io.Reader) bool {
-	req, err := http.NewRequest("POST", fmt.Sprintf("http://%s%s", addr, uploadURL), datum)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		goutils.WriteError("upload error", err)
-		return false
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == 200 {
-		return true
-	} else {
-		body, _ := ioutil.ReadAll(resp.Body)
-		goutils.WriteDebug(string(body))
-		return false
-	}
-}
-
-func doUpload(addr string, filename string, data []string, raw map[string][]string) {
-	j, err := NewUpload(filename, data, raw)
-	if err != nil {
-		goutils.WriteError("unable to upload", err)
-		return
-	}
-	jBytes := bytes.NewBuffer(j)
-	defer jBytes.Reset()
-	tries := 0
-	for {
-		if uploadRequest(addr, jBytes) {
-			goutils.WriteInfo("uploaded...")
-			break
-		}
-		if tries >= 3 {
-			goutils.WriteInfo("giving up...")
-			break
-		}
-		sleep := time.Duration(rand.Intn(5))
-		time.Sleep(sleep * time.Second)
-		tries += 1
 	}
 }
 
@@ -208,37 +159,6 @@ func reindex(client, filename string, ctx *Context, mode string) {
 	writeManifest(existing, fname)
 }
 
-func uploadEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	if req.Body == nil {
-		responseBadRequest(resp, "no request body", nil)
-		return
-	}
-	upload, err := DecodeUpload(req.Body)
-	if err != nil {
-		responseBadRequest(resp, "invalid json", err)
-		return
-	}
-	fileName := fmt.Sprintf("%s_%s_upload_%s", ctx.tag, getSession(6), upload.FileName)
-	go reindex(getClient(req), fileName, ctx, "upload")
-	j, jerr := newFile(fileName+JsonFile, ctx)
-	if jerr == nil {
-		defer j.Close()
-		j.Write([]byte(upload.Raw))
-	} else {
-		goutils.WriteError("json uploaded error", jerr)
-	}
-	f, err := newFile(fileName+MarkdownFile, ctx)
-	if err != nil {
-		responseBadRequest(resp, "file io", err)
-	}
-	defer f.Close()
-	for _, d := range upload.Data {
-		if _, err := f.WriteString(d); err != nil {
-			goutils.WriteError("file append error", err)
-		}
-	}
-}
-
 func timeString() string {
 	return time.Now().Format("2006-01-02T15-04-05")
 }
@@ -275,7 +195,6 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 	metaNum := 1
 	mapping := ctx.questionMap
 	var metaSet []string
-	var uploadSet []string
 	var keys []string
 	for k := range data {
 		keys = append(keys, k)
@@ -312,17 +231,11 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 		localLines = append(localLines, fmt.Sprintf("```\n\n"))
 		for _, l := range localLines {
 			if ok {
-				uploadSet = writeString(f, l, uploadSet)
+				writeString(f, l)
 			} else {
 				metaSet = append(metaSet, l)
 			}
 		}
-	}
-	for _, l := range metaSet {
-		uploadSet = writeString(f, l, uploadSet)
-	}
-	if ctx.uploading && len(uploadSet) > 0 {
-		go doUpload(ctx.upload, fname, uploadSet, data)
 	}
 }
 
@@ -499,7 +412,6 @@ func main() {
 	bind := flag.String("bind", "0.0.0.0:8080", "binding (ip:port)")
 	tag := flag.String("tag", timeString(), "output tag")
 	config := flag.String("config", "settings.conf", "configuration path")
-	upload := flag.String("upload", "", "upload address (ip:port)")
 	flag.Parse()
 	cfg := *config
 	logging := goutils.NewLogOptions()
@@ -549,7 +461,6 @@ func main() {
 	runSurvey(conf, &initSurvey{
 		bind:        *bind,
 		tag:         *tag,
-		upload:      *upload,
 		tmp:         tmp,
 		questions:   settingsFile,
 		inQuestions: initialQuestions,
@@ -561,7 +472,6 @@ func main() {
 type initSurvey struct {
 	bind        string
 	tag         string
-	upload      string
 	tmp         string
 	inQuestions string
 	questions   string
@@ -577,8 +487,6 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 	ctx.tag = conf.GetStringOrDefault("tag", settings.tag)
 	ctx.store = conf.GetStringOrDefault("storage", defaultStore)
 	ctx.temp = settings.tmp
-	ctx.upload = settings.upload
-	ctx.uploading = len(ctx.upload) > 0
 	ctx.staticPath = staticURL
 	ctx.beginTmpl = readTemplate(static, "begin.html")
 	ctx.surveyTmpl = readTemplate(static, "survey.html")
@@ -606,9 +514,6 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 	})
 	http.HandleFunc("/completed", func(resp http.ResponseWriter, req *http.Request) {
 		completeEndpoint(resp, req, ctx)
-	})
-	http.HandleFunc(uploadURL, func(resp http.ResponseWriter, req *http.Request) {
-		uploadEndpoint(resp, req, ctx)
 	})
 	http.HandleFunc("/results", func(resp http.ResponseWriter, req *http.Request) {
 		resultsEndpoint(resp, req, ctx)
