@@ -27,11 +27,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b5f76f8f10ad7de3a15facbd84a23a9a2944abe863ca8d982ec65d8a98b7a217"
+  digest = "1:d5965314d192c93a6fee36644895d25864856d376b564f7bf3e82b97df46b438"
   name = "gitlab.com/golang-commonmark/markdown"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "246aecf104611b4ecb30fe0f1c2655bda38b7324"
+  revision = "772775880e1fbf39a7804149ed11c0f714ec89fe"
 
 [[projects]]
   branch = "master"
@@ -64,7 +64,7 @@
     "transform",
     "unicode/cldr",
     "unicode/norm",
-    "unicode/rangetable",
+    "unicode/rangetable"
   ]
   pruneopts = "NUT"
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
@@ -75,7 +75,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/epiphyte/goutils",
-    "gitlab.com/golang-commonmark/markdown",
+    "gitlab.com/golang-commonmark/markdown"
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
