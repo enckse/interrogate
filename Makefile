@@ -16,10 +16,11 @@ OUTPUT  := $(BIN)$(OS)/$(ARCH)/
 GOBUILD := GOOS=$(OS) GOARCH=$(ARCH) go build -o $(OUTPUT)
 GOFLAGS := $(FLAGS) -buildmode=$(TARGET) $(CMD)common.go $(CMD)
 APPS    := survey stitcher
-RSRC    := usr/share/survey/resources
+RSRC    := /usr/share/survey/resources
 TMPL    := templates/
-SYSD    := lib/systemd/system/
-TMPD    := usr/lib/tmpfiles.d/
+SYSD    := /lib/systemd/system/
+TMPD    := /usr/lib/tmpfiles.d/
+ETC     := /etc/survey/
 
 all: clean build format
 
@@ -48,10 +49,10 @@ format:
 	exit $(shell gofmt -l $(SRC) | wc -l)
 
 install:
-	install -Dm 755 -d $(DESTDIR)etc/survey
-	install -Dm 644 supporting/example.config $(DESTDIR)etc/survey/
-	install -Dm 644 supporting/settings.conf $(DESTDIR)etc/survey/
-	install -Dm 755 $(BIN)/linux/amd64/survey $(DESTDIR)usr/bin/survey
+	install -Dm 755 -d $(DESTDIR)$(ETC)
+	install -Dm 644 supporting/example.config $(DESTDIR)$(ETC)
+	install -Dm 644 supporting/settings.conf $(DESTDIR)$(ETC)
+	install -Dm 755 $(BIN)/linux/amd64/survey $(DESTDIR)/usr/bin/survey
 	install -Dm 755 $(BIN)/linux/amd64/stitcher $(DESTDIR)usr/bin/survey-stitcher
 	install -Dm 755 -d $(DESTDIR)(SYSD)
 	install -Dm 644 supporting/survey.service $(DESTDIR)$(SYSD)
