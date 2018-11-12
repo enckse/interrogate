@@ -8,9 +8,7 @@ TARGET  := pie
 SRC     := $(shell find $(CMD) -type f -name "*.go")
 VERSION ?= $(shell git describe --long | sed "s/\([^-]*-g\)/r\1/;s/-/./g")
 LINUX   := linux
-ARM8    := arm8
-WINDOWS := windows
-TARGETS := $(LINUX) $(ARM8) $(WINDOWS)
+TARGETS := $(LINUX)
 FLAGS   := -ldflags '$(ADDED) -s -w -X main.vers=$(VERSION)' $(TRIMS)
 OUTPUT  := $(BIN)$(OS)/$(ARCH)/
 GOBUILD := GOOS=$(OS) GOARCH=$(ARCH) go build -o $(OUTPUT)
@@ -32,13 +30,13 @@ $(APPS):
 	mkdir -p $(OUTPUT)
 	$(GOBUILD)$@ $(GOFLAGS)$@.go
 
-$(WINDOWS):
+windows:
 	make target OS=windows TARGET=exe ADDED='' TRIM=''
 
 $(LINUX):
 	make target
 
-$(ARM8):
+arm8:
 	make target TARGET=exe ARCH=arm64 ADDED='' TRIM=''
 
 clean:
