@@ -19,6 +19,7 @@ APPS    := survey stitcher
 RSRC    := usr/share/survey/resources
 TMPL    := templates/
 SYSD    := lib/systemd/system/
+TMPD    := usr/lib/tmpfiles.d/
 
 all: clean build format
 
@@ -52,9 +53,9 @@ install:
 	install -Dm 644 supporting/settings.conf $(DESTDIR)etc/survey/
 	install -Dm 755 $(BIN)/linux/amd64/survey $(DESTDIR)usr/bin/survey
 	install -Dm 755 $(BIN)/linux/amd64/stitcher $(DESTDIR)usr/bin/survey-stitcher
-	install -Dm 755 -d $(SYSD)
-	install -Dm 644 supporting/survey.service $(DESTDIR)lib/systemd/system/
+	install -Dm 755 -d $(DESTDIR)(SYSD)
+	install -Dm 644 supporting/survey.service $(DESTDIR)$(SYSD)
+	install -Dm 755 -d $(DESTDIR)$(TMPD)
+	install -Dm 644 supporting/tmpfiles.d $(DESTDIR)$(TMPD)survey.conf
 	for f in $(shell find $(TMPL) -type d | cut -d "/" -f 2-); do install -Dm755 -d $(DESTDIR)$(RSRC)/$$f; done
 	for f in $(shell find $(TMPL) -type f | cut -d "/" -f 2-); do install -Dm755 $(TMPL)/$$f $(DESTDIR)$(RSRC)/$$f; done
-	install -Dm 755 -d $(DESTDIR)var/cache/survey
-	install -Dm 755 -d $(DESTDIR)var/tmp/survey
