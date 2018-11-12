@@ -12,9 +12,13 @@ ARM8    := arm8
 WINDOWS := windows
 TARGETS := $(LINUX) $(ARM8) $(WINDOWS)
 FLAGS   := -ldflags '$(ADDED) -s -w -X main.vers=$(VERSION)' $(TRIMS)
-GOBUILD := GOOS=$(OS) GOARCH=$(ARCH) go build -o $(BIN)
+OUTPUT  := $(BIN)$(OS)/$(ARCH)/
+GOBUILD := GOOS=$(OS) GOARCH=$(ARCH) go build -o $(OUTPUT)
 GOFLAGS := $(FLAGS) -buildmode=$(TARGET) $(CMD)common.go $(CMD)
 APPS    := survey stitcher
+RSRC    := usr/share/survey/resources
+TMPL    := templates/
+SYSD    := lib/systemd/system/
 
 all: clean build format
 
@@ -23,7 +27,8 @@ build: $(TARGETS)
 target: $(APPS)
 
 $(APPS):
-	$(GOBUILD)$@-$(OS)-$(ARCH) $(GOFLAGS)$@.go
+	mkdir -p $(OUTPUT)
+	$(GOBUILD)$@ $(GOFLAGS)$@.go
 
 $(WINDOWS):
 	make target OS=windows TARGET=exe ADDED='' TRIM=''
@@ -45,8 +50,11 @@ install:
 	install -Dm 755 -d $(DESTDIR)etc/survey
 	install -Dm 644 supporting/example.config $(DESTDIR)etc/survey/
 	install -Dm 644 supporting/settings.conf $(DESTDIR)etc/survey/
-	install -Dm 755 $(BIN)survey-linux-amd64 $(DESTDIR)usr/bin/survey
+	install -Dm 755 $(BIN)/linux/amd64/survey $(DESTDIR)usr/bin/survey
+	install -Dm 755 $(BIN)/linux/amd64/stitcher $(DESTDIR)usr/bin/survey-stitcher
+	install -Dm 755 -d $(SYSD)
 	install -Dm 644 supporting/survey.service $(DESTDIR)lib/systemd/system/
-	install -Dm 644 -t templates/ $(DESTDIR)usr/share/survey/resources/
+	for f in $(shell find $(TMPL) -type d | cut -d "/" -f 2-); do install -Dm755 -d $(DESTDIR)$(RSRC)/$$f; done
+	for f in $(shell find $(TMPL) -type f | cut -d "/" -f 2-); do install -Dm755 $(TMPL)/$$f $(DESTDIR)$(RSRC)/$$f; done
 	install -Dm 755 -d $(DESTDIR)var/cache/survey
 	install -Dm 755 -d $(DESTDIR)var/tmp/survey
