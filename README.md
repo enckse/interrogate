@@ -3,15 +3,7 @@ survey
 
 a basic/primitive survey app for LAN-based survey completion.
 
-## setup
-
-use the epiphyte [repository](https://mirror.epiphyte.network/repos) to install as a package
-
-```
-pacman -S survey
-```
-
-### files
+# setup
 
 * by default data is saved to `/var/cache/survey/`
 * configuration is in `/etc/survey/`
