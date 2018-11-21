@@ -521,7 +521,7 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 		base := filepath.Base(a.Name())
 		if strings.HasSuffix(base, questionConf) {
 			base = strings.Replace(base, questionConf, "", -1)
-			if settings.inQuestions != base {
+			if settings.inQuestions != base && settings.preOverlay != base && settings.postOverlay != base {
 				ctx.available = append(ctx.available, base)
 			}
 		}
