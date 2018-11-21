@@ -6,7 +6,7 @@ ADDED   := -linkmode external -extldflags '$(LDFLAGS)'
 TRIMS   := -gcflags=all=-trimpath=$(GOPATH) -asmflags=all=-trimpath=$(GOPATH)
 TARGET  := pie
 SRC     := $(shell find $(CMD) -type f -name "*.go")
-VERSION ?= $(shell git describe --long | sed "s/\([^-]*-g\)/r\1/;s/-/./g")
+VERSION := DEVELOP
 LINUX   := linux
 TARGETS := $(LINUX)
 FLAGS   := -ldflags '$(ADDED) -s -w -X main.vers=$(VERSION)' $(TRIMS)
