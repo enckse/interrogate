@@ -482,6 +482,7 @@ func main() {
 		inQuestions: initialQuestions,
 		preOverlay:  preOver,
 		postOverlay: postOver,
+		searchDir:   dir,
 	})
 }
 
@@ -493,6 +494,7 @@ type initSurvey struct {
 	questions   string
 	preOverlay  string
 	postOverlay string
+	searchDir   string
 }
 
 func runSurvey(conf *goutils.Config, settings *initSurvey) {
@@ -511,8 +513,18 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 	ctx.resultsTmpl = readTemplate(static, "results.html")
 	ctx.token = conf.GetStringOrDefault("token", time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
-	for _, a := range conf.GetArrayOrEmpty("available") {
-		ctx.available = append(ctx.available, a)
+	avails, err := ioutil.ReadDir(settings.searchDir)
+	if err != nil {
+		goutils.Fatal("unable to read available configs", err)
+	}
+	for _, a := range avails {
+		base := filepath.Base(a.Name())
+		if strings.HasSuffix(base, questionConf) {
+			base = strings.Replace(base, questionConf, "", -1)
+			if settings.inQuestions != base {
+				ctx.available = append(ctx.available, base)
+			}
+		}
 	}
 	goutils.WriteInfo("admin token", ctx.token)
 	for _, d := range []string{ctx.store, ctx.temp} {
@@ -544,7 +556,7 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 	}
 	staticPath := filepath.Join(static, staticURL)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
-	err := http.ListenAndServe(conf.GetStringOrDefault("bind", settings.bind), nil)
+	err = http.ListenAndServe(conf.GetStringOrDefault("bind", settings.bind), nil)
 	if err != nil {
 		goutils.WriteError("unable to start", err)
 		panic("failure")
