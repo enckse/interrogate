@@ -466,13 +466,17 @@ func main() {
 	}
 	dir := filepath.Dir(cfg)
 	preOver := conf.GetStringOrEmpty("pre")
+	ignore := make(map[string]struct{})
 	if preOver != "" {
+		ignore[preOver] = struct{}{}
 		preOver = filepath.Join(dir, fmt.Sprintf("%s%s", preOver, questionConf))
 	}
 	postOver := conf.GetStringOrEmpty("post")
 	if postOver != "" {
+		ignore[postOver] = struct{}{}
 		postOver = filepath.Join(dir, fmt.Sprintf("%s%s", postOver, questionConf))
 	}
+	ignore[initialQuestions] = struct{}{}
 	settingsFile := filepath.Join(dir, questions)
 	runSurvey(conf, &initSurvey{
 		bind:        *bind,
@@ -483,6 +487,7 @@ func main() {
 		preOverlay:  preOver,
 		postOverlay: postOver,
 		searchDir:   dir,
+		ignores:     ignore,
 	})
 }
 
@@ -495,6 +500,7 @@ type initSurvey struct {
 	preOverlay  string
 	postOverlay string
 	searchDir   string
+	ignores     map[string]struct{}
 }
 
 func runSurvey(conf *goutils.Config, settings *initSurvey) {
@@ -521,7 +527,7 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 		base := filepath.Base(a.Name())
 		if strings.HasSuffix(base, questionConf) {
 			base = strings.Replace(base, questionConf, "", -1)
-			if settings.inQuestions != base && settings.preOverlay != base && settings.postOverlay != base {
+			if _, ok := settings.ignores[base]; !ok {
 				ctx.available = append(ctx.available, base)
 			}
 		}
