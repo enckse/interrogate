@@ -33,6 +33,7 @@ const (
 	indexFile        = "index.manifest"
 	questionFileName = "questions"
 	qReset           = "RESET"
+	saveFileName     = "save"
 )
 
 func readContent(directory string, name string) string {
@@ -144,8 +145,20 @@ func reindex(client, filename string, ctx *Context, mode string) {
 	}
 	for i, c := range existing.Clients {
 		if c == client {
-			existing.Files[i] = filename
-			existing.Modes[i] = mode
+			curMode := existing.Modes[i]
+			update := false
+			// if we currently have a 'save' we only overwrite with another 'save'
+			if curMode == saveFileName {
+				if mode == saveFileName {
+					update = true
+				}
+			} else {
+				update = true
+			}
+			if update {
+				existing.Files[i] = filename
+				existing.Modes[i] = mode
+			}
 			handled = true
 			break
 		}
@@ -524,7 +537,7 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 	http.HandleFunc("/admin", func(resp http.ResponseWriter, req *http.Request) {
 		adminEndpoint(resp, req, ctx)
 	})
-	for _, v := range []string{"save", "snapshot"} {
+	for _, v := range []string{saveFileName, "snapshot"} {
 		http.HandleFunc(fmt.Sprintf("/%s/", v), func(resp http.ResponseWriter, req *http.Request) {
 			saveEndpoint(resp, req, ctx)
 		})
