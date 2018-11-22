@@ -3,13 +3,12 @@ CMD     := cmd/
 OS      := linux
 ARCH    := amd64
 ADDED   := -linkmode external -extldflags '$(LDFLAGS)'
-TRIMS   := -gcflags=all=-trimpath=$(GOPATH) -asmflags=all=-trimpath=$(GOPATH)
 TARGET  := pie
 SRC     := $(shell find $(CMD) -type f -name "*.go")
 VERSION := DEVELOP
 LINUX   := linux
 TARGETS := $(LINUX)
-FLAGS   := -ldflags '$(ADDED) -s -w -X main.vers=$(VERSION)' $(TRIMS)
+FLAGS   := -ldflags '$(ADDED) -s -w -X main.vers=$(VERSION)' -gcflags=all=-trimpath=$(GOPATH) -asmflags=all=-trimpath=$(GOPATH)
 OUTPUT  := $(BIN)$(OS)/$(ARCH)/
 GOBUILD := GOOS=$(OS) GOARCH=$(ARCH) go build -o $(OUTPUT)
 GOFLAGS := $(FLAGS) -buildmode=$(TARGET) $(CMD)common.go $(CMD)
@@ -31,13 +30,13 @@ $(APPS):
 	$(GOBUILD)$@ $(GOFLAGS)$@.go
 
 windows:
-	make target OS=windows TARGET=exe ADDED='' TRIM=''
+	make target OS=windows TARGET=exe ADDED=''
 
 $(LINUX):
 	make target
 
 arm8:
-	make target TARGET=exe ARCH=arm64 ADDED='' TRIM=''
+	make target TARGET=exe ARCH=arm64 ADDED=''
 
 clean:
 	rm -rf $(BIN)
