@@ -55,7 +55,6 @@ type Context struct {
 	surveyTmpl   *template.Template
 	completeTmpl *template.Template
 	adminTmpl    *template.Template
-	resultsTmpl  *template.Template
 	questions    []Field
 	title        string
 	anon         bool
@@ -105,7 +104,6 @@ type ManifestData struct {
 	File      string
 	Manifest  []*ManifestEntry
 	Warning   string
-	Rendered  template.HTML
 	Available []string
 	Token     string
 }

@@ -29,6 +29,7 @@ var (
 const (
 	staticURL        = "/static/"
 	surveyURL        = "/survey/"
+	tokenParam       = "token"
 	surveyClientURL  = surveyURL + "%d/%s"
 	alphaNum         = "abcdefghijklmnopqrstuvwxyz0123456789"
 	beginURL         = "/begin/"
@@ -298,7 +299,7 @@ func getSession(length int) string {
 
 func isAdmin(ctx *Context, req *http.Request) bool {
 	query := req.URL.Query()
-	v, ok := query["token"]
+	v, ok := query[tokenParam]
 	if !ok {
 		return false
 	}
@@ -369,35 +370,33 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 }
 
-func resultsEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	if !isAdmin(ctx, req) {
 		return
 	}
 	lock.Lock()
 	defer lock.Unlock()
-	pd := &ManifestData{}
-	_, m, err := readManifestFile(ctx)
-	if err == nil {
+	_, m, werr := readManifestFile(ctx)
+	if werr == nil {
 		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
-		err = stitch(m, MarkdownFile, ctx.store, results)
+		err := stitch(m, MarkdownFile, ctx.store, results)
 		if err == nil {
 			data, err := ioutil.ReadFile(results + htmlFile)
 			if err == nil {
-				pd.Rendered = template.HTML(data)
+				resp.Write(data)
 			} else {
 				logger.WriteError("unable to read stitch results", err)
-				pd.Warning = err.Error()
+				werr = err
 			}
 		} else {
 			logger.WriteError("unable to stitch", err)
-			pd.Warning = err.Error()
+			werr = err
 		}
 	} else {
-		pd.Warning = err.Error()
+		logger.WriteError("unable to get manifest", werr)
 	}
-	err = ctx.resultsTmpl.Execute(resp, pd)
-	if err != nil {
-		logger.WriteError("template execution error", err)
+	if werr != nil {
+		resp.Write([]byte("unable to process results"))
 	}
 }
 
@@ -518,7 +517,6 @@ func runSurvey(conf *config.Config, settings *initSurvey) {
 	ctx.surveyTmpl = readTemplate(static, "survey.html")
 	ctx.completeTmpl = readTemplate(static, "complete.html")
 	ctx.adminTmpl = readTemplate(static, "admin.html")
-	ctx.resultsTmpl = readTemplate(static, "results.html")
 	ctx.token = conf.GetStringOrDefault("token", time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
 	avails, err := ioutil.ReadDir(settings.searchDir)
@@ -552,7 +550,7 @@ func runSurvey(conf *config.Config, settings *initSurvey) {
 		completeEndpoint(resp, req, ctx)
 	})
 	http.HandleFunc("/results", func(resp http.ResponseWriter, req *http.Request) {
-		resultsEndpoint(resp, req, ctx)
+		dispResults(resp, req, ctx)
 	})
 	http.HandleFunc("/admin", func(resp http.ResponseWriter, req *http.Request) {
 		adminEndpoint(resp, req, ctx)
