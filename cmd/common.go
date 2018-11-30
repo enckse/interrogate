@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -20,6 +21,7 @@ import (
 const (
 	JsonFile     = ".json"
 	MarkdownFile = ".md"
+	CsvFile      = ".csv"
 	htmlFile     = ".html"
 	defaultStore = "/var/cache/survey/"
 	questionConf = ".config"
@@ -338,7 +340,17 @@ func write(b *bytes.Buffer, text string) {
 	b.Write([]byte(text))
 }
 
-func stitch(m *Manifest, ext, dir, out string) error {
+func stitch(m *Manifest, ext, dir, out string, force bool) error {
+	if opsys.PathExists(out) {
+		if force {
+			err := os.Remove(out)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New("output file already exists (force?)")
+		}
+	}
 	err := m.Check()
 	if err != nil {
 		return err
@@ -346,6 +358,7 @@ func stitch(m *Manifest, ext, dir, out string) error {
 	b := &bytes.Buffer{}
 	isJson := ext == JsonFile
 	isMarkdown := ext == MarkdownFile
+	isCsv := ext == CsvFile
 	if isJson {
 		write(b, "[\n")
 	}
@@ -366,7 +379,21 @@ func stitch(m *Manifest, ext, dir, out string) error {
 		logger.WriteInfo("stitching client", client)
 		path := filepath.Join(dir, f+ext)
 		if opsys.PathNotExists(path) {
-			return errors.New("missing file for client")
+			return errors.New(fmt.Sprintf("missing file for client: %s", path))
+		}
+		if isCsv {
+			var cmds []string
+			if i == 0 {
+				cmds = append(cmds, "head -n 1")
+			}
+			cmds = append(cmds, "tail -n +2")
+			for _, v := range cmds {
+				_, err := opsys.RunBashCommand(fmt.Sprintf("cat %s | %s >> %s", path, v, out))
+				if err != nil {
+					return err
+				}
+			}
+			continue
 		}
 		existing, rerr := ioutil.ReadFile(path)
 		if rerr != nil {
@@ -377,6 +404,9 @@ func stitch(m *Manifest, ext, dir, out string) error {
 		if isJson {
 			write(b, "}\n")
 		}
+	}
+	if isCsv {
+		return nil
 	}
 	if isJson {
 		write(b, "]")

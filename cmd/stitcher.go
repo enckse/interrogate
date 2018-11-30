@@ -55,10 +55,11 @@ func main() {
 	dir := flag.String("directory", defaultStore, "location of files to stitch")
 	ext := flag.String("extension", JsonFile, "file extension for stitching")
 	out := flag.String("output", "results", "output results")
+	force := flag.Bool("force", false, "force overwrite existing results")
 	flag.Parse()
 	logger.WriteInfo(vers)
 	extension := *ext
-	if extension != JsonFile && extension != MarkdownFile {
+	if extension != JsonFile && extension != MarkdownFile && extension != CsvFile {
 		logger.WriteWarn("unknown input extension", extension)
 		return
 	}
@@ -83,7 +84,7 @@ func main() {
 		logger.WriteError("invalid manifest", err)
 		return
 	}
-	e := stitch(m, extension, *dir, outFile)
+	e := stitch(m, extension, *dir, outFile, *force)
 	if e != nil {
 		logger.WriteError("stitching failed", e)
 	}

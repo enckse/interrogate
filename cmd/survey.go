@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -199,11 +200,11 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 			logger.WriteError("unable to write json", merr)
 		}
 	} else {
-		logger.WriteError("result writing json output", jerr)
+		logger.WriteError("error writing json output", jerr)
 	}
 	f, err := newFile(fname+MarkdownFile, ctx)
 	if err != nil {
-		logger.WriteError("result error", err)
+		logger.WriteError("result error creating markdown file", err)
 		return
 	}
 	defer f.Close()
@@ -216,7 +217,11 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
+	var csvValues [][]string
+	csvValues = append(csvValues, []string{})
+	csvValues = append(csvValues, []string{})
 	for _, k := range keys {
+		csvValues[0] = append(csvValues[0], k)
 		v := data[k]
 		useNumber := 0
 		questionType := k
@@ -234,6 +239,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 		var localLines []string
 		localLines = append(localLines, fmt.Sprintf("#### %d. %s\n\n```\n", useNumber, questionType))
 		noAnswer := true
+		csvValues[1] = append(csvValues[1], strings.Join(v, "\n"))
 		for _, value := range v {
 			if len(strings.TrimSpace(value)) == 0 {
 				continue
@@ -255,6 +261,13 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 	}
 	for _, l := range metaSet {
 		writeString(f, l)
+	}
+	f, err = newFile(fname+CsvFile, ctx)
+	w := csv.NewWriter(f)
+	w.WriteAll(csvValues)
+	err = w.Error()
+	if err != nil {
+		logger.WriteError("csv output error", err)
 	}
 }
 
@@ -379,7 +392,7 @@ func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	_, m, werr := readManifestFile(ctx)
 	if werr == nil {
 		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
-		err := stitch(m, MarkdownFile, ctx.store, results)
+		err := stitch(m, MarkdownFile, ctx.store, results, true)
 		if err == nil {
 			data, err := ioutil.ReadFile(results + htmlFile)
 			if err == nil {
