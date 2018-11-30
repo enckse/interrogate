@@ -5,7 +5,8 @@ import (
 	"flag"
 	"io/ioutil"
 
-	"github.com/epiphyte/goutils"
+	"github.com/epiphyte/goutils/logger"
+	"github.com/epiphyte/goutils/opsys"
 )
 
 func mergeManifests(files []string, workingFile string) (string, error) {
@@ -18,7 +19,7 @@ func mergeManifests(files []string, workingFile string) (string, error) {
 	clients := make(map[string]string)
 	modes := make(map[string]string)
 	for _, manifest := range files {
-		if goutils.PathNotExists(manifest) {
+		if opsys.PathNotExists(manifest) {
 			return "", errors.New("invalid manifest file given for merge")
 		}
 		b, err := ioutil.ReadFile(manifest)
@@ -55,35 +56,35 @@ func main() {
 	ext := flag.String("extension", JsonFile, "file extension for stitching")
 	out := flag.String("output", "results", "output results")
 	flag.Parse()
-	goutils.WriteInfo(vers)
+	logger.WriteInfo(vers)
 	extension := *ext
 	if extension != JsonFile && extension != MarkdownFile {
-		goutils.WriteWarn("unknown input extension", extension)
+		logger.WriteWarn("unknown input extension", extension)
 		return
 	}
 	manifest, err := mergeManifests(manifests, *out+".manifest")
 	if err != nil {
-		goutils.WriteError("unable to get a unique manifest", err)
+		logger.WriteError("unable to get a unique manifest", err)
 		return
 	}
 	file := manifest
-	if goutils.PathNotExists(file) {
-		goutils.WriteWarn("manifest file not found", file)
+	if opsys.PathNotExists(file) {
+		logger.WriteWarn("manifest file not found", file)
 		return
 	}
 	outFile := *out + extension
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
-		goutils.WriteError("unable to read manifest", err)
+		logger.WriteError("unable to read manifest", err)
 		return
 	}
 	m, err := readManifest(b)
 	if err != nil {
-		goutils.WriteError("invalid manifest", err)
+		logger.WriteError("invalid manifest", err)
 		return
 	}
 	e := stitch(m, extension, *dir, outFile)
 	if e != nil {
-		goutils.WriteError("stitching failed", e)
+		logger.WriteError("stitching failed", e)
 	}
 }

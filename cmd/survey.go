@@ -17,7 +17,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/epiphyte/goutils"
+	"github.com/epiphyte/goutils/config"
+	"github.com/epiphyte/goutils/logger"
+	"github.com/epiphyte/goutils/opsys"
 )
 
 var (
@@ -40,7 +42,7 @@ func readContent(directory string, name string) string {
 	file := filepath.Join(directory, name)
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
-		goutils.WriteError("unable to read file: "+file, err)
+		logger.WriteError("unable to read file: "+file, err)
 		panic("bad file")
 	}
 	return string(b)
@@ -52,7 +54,7 @@ func readTemplate(directory string, tmpl string) *template.Template {
 	def := strings.Replace(base, "{{CONTENT}}", file, -1)
 	t, err := template.New("t").Parse(def)
 	if err != nil {
-		goutils.WriteError("unable to read template: "+file, err)
+		logger.WriteError("unable to read template: "+file, err)
 		panic("bad template")
 	}
 	return t
@@ -61,7 +63,7 @@ func readTemplate(directory string, tmpl string) *template.Template {
 func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageData) {
 	err := tmpl.Execute(resp, pd)
 	if err != nil {
-		goutils.WriteError("template execution error", err)
+		logger.WriteError("template execution error", err)
 	}
 }
 
@@ -81,7 +83,7 @@ func getTuple(req *http.Request, strPos int) (string, bool) {
 	parts := strings.Split(path, "/")
 	required := strPos
 	if len(parts) < required+1 {
-		goutils.WriteInfo("warning, invalid url", path)
+		logger.WriteInfo("warning, invalid url", path)
 		return "", false
 	}
 	return parts[strPos], true
@@ -89,7 +91,7 @@ func getTuple(req *http.Request, strPos int) (string, bool) {
 
 func writeString(file *os.File, line string) {
 	if _, err := file.WriteString(line); err != nil {
-		goutils.WriteError("file append error", err)
+		logger.WriteError("file append error", err)
 	}
 }
 
@@ -99,14 +101,14 @@ func createPath(filename string, ctx *Context) string {
 
 func newFile(filename string, ctx *Context) (*os.File, error) {
 	fname := createPath(filename, ctx)
-	goutils.WriteInfo("file name", fname)
+	logger.WriteInfo("file name", fname)
 	return os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 }
 
 func responseBadRequest(resp http.ResponseWriter, message string, err error) {
-	goutils.WriteInfo("bad request")
+	logger.WriteInfo("bad request")
 	if err != nil {
-		goutils.WriteError("request error", err)
+		logger.WriteError("request error", err)
 	}
 	http.Error(resp, message, 400)
 }
@@ -114,21 +116,21 @@ func responseBadRequest(resp http.ResponseWriter, message string, err error) {
 func readManifestFile(ctx *Context) (string, *Manifest, error) {
 	existing := &Manifest{}
 	fname := createPath(fmt.Sprintf("%s.%s", ctx.tag, indexFile), ctx)
-	if goutils.PathExists(fname) {
-		goutils.WriteInfo("reading index")
+	if opsys.PathExists(fname) {
+		logger.WriteInfo("reading index")
 		c, err := ioutil.ReadFile(fname)
 		if err != nil {
-			goutils.WriteError("unable to read index", err)
+			logger.WriteError("unable to read index", err)
 			return fname, nil, err
 		}
 		existing, err = readManifest(c)
 		if err != nil {
-			goutils.WriteError("corrupt index", err)
+			logger.WriteError("corrupt index", err)
 			return fname, nil, err
 		}
 		err = existing.Check()
 		if err != nil {
-			goutils.WriteWarn("invalid index... (lengths)")
+			logger.WriteWarn("invalid index... (lengths)")
 			return fname, nil, errors.New("invalid index lengths")
 		}
 	}
@@ -168,7 +170,7 @@ func reindex(client, filename string, ctx *Context, mode string) {
 		existing.Files = append(existing.Files, filename)
 		existing.Modes = append(existing.Modes, mode)
 	}
-	goutils.WriteInfo("writing new index", fname)
+	logger.WriteInfo("writing new index", fname)
 	writeManifest(existing, fname)
 }
 
@@ -193,14 +195,14 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 		if merr == nil {
 			j.Write(jsonString)
 		} else {
-			goutils.WriteError("unable to write json", merr)
+			logger.WriteError("unable to write json", merr)
 		}
 	} else {
-		goutils.WriteError("result writing json output", jerr)
+		logger.WriteError("result writing json output", jerr)
 	}
 	f, err := newFile(fname+MarkdownFile, ctx)
 	if err != nil {
-		goutils.WriteError("result error", err)
+		logger.WriteError("result error", err)
 		return
 	}
 	defer f.Close()
@@ -261,7 +263,7 @@ func getClient(req *http.Request) string {
 	if err == nil {
 		remoteAddress = host
 	} else {
-		goutils.WriteError("unable to read host port", err)
+		logger.WriteError("unable to read host port", err)
 	}
 	return remoteAddress
 }
@@ -326,7 +328,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 			q := filepath.Join(ctx.temp, questionFileName)
 			err := ioutil.WriteFile(q, []byte(name), 0644)
 			if err != nil {
-				goutils.WriteError("unable to write question file and restart", err)
+				logger.WriteError("unable to write question file and restart", err)
 			}
 		case "restart":
 			for _, val := range v {
@@ -337,7 +339,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		}
 	}
 	if restarting {
-		goutils.WriteInfo("restart requested")
+		logger.WriteInfo("restart requested")
 		os.Exit(1)
 	}
 	lock.Lock()
@@ -363,7 +365,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 	err = ctx.adminTmpl.Execute(resp, pd)
 	if err != nil {
-		goutils.WriteError("template execution error", err)
+		logger.WriteError("template execution error", err)
 	}
 }
 
@@ -383,11 +385,11 @@ func resultsEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) 
 			if err == nil {
 				pd.Rendered = template.HTML(data)
 			} else {
-				goutils.WriteError("unable to read stitch results", err)
+				logger.WriteError("unable to read stitch results", err)
 				pd.Warning = err.Error()
 			}
 		} else {
-			goutils.WriteError("unable to stitch", err)
+			logger.WriteError("unable to stitch", err)
 			pd.Warning = err.Error()
 		}
 	} else {
@@ -395,7 +397,7 @@ func resultsEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) 
 	}
 	err = ctx.resultsTmpl.Execute(resp, pd)
 	if err != nil {
-		goutils.WriteError("template execution error", err)
+		logger.WriteError("template execution error", err)
 	}
 }
 
@@ -427,34 +429,34 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	bind := flag.String("bind", "0.0.0.0:8080", "binding (ip:port)")
 	tag := flag.String("tag", timeString(), "output tag")
-	config := flag.String("config", "settings.conf", "configuration path")
+	configFile := flag.String("config", "settings.conf", "configuration path")
 	flag.Parse()
-	cfg := *config
-	logging := goutils.NewLogOptions()
+	cfg := *configFile
+	logging := logger.NewLogOptions()
 	logging.Info = true
-	goutils.ConfigureLogging(logging)
-	goutils.WriteInfo(vers)
-	conf, err := goutils.LoadConfig(cfg, goutils.NewConfigSettings())
+	logger.ConfigureLogging(logging)
+	logger.WriteInfo(vers)
+	conf, err := config.LoadConfig(cfg, config.NewConfigSettings())
 	if err != nil {
-		goutils.Fatal("unable to load config", err)
+		logger.Fatal("unable to load config", err)
 	}
 	tmp := conf.GetStringOrDefault("temp", "/tmp/")
 	questionFile := filepath.Join(tmp, questionFileName)
-	existed := goutils.PathExists(questionFile)
+	existed := opsys.PathExists(questionFile)
 	questions := ""
 	if existed {
-		goutils.WriteInfo("loading question set input file", questionFile)
+		logger.WriteInfo("loading question set input file", questionFile)
 		q, err := ioutil.ReadFile(questionFile)
 		if err != nil {
-			goutils.Fatal("unable to read question setting file", err)
+			logger.Fatal("unable to read question setting file", err)
 		}
 		questions = string(q)
 	}
 	if err != nil {
 		if existed {
-			goutils.Fatal("unable to remove question file", err)
+			logger.Fatal("unable to remove question file", err)
 		} else {
-			goutils.WriteDebug("unable to remove non-existing file")
+			logger.WriteDebug("unable to remove non-existing file")
 		}
 	}
 	initialQuestions := conf.GetStringOrEmpty("questions")
@@ -503,7 +505,7 @@ type initSurvey struct {
 	ignores     map[string]struct{}
 }
 
-func runSurvey(conf *goutils.Config, settings *initSurvey) {
+func runSurvey(conf *config.Config, settings *initSurvey) {
 	static := conf.GetStringOrDefault("resources", "/usr/share/survey/resources/")
 	snapValue := conf.GetIntOrDefaultOnly("snapshot", 15)
 	ctx := &Context{}
@@ -521,7 +523,7 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 	ctx.available = []string{settings.inQuestions}
 	avails, err := ioutil.ReadDir(settings.searchDir)
 	if err != nil {
-		goutils.Fatal("unable to read available configs", err)
+		logger.Fatal("unable to read available configs", err)
 	}
 	for _, a := range avails {
 		base := filepath.Base(a.Name())
@@ -532,11 +534,11 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 			}
 		}
 	}
-	goutils.WriteInfo("admin token", ctx.token)
+	logger.WriteInfo("admin token", ctx.token)
 	for _, d := range []string{ctx.store, ctx.temp} {
 		err := os.MkdirAll(d, 0755)
 		if err != nil {
-			goutils.Fatal("unable to create directory", err)
+			logger.Fatal("unable to create directory", err)
 		}
 	}
 	ctx.load(settings.questions, settings.preOverlay, settings.postOverlay)
@@ -564,7 +566,7 @@ func runSurvey(conf *goutils.Config, settings *initSurvey) {
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
 	err = http.ListenAndServe(conf.GetStringOrDefault("bind", settings.bind), nil)
 	if err != nil {
-		goutils.WriteError("unable to start", err)
+		logger.WriteError("unable to start", err)
 		panic("failure")
 	}
 }

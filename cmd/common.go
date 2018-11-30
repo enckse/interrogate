@@ -12,7 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/epiphyte/goutils"
+	"github.com/epiphyte/goutils/logger"
+	"github.com/epiphyte/goutils/opsys"
 	"gitlab.com/golang-commonmark/markdown"
 )
 
@@ -162,12 +163,12 @@ type Question struct {
 func writeManifest(manifest *Manifest, filename string) {
 	datum, err := json.Marshal(manifest)
 	if err != nil {
-		goutils.WriteError("unable to marshal manifest", err)
+		logger.WriteError("unable to marshal manifest", err)
 		return
 	}
 	err = ioutil.WriteFile(filename, datum, 0644)
 	if err != nil {
-		goutils.WriteError("manifest writing failure", err)
+		logger.WriteError("manifest writing failure", err)
 	}
 }
 
@@ -194,7 +195,7 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 		if over == "" {
 			continue
 		}
-		if goutils.PathNotExists(over) {
+		if opsys.PathNotExists(over) {
 			panic("overlay file not found: " + over)
 		}
 		var c Config
@@ -318,9 +319,9 @@ func getWhenEmpty(value, dflt string) string {
 
 func (ctx *Context) load(q, pre, post string) {
 	err := ctx.newSet(fmt.Sprintf("%s%s", q, questionConf), pre, post)
-	goutils.WriteDebug("questions", q)
+	logger.WriteDebug("questions", q)
 	if err != nil {
-		goutils.WriteError("unable to load question set", err)
+		logger.WriteError("unable to load question set", err)
 		panic("invalid question set")
 	}
 }
@@ -364,9 +365,9 @@ func stitch(m *Manifest, ext, dir, out string) error {
 			write(b, fmt.Sprintf("%s (%s)", client, mode))
 			write(b, "\n---\n\n")
 		}
-		goutils.WriteInfo("stitching client", client)
+		logger.WriteInfo("stitching client", client)
 		path := filepath.Join(dir, f+ext)
-		if goutils.PathNotExists(path) {
+		if opsys.PathNotExists(path) {
 			return errors.New("missing file for client")
 		}
 		existing, rerr := ioutil.ReadFile(path)
