@@ -188,7 +188,9 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 		}
 	}
 	data["client"] = []string{client}
-	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, timeString(), mode, name)
+	ts := timeString()
+	data["timestamp"] = []string{ts}
+	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, ts, mode, name)
 	go reindex(client, fname, ctx, mode)
 	j, jerr := newFile(fname+JsonFile, ctx)
 	if jerr == nil {
