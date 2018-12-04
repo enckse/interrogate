@@ -64,6 +64,7 @@ type Context struct {
 	staticPath   string
 	token        string
 	available    []string
+	cfgName      string
 }
 
 type Field struct {
@@ -108,6 +109,7 @@ type ManifestData struct {
 	Warning   string
 	Available []string
 	Token     string
+	CfgName   string
 }
 
 type PageData struct {

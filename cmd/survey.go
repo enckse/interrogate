@@ -368,6 +368,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd.Title = "Admin"
 	pd.Tag = ctx.tag
 	pd.File = f
+	pd.CfgName = ctx.cfgName
 	if err == nil {
 		for i, obj := range m.Files {
 			entry := &ManifestEntry{}
@@ -534,6 +535,7 @@ func runSurvey(conf *config.Config, settings *initSurvey) {
 	ctx.adminTmpl = readTemplate(static, "admin.html")
 	ctx.token = conf.GetStringOrDefault("token", time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
+	ctx.cfgName = settings.questions
 	avails, err := ioutil.ReadDir(settings.searchDir)
 	if err != nil {
 		logger.Fatal("unable to read available configs", err)
