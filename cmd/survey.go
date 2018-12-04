@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -13,7 +12,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -204,73 +202,6 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 	} else {
 		logger.WriteError("error writing json output", jerr)
 	}
-	f, err := newFile(fname+MarkdownFile, ctx)
-	if err != nil {
-		logger.WriteError("result error creating markdown file", err)
-		return
-	}
-	defer f.Close()
-	questionNum := 1
-	metaNum := 1
-	mapping := ctx.questionMap
-	var metaSet []string
-	var keys []string
-	for k := range data {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	var csvValues [][]string
-	csvValues = append(csvValues, []string{})
-	csvValues = append(csvValues, []string{})
-	for _, k := range keys {
-		csvValues[0] = append(csvValues[0], k)
-		v := data[k]
-		useNumber := 0
-		questionType := k
-		qType, ok := mapping[k]
-		if ok {
-			useNumber = questionNum
-			questionType = qType
-			questionNum += 1
-		} else {
-			useNumber = metaNum
-			questionType = fmt.Sprintf("system (%s)", k)
-			metaNum += 1
-		}
-
-		var localLines []string
-		localLines = append(localLines, fmt.Sprintf("#### %d. %s\n\n```\n", useNumber, questionType))
-		noAnswer := true
-		csvValues[1] = append(csvValues[1], strings.Join(v, "\n"))
-		for _, value := range v {
-			if len(strings.TrimSpace(value)) == 0 {
-				continue
-			}
-			noAnswer = false
-			localLines = append(localLines, fmt.Sprintf("%s\n", value))
-		}
-		if noAnswer {
-			localLines = append(localLines, "<no response>\n")
-		}
-		localLines = append(localLines, fmt.Sprintf("```\n\n"))
-		for _, l := range localLines {
-			if ok {
-				writeString(f, l)
-			} else {
-				metaSet = append(metaSet, l)
-			}
-		}
-	}
-	for _, l := range metaSet {
-		writeString(f, l)
-	}
-	f, err = newFile(fname+CsvFile, ctx)
-	w := csv.NewWriter(f)
-	w.WriteAll(csvValues)
-	err = w.Error()
-	if err != nil {
-		logger.WriteError("csv output error", err)
-	}
 }
 
 func getClient(req *http.Request) string {
@@ -395,13 +326,20 @@ func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	_, m, werr := readManifestFile(ctx)
 	if werr == nil {
 		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
-		err := stitch(m, MarkdownFile, ctx.store, results, true)
+		err := stitch(m, ctx.store, results, true)
 		if err == nil {
-			data, err := ioutil.ReadFile(results + htmlFile)
+			htmlResult := results + htmlFile
+			err = convFormat(results, ctx.cfgName, htmlResult)
 			if err == nil {
-				resp.Write(data)
+				data, err := ioutil.ReadFile(htmlResult)
+				if err == nil {
+					resp.Write(data)
+				} else {
+					logger.WriteError("unable to read stitch results", err)
+					werr = err
+				}
 			} else {
-				logger.WriteError("unable to read stitch results", err)
+				logger.WriteError("unable to convert format", err)
 				werr = err
 			}
 		} else {

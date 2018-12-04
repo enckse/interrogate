@@ -15,13 +15,10 @@ import (
 
 	"github.com/epiphyte/goutils/logger"
 	"github.com/epiphyte/goutils/opsys"
-	"gitlab.com/golang-commonmark/markdown"
 )
 
 const (
 	JsonFile     = ".json"
-	MarkdownFile = ".md"
-	CsvFile      = ".csv"
 	htmlFile     = ".html"
 	defaultStore = "/var/cache/survey/"
 	questionConf = ".config"
@@ -30,12 +27,6 @@ const (
 
 var (
 	vers = "master"
-	md   = markdown.New(
-		markdown.HTML(true),
-		markdown.Tables(true),
-		markdown.Linkify(true),
-		markdown.Typographer(true),
-	)
 )
 
 type strFlagSlice []string
@@ -352,7 +343,7 @@ func convFormat(inputJsonFile, configFile, outFile string) error {
 	return err
 }
 
-func stitch(m *Manifest, ext, dir, out string, force bool) error {
+func stitch(m *Manifest, dir, out string, force bool) error {
 	if opsys.PathExists(out) {
 		if force {
 			err := os.Remove(out)
@@ -368,44 +359,18 @@ func stitch(m *Manifest, ext, dir, out string, force bool) error {
 		return err
 	}
 	b := &bytes.Buffer{}
-	isJson := ext == JsonFile
-	isMarkdown := ext == MarkdownFile
-	isCsv := ext == CsvFile
-	if isJson {
-		write(b, "[\n")
-	}
+	write(b, "[\n")
 	for i, f := range m.Files {
 		client := m.Clients[i]
 		mode := m.Modes[i]
-		if isJson {
-			if i > 0 {
-				write(b, "\n,\n")
-			}
-			write(b, fmt.Sprintf("{\"mode\": \"%s\", \"client\": \"%s\", \"data\":", mode, client))
+		if i > 0 {
+			write(b, "\n,\n")
 		}
-		if isMarkdown {
-			write(b, "---\n")
-			write(b, fmt.Sprintf("%s (%s)", client, mode))
-			write(b, "\n---\n\n")
-		}
+		write(b, fmt.Sprintf("{\"mode\": \"%s\", \"client\": \"%s\", \"data\":", mode, client))
 		logger.WriteInfo("stitching client", client)
-		path := filepath.Join(dir, f+ext)
+		path := filepath.Join(dir, f+JsonFile)
 		if opsys.PathNotExists(path) {
 			return errors.New(fmt.Sprintf("missing file for client: %s", path))
-		}
-		if isCsv {
-			var cmds []string
-			if i == 0 {
-				cmds = append(cmds, "head -n 1")
-			}
-			cmds = append(cmds, "tail -n +2")
-			for _, v := range cmds {
-				_, err := opsys.RunBashCommand(fmt.Sprintf("cat %s | %s >> %s", path, v, out))
-				if err != nil {
-					return err
-				}
-			}
-			continue
 		}
 		existing, rerr := ioutil.ReadFile(path)
 		if rerr != nil {
@@ -413,28 +378,13 @@ func stitch(m *Manifest, ext, dir, out string, force bool) error {
 		}
 		b.Write(existing)
 		write(b, "\n")
-		if isJson {
-			write(b, "}\n")
-		}
+		write(b, "}\n")
 	}
-	if isCsv {
-		return nil
-	}
-	if isJson {
-		write(b, "]")
-	}
+	write(b, "]")
 	datum := b.Bytes()
 	err = ioutil.WriteFile(out, datum, 0644)
 	if err != nil {
 		return err
-	}
-	if isMarkdown {
-		tokens := md.Parse(datum)
-		markdown := &bytes.Buffer{}
-		write(markdown, fmt.Sprintf("<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>%s</title></head><body>", out))
-		write(markdown, md.RenderTokensToString(tokens))
-		write(markdown, "</body></html>")
-		return ioutil.WriteFile(fmt.Sprintf("%s%s", out, htmlFile), markdown.Bytes(), 0644)
 	}
 	return nil
 }
