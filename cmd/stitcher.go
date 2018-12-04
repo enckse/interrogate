@@ -51,18 +51,14 @@ func mergeManifests(files []string, workingFile string) (string, error) {
 
 func main() {
 	var manifests strFlagSlice
+	var extensions strFlagSlice
 	flag.Var(&manifests, "manifest", "input manifest files")
 	dir := flag.String("directory", defaultStore, "location of files to stitch")
-	ext := flag.String("extension", JsonFile, "file extension for stitching")
+	flag.Var(&extensions, "extension", "file extension/type to out (none == all)")
 	out := flag.String("output", "results", "output results")
 	force := flag.Bool("force", false, "force overwrite existing results")
 	flag.Parse()
 	logger.WriteInfo(vers)
-	extension := *ext
-	if extension != JsonFile && extension != MarkdownFile && extension != CsvFile {
-		logger.WriteWarn("unknown input extension", extension)
-		return
-	}
 	manifest, err := mergeManifests(manifests, *out+".manifest")
 	if err != nil {
 		logger.WriteError("unable to get a unique manifest", err)
@@ -73,7 +69,6 @@ func main() {
 		logger.WriteWarn("manifest file not found", file)
 		return
 	}
-	outFile := *out + extension
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
 		logger.WriteError("unable to read manifest", err)
@@ -84,8 +79,18 @@ func main() {
 		logger.WriteError("invalid manifest", err)
 		return
 	}
-	e := stitch(m, extension, *dir, outFile, *force)
-	if e != nil {
-		logger.WriteError("stitching failed", e)
+	if len(extensions) == 0 {
+		extensions = []string{JsonFile, MarkdownFile, CsvFile}
+	}
+	for _, e := range extensions {
+		if e != JsonFile && e != MarkdownFile && e != CsvFile {
+			logger.WriteWarn("unknown input extension", e)
+			return
+		}
+		outFile := *out + e
+		e := stitch(m, e, *dir, outFile, *force)
+		if e != nil {
+			logger.WriteError("stitching failed", e)
+		}
 	}
 }
