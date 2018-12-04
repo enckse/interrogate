@@ -462,11 +462,6 @@ func main() {
 		logger.WriteInfo("loading question set input file", questionFile)
 		q, err := ioutil.ReadFile(questionFile)
 		if err != nil {
-			logger.WriteWarn("delete old questions file", questionFile)
-			err = os.Remove(questionFile)
-			if err != nil {
-				logger.WriteError("unable to clear cached question file", err)
-			}
 			logger.Fatal("unable to read question setting file", err)
 		}
 		questions = string(q)
