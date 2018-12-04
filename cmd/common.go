@@ -25,6 +25,7 @@ const (
 	htmlFile     = ".html"
 	defaultStore = "/var/cache/survey/"
 	questionConf = ".config"
+	pythonCmd    = "survey-pystitch"
 )
 
 var (
@@ -340,6 +341,15 @@ func NewPageData(req *http.Request, ctx *Context) *PageData {
 
 func write(b *bytes.Buffer, text string) {
 	b.Write([]byte(text))
+}
+
+func convFormat(inputJsonFile, configFile, outFile string) error {
+	_, err := opsys.RunBashCommand(fmt.Sprintf("%s %s %s", pythonCmd, configFile, inputJsonFile))
+	if err != nil {
+		return err
+	}
+	_, err = opsys.RunBashCommand(fmt.Sprintf("epiphyte-markdown -document -file %s.md > %s", inputJsonFile, outFile))
+	return err
 }
 
 func stitch(m *Manifest, ext, dir, out string, force bool) error {
