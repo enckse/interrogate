@@ -783,6 +783,7 @@ func runSurvey(conf *config.Config, settings *initSurvey) {
 	ctx.snapshot = snapValue
 	ctx.tag = conf.GetStringOrDefault("tag", settings.tag)
 	ctx.store = conf.GetStringOrDefault("storage", "/var/cache/survey/")
+	ctx.store = filepath.Join(ctx.store, ctx.tag)
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
 	ctx.beginTmpl = readTemplate(static, "begin.html")
