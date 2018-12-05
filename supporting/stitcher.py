@@ -80,6 +80,7 @@ def main():
     parser.add_argument("--out", default="results", help="output file(s)")
     args = parser.parse_args()
     try:
+        print("processing...")
         run(args)
     except Exception as e:
         print("unable to process for stitching")
@@ -101,6 +102,7 @@ def run(args):
     files = manifest["files"]
     modes = manifest["modes"]
     idx = 0
+    print("parsing clients...")
     for client in manifest["clients"]:
         m = modes[idx]
         f = files[idx]
@@ -109,6 +111,7 @@ def run(args):
         with open(os.path.join(args.dir, f + ".json")) as f:
             obj["data"] = json.loads(f.read())
         objs.append(obj)
+    print("reading data...")
     for mani in objs:
         client = mani["client"]
         mode = mani["mode"]
@@ -132,6 +135,7 @@ def run(args):
     fields = list([display(ind + 1, x[0]) for ind, x in enumerate(questions)])
     fields += [_CLIENT, _MODE]
     markdown_file = args.out + ".md"
+    print("outputs...")
     with open(args.out + ".json", 'w') as j_file:
         with open(markdown_file, 'w') as md_file:
             with open(args.out + ".csv", 'w') as c_file:

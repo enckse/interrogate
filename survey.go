@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -69,7 +68,6 @@ type Context struct {
 	questions    []Field
 	title        string
 	anon         bool
-	questionMap  map[string]string
 	staticPath   string
 	token        string
 	available    []string
@@ -234,7 +232,6 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 	}
 	ctx.title = config.Metadata.Title
 	var mapping []Field
-	questionMap := make(map[string]string)
 	number := 0
 	inCond := false
 	condCount := 0
@@ -256,7 +253,6 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 		field.Basis = q.Basis
 		field.Height = q.Height
 		field.Width = q.Width
-		questionMap[strconv.Itoa(k)] = fmt.Sprintf("%s (%s)", q.Text, q.Type)
 		field.Description = q.Description
 		defaultDimensions := false
 		switch q.Type {
@@ -315,7 +311,6 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 	if inCond {
 		panic("unclosed conditional")
 	}
-	ctx.questionMap = questionMap
 	ctx.questions = mapping
 	return nil
 }
