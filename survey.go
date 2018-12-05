@@ -49,7 +49,6 @@ type Context struct {
 	adminTmpl    *template.Template
 	questions    []Field
 	title        string
-	anon         bool
 	staticPath   string
 	token        string
 	available    []string
