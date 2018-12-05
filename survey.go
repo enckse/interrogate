@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -12,6 +13,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,11 +23,12 @@ import (
 	"github.com/epiphyte/goutils/opsys"
 )
 
-var (
-	lock = &sync.Mutex{}
-)
-
 const (
+	JsonFile         = ".json"
+	htmlFile         = ".html"
+	defaultStore     = "/var/cache/survey/"
+	questionConf     = ".config"
+	pythonCmd        = "survey-stitcher"
 	staticURL        = "/static/"
 	surveyURL        = "/survey/"
 	tokenParam       = "token"
@@ -37,6 +40,321 @@ const (
 	qReset           = "RESET"
 	saveFileName     = "save"
 )
+
+var (
+	lock = &sync.Mutex{}
+	vers = "master"
+)
+
+type strFlagSlice []string
+
+func (s *strFlagSlice) Set(str string) error {
+	*s = append(*s, str)
+	return nil
+}
+
+func (s *strFlagSlice) String() string {
+	return fmt.Sprintf("%v", *s)
+}
+
+type Context struct {
+	snapshot     int
+	tag          string
+	store        string
+	temp         string
+	beginTmpl    *template.Template
+	surveyTmpl   *template.Template
+	completeTmpl *template.Template
+	adminTmpl    *template.Template
+	questions    []Field
+	title        string
+	anon         bool
+	questionMap  map[string]string
+	staticPath   string
+	token        string
+	available    []string
+	cfgName      string
+}
+
+type Field struct {
+	Value       string
+	Id          int
+	Text        string
+	Input       bool
+	Long        bool
+	Label       bool
+	Check       bool
+	Number      bool
+	Explanation bool
+	Description string
+	Option      bool
+	Slider      bool
+	Required    string
+	Options     []string
+	SlideId     template.JS
+	SlideHideId template.JS
+	hidden      bool
+	Basis       string
+	Image       bool
+	Video       bool
+	Audio       bool
+	Height      string
+	Width       string
+	CondStart   bool
+	CondEnd     bool
+}
+
+type ManifestEntry struct {
+	Name   string
+	Client string
+	Mode   string
+}
+
+type ManifestData struct {
+	Title     string
+	Tag       string
+	File      string
+	Manifest  []*ManifestEntry
+	Warning   string
+	Available []string
+	Token     string
+	CfgName   string
+}
+
+type PageData struct {
+	QueryParams string
+	Title       string
+	Session     string
+	Snapshot    int
+	Hidden      []Field
+	Questions   []Field
+}
+
+type Config struct {
+	Metadata  Meta       `json:"meta"`
+	Questions []Question `json:"questions"`
+}
+
+type Meta struct {
+	Title string `json:"title"`
+}
+
+type Manifest struct {
+	Files   []string `json:"files"`
+	Clients []string `json:"clients"`
+	Modes   []string `json:"modes"`
+}
+
+func (m *Manifest) Check() error {
+	valid := true
+	if len(m.Files) != len(m.Clients) {
+		valid = false
+	}
+	if len(m.Files) != len(m.Modes) {
+		valid = false
+	}
+	if valid {
+		return nil
+	}
+	return errors.New("corrupt index")
+}
+
+type Question struct {
+	Text        string   `json:"text"`
+	Description string   `json:"desc"`
+	Type        string   `json:"type"`
+	Attributes  []string `json:"attrs"`
+	Options     []string `json:"options"`
+	Numbered    int      `json:"numbered"`
+	Basis       string   `json:"basis"`
+	Height      string   `json:"height"`
+	Width       string   `json:"width"`
+}
+
+func writeManifest(manifest *Manifest, filename string) {
+	datum, err := json.Marshal(manifest)
+	if err != nil {
+		logger.WriteError("unable to marshal manifest", err)
+		return
+	}
+	err = ioutil.WriteFile(filename, datum, 0644)
+	if err != nil {
+		logger.WriteError("manifest writing failure", err)
+	}
+}
+
+func readManifest(contents []byte) (*Manifest, error) {
+	var manifest Manifest
+	err := json.Unmarshal(contents, &manifest)
+	if err != nil {
+		return nil, err
+	}
+	return &manifest, nil
+}
+
+func (ctx *Context) newSet(configFile, pre, post string) error {
+	data, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return err
+	}
+	var config Config
+	err = json.Unmarshal(data, &config)
+	if err != nil {
+		return err
+	}
+	for idx, over := range []string{pre, post} {
+		if over == "" {
+			continue
+		}
+		if opsys.PathNotExists(over) {
+			panic("overlay file not found: " + over)
+		}
+		var c Config
+		oData, err := ioutil.ReadFile(over)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(oData, &c)
+		if err != nil {
+			return err
+		}
+		appending := c.Questions
+		switch idx {
+		case 0:
+			appending = config.Questions
+			config.Questions = c.Questions
+		case 1:
+			// this is valid but no-op
+		default:
+			panic("invalid overlay setting")
+		}
+		for _, oQuestion := range appending {
+			config.Questions = append(config.Questions, oQuestion)
+		}
+	}
+	ctx.title = config.Metadata.Title
+	var mapping []Field
+	questionMap := make(map[string]string)
+	number := 0
+	inCond := false
+	condCount := 0
+	for _, q := range config.Questions {
+		condCount += 1
+		k := number
+		number = number + 1
+		if q.Numbered > 0 {
+			k = q.Numbered
+		}
+		field := &Field{}
+		for _, attr := range q.Attributes {
+			if attr == "required" {
+				field.Required = attr
+			}
+		}
+		field.Id = k
+		field.Text = q.Text
+		field.Basis = q.Basis
+		field.Height = q.Height
+		field.Width = q.Width
+		questionMap[strconv.Itoa(k)] = fmt.Sprintf("%s (%s)", q.Text, q.Type)
+		field.Description = q.Description
+		defaultDimensions := false
+		switch q.Type {
+		case "input":
+			field.Input = true
+		case "hidden":
+			field.hidden = true
+		case "long":
+			field.Long = true
+		case "option":
+			field.Option = true
+			field.Options = q.Options
+		case "label":
+			field.Label = true
+		case "checkbox":
+			field.Check = true
+		case "number":
+			field.Number = true
+		case "image":
+			field.Image = true
+			defaultDimensions = true
+		case "audio":
+			field.Audio = true
+		case "video":
+			defaultDimensions = true
+			field.Video = true
+		case "slide":
+			field.Slider = true
+			field.SlideId = template.JS(fmt.Sprintf("slide%d", k))
+			field.SlideHideId = template.JS(fmt.Sprintf("shide%d", k))
+			field.Basis = getWhenEmpty(field.Basis, "50")
+		case "conditional":
+			if inCond {
+				if condCount == 1 {
+					panic("conditional contains no questions")
+				}
+				field.CondEnd = true
+				inCond = false
+			} else {
+				condCount = 0
+				inCond = true
+				field.CondStart = true
+			}
+		default:
+			panic("unknown question type: " + q.Type)
+		}
+		if field.Image || field.Audio || field.Video {
+			field.Basis = fmt.Sprintf("%s%s", ctx.staticPath, field.Basis)
+		}
+		if defaultDimensions {
+			field.Height = getWhenEmpty(field.Height, "250")
+			field.Width = getWhenEmpty(field.Width, "250")
+		}
+		mapping = append(mapping, *field)
+	}
+	if inCond {
+		panic("unclosed conditional")
+	}
+	ctx.questionMap = questionMap
+	ctx.questions = mapping
+	return nil
+}
+
+func getWhenEmpty(value, dflt string) string {
+	if len(strings.TrimSpace(value)) == 0 {
+		return dflt
+	} else {
+		return value
+	}
+}
+
+func (ctx *Context) load(q, pre, post string) {
+	err := ctx.newSet(fmt.Sprintf("%s%s", q, questionConf), pre, post)
+	logger.WriteDebug("questions", q)
+	if err != nil {
+		logger.WriteError("unable to load question set", err)
+		panic("invalid question set")
+	}
+}
+
+func NewPageData(req *http.Request, ctx *Context) *PageData {
+	pd := &PageData{}
+	pd.QueryParams = req.URL.RawQuery
+	pd.Snapshot = ctx.snapshot
+	if len(pd.QueryParams) > 0 {
+		pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
+	}
+	return pd
+}
+
+func write(b *bytes.Buffer, text string) {
+	b.Write([]byte(text))
+}
+
+func convFormat(manifest, out, dir, configFile string) error {
+	_, err := opsys.RunBashCommand(fmt.Sprintf("%s --manifest %s --out %s --dir %s --config %s", pythonCmd, manifest, out, dir, configFile))
+	return err
+}
 
 func readContent(directory string, name string) string {
 	file := filepath.Join(directory, name)
@@ -323,23 +641,16 @@ func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 	lock.Lock()
 	defer lock.Unlock()
-	_, m, werr := readManifestFile(ctx)
+	f, _, werr := readManifestFile(ctx)
 	if werr == nil {
 		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
-		err := stitch(m, ctx.store, results, true)
+		err := convFormat(f, results, ctx.store, ctx.cfgName)
 		if err == nil {
-			htmlResult := results + htmlFile
-			err = convFormat(results, ctx.cfgName, htmlResult)
+			data, err := ioutil.ReadFile(results + htmlFile)
 			if err == nil {
-				data, err := ioutil.ReadFile(htmlResult)
-				if err == nil {
-					resp.Write(data)
-				} else {
-					logger.WriteError("unable to read stitch results", err)
-					werr = err
-				}
+				resp.Write(data)
 			} else {
-				logger.WriteError("unable to convert format", err)
+				logger.WriteError("unable to read stitch results", err)
 				werr = err
 			}
 		} else {
