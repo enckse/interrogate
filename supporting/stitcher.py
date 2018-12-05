@@ -75,8 +75,10 @@ def main():
     """Program entry point."""
     parser = argparse.ArgumentParser(description="stitch survey results")
     parser.add_argument("--manifest", required=True, help="input manifest")
-    parser.add_argument("--config", required=True, help="input config")
     parser.add_argument("--dir", required=True, help="directory of files")
+    parser.add_argument("--config", required=True, help="input config")
+    parser.add_argument("--pre", help="post overlay config")
+    parser.add_argument("--post", help="pre overlay config")
     parser.add_argument("--out", default="results", help="output file(s)")
     args = parser.parse_args()
     try:
@@ -88,16 +90,25 @@ def main():
         exit(1)
 
 
+def load_config(config):
+    """Load a config to objects."""
+    cfg = {}
+    with open(config) as f:
+        cfg = json.loads(f.read())
+    return list([(x["text"], x["type"]) for x in cfg["questions"]])
+
+
 def run(args):
     """Run the stitcher."""
-    cfg = {}
-    with open(args.config) as f:
-        cfg = json.loads(f.read())
     manifest = {}
     with open(args.manifest) as f:
         manifest = json.loads(f.read())
     results = []
-    questions = list([(x["text"], x["type"]) for x in cfg["questions"]])
+    questions = load_config(args.config)
+    if args.pre and len(args.pre) > 0:
+        questions = load_config(args.pre) + questions
+    if args.post and len(args.post) > 0:
+        questions = questions + load_config(args.post)
     objs = []
     files = manifest["files"]
     modes = manifest["modes"]
@@ -123,17 +134,16 @@ def run(args):
                 continue
             idx[int(v)] = values
         datum = []
-        count = 1
         for k in sorted(idx.keys()):
             text = questions[k][0]
             typed = questions[k][1]
-            disp = display(count, text)
+            disp = display(k, text)
             datum.append(Data(disp, typed, idx[k]))
-            count += 1
         obj = Result(mode, client, datum)
         results.append(obj)
-    fields = list([display(ind + 1, x[0]) for ind, x in enumerate(questions)])
+    fields = list([display(ind, x[0]) for ind, x in enumerate(questions)])
     fields += [_CLIENT, _MODE]
+    fields = list(sorted(fields))
     markdown_file = args.out + ".md"
     print("outputs...")
     with open(args.out + ".json", 'w') as j_file:

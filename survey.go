@@ -72,6 +72,8 @@ type Context struct {
 	token        string
 	available    []string
 	cfgName      string
+	preManifest  string
+	postManifest string
 }
 
 type Field struct {
@@ -221,8 +223,10 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 		case 0:
 			appending = config.Questions
 			config.Questions = c.Questions
+			ctx.preManifest = over
 		case 1:
 			// this is valid but no-op
+			ctx.postManifest = over
 		default:
 			panic("invalid overlay setting")
 		}
@@ -346,8 +350,15 @@ func write(b *bytes.Buffer, text string) {
 	b.Write([]byte(text))
 }
 
-func convFormat(manifest, out, dir, configFile string) error {
-	_, err := opsys.RunBashCommand(fmt.Sprintf("%s --manifest %s --out %s --dir %s --config %s", pythonCmd, manifest, out, dir, configFile))
+func convFormat(manifest, out, dir, configFile, pre, post string) error {
+	includes := ""
+	if len(pre) > 0 {
+		includes = fmt.Sprintf("--pre %s", pre)
+	}
+	if len(post) > 0 {
+		includes = fmt.Sprintf("%s --post %s", post)
+	}
+	_, err := opsys.RunBashCommand(fmt.Sprintf("%s --manifest %s --out %s --dir %s --config %s %s", pythonCmd, manifest, out, dir, configFile, includes))
 	return err
 }
 
@@ -639,7 +650,7 @@ func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	f, _, werr := readManifestFile(ctx)
 	if werr == nil {
 		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
-		err := convFormat(f, results, ctx.store, ctx.cfgName+questionConf)
+		err := convFormat(f, results, ctx.store, ctx.cfgName+questionConf, ctx.preManifest, ctx.postManifest)
 		if err == nil {
 			data, err := ioutil.ReadFile(results + htmlFile)
 			if err == nil {
