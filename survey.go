@@ -57,6 +57,18 @@ type Context struct {
 	postManifest string
 }
 
+type initSurvey struct {
+	bind        string
+	tag         string
+	tmp         string
+	inQuestions string
+	questions   string
+	preOverlay  string
+	postOverlay string
+	searchDir   string
+	ignores     map[string]struct{}
+}
+
 type Field struct {
 	Value       string
 	Id          int
@@ -736,18 +748,6 @@ func main() {
 		searchDir:   dir,
 		ignores:     ignore,
 	})
-}
-
-type initSurvey struct {
-	bind        string
-	tag         string
-	tmp         string
-	inQuestions string
-	questions   string
-	preOverlay  string
-	postOverlay string
-	searchDir   string
-	ignores     map[string]struct{}
 }
 
 func runSurvey(conf *config.Config, settings *initSurvey) {
