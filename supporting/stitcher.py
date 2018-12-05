@@ -15,10 +15,10 @@ _HTML_FOOTER = "</body></html>"
 class Data(object):
     """Data object."""
 
-    def __init__(self, text, typed, actual):
+    def __init__(self, disp, typed, actual):
         """Initialize the instance."""
-        self.text = text
         self.typed = typed
+        self.disp = disp
         data = []
         for v in actual:
             if v.strip() == "":
@@ -31,7 +31,7 @@ class Data(object):
 
     def to_md(self, md_file):
         """Convert to markdown."""
-        md_file.write("\n#### {} ({})\n".format(self.text, self.typed))
+        md_file.write("\n#### {} ({})\n".format(self.disp, self.typed))
         md_file.write("\n```\n")
         md_file.write(self.data)
         md_file.write("\n```\n")
@@ -59,9 +59,14 @@ class Result(object):
         obj[_CLIENT] = self.client
         obj[_MODE] = self.mode
         for d in self.data:
-            obj[d.text] = d.data
+            obj[d.disp] = d.data
         csv_file.writerow(obj)
         json_file.write(json.dumps(obj))
+
+
+def display(number, text):
+    """Output display text."""
+    return "{}. {}".format(number, text)
 
 
 def main():
@@ -113,13 +118,17 @@ def run(args):
                 continue
             idx[int(v)] = values
         datum = []
+        count = 1
         for k in sorted(idx.keys()):
             text = questions[k][0]
             typed = questions[k][1]
-            datum.append(Data(text, typed, idx[k]))
+            disp = display(count, text)
+            datum.append(Data(disp, typed, idx[k]))
+            count += 1
         obj = Result(mode, client, datum)
         results.append(obj)
-    fields = list([x[0] for x in questions]) + [_CLIENT, _MODE]
+    fields = list([display(ind, x) for ind, x in enumerate(questions)])
+    fields += [_CLIENT, _MODE]
     markdown_file = args.out + ".md"
     with open(args.out + ".json", 'w') as j_file:
         with open(markdown_file, 'w') as md_file:
