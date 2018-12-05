@@ -61,6 +61,9 @@ window.onload=function(){
             <input class="" value="0" onchange="toggleCheckbox('conditional-{{ $question.Id }}')" type="checkbox" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
             <div style="display: none;" id="conditional-{{ $question.Id }}">
         {{- end -}}
+        {{ if $question.HorizontalFeed }}
+            <hr />
+        {{- end -}}
         {{ if $question.Explanation }}
             <input class="u-full-width" type="hidden" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
         {{- end -}}

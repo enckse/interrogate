@@ -86,15 +86,17 @@ type Field struct {
 	Options     []string
 	SlideId     template.JS
 	SlideHideId template.JS
-	hidden      bool
 	Basis       string
 	Image       bool
 	Video       bool
 	Audio       bool
 	Height      string
 	Width       string
-	CondStart   bool
-	CondEnd     bool
+	// Control types, not input types
+	CondStart      bool
+	CondEnd        bool
+	HorizontalFeed bool
+	hidden         bool
 }
 
 type ManifestEntry struct {
@@ -276,6 +278,8 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 		case "video":
 			defaultDimensions = true
 			field.Video = true
+		case "hr":
+			field.HorizontalFeed = true
 		case "slide":
 			field.Slider = true
 			field.SlideId = template.JS(fmt.Sprintf("slide%d", k))
