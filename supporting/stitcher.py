@@ -51,14 +51,15 @@ class Result(object):
         for d in self.data:
             d.to_md(md_file)
 
-    def to_csv(self, csv_file):
-        """Convert to csv file."""
+    def to_object(self, json_file, csv_file):
+        """Convert to object-based output."""
         obj = {}
         obj[_CLIENT] = self.client
         obj[_MODE] = self.mode
         for d in self.data:
             obj[d.text] = d.data
         csv_file.writerow(obj)
+        json_file.write(json.dumps(obj))
 
 
 def main():
@@ -123,10 +124,15 @@ def run(args):
             with open(args.out + ".csv", 'w') as c_file:
                 csv_file = csv.DictWriter(c_file, fieldnames=fields)
                 csv_file.writeheader()
+                j_file.write("[\n")
+                first = True
                 for result in results:
                     result.to_md(md_file)
-                    result.to_csv(csv_file)
-                j_file.write(json.dumps(results))
+                    if not first:
+                        j_file.write("\n,\n")
+                    first = False
+                    result.to_object(j_file, csv_file)
+                j_file.write("\n]")
     with open(args.out + ".html", 'w') as h_file:
         with open(markdown_file) as m_file:
             html = markdown.markdown(m_file.read())
