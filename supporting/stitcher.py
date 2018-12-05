@@ -50,7 +50,8 @@ class Result(object):
     def to_md(self, md_file):
         """Convert to md file."""
         md_file.write("\n---\n")
-        md_file.write("### {} ({})\n".format(self.client, self.mode))
+        md_file.write("### {}\n".format(self.client))
+        md_file.write("\n```\n{}\n```\n".format(self.mode))
         for d in self.data:
             d.to_md(md_file)
         md_file.write("\n")
@@ -125,12 +126,15 @@ def run(args):
     print("reading data...")
     for mani in objs:
         client = mani["client"]
-        mode = mani["mode"]
+        mode = [mani["mode"]]
         data = mani['data']
         idx = {}
         for v in data:
             values = data[v]
-            if v in ["session", "client", "timestamp"]:
+            if v == "client":
+                continue
+            if v in ["session", "timestamp"]:
+                mode = mode + values
                 continue
             idx[int(v)] = values
         datum = []
@@ -139,7 +143,7 @@ def run(args):
             typed = questions[k][1]
             disp = display(k, text)
             datum.append(Data(disp, typed, idx[k]))
-        obj = Result(mode, client, datum)
+        obj = Result(" - ".join(mode), client, datum)
         results.append(obj)
     fields = list([display(ind, x[0]) for ind, x in enumerate(questions)])
     fields += [_CLIENT, _MODE]
