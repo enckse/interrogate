@@ -356,7 +356,7 @@ func convFormat(manifest, out, dir, configFile, pre, post string) error {
 		includes = fmt.Sprintf("--pre %s", pre)
 	}
 	if len(post) > 0 {
-		includes = fmt.Sprintf("%s --post %s", post)
+		includes = fmt.Sprintf("%s --post %s", includes, post)
 	}
 	_, err := opsys.RunBashCommand(fmt.Sprintf("%s --manifest %s --out %s --dir %s --config %s %s", pythonCmd, manifest, out, dir, configFile, includes))
 	return err
