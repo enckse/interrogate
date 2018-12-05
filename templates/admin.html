@@ -1,3 +1,21 @@
+<script type="text/javascript">
+$(document).ready(function () {
+    $('#admin_form').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url : "/admin?token={{ $.Token }}",
+            type: "POST",
+            data: $(this).serialize(),
+            success: function (data) {
+                setTimeout(location.reload.bind(location), 5000);
+            },
+            error: function (jXHR, textStatus, errorThrown) {
+                setTimeout(location.reload.bind(location), 5000);
+            }
+        });
+    });
+});
+</script>
 <h4>Survey Administration</h4>
 <hr />
 <h5>Tag {{ .Tag }}</h5>
@@ -21,7 +39,7 @@
 </table>
 <hr />
 <h4>management</h4>
-<form name="admin_form" id="admin_form" action="/admin?token={{ $.Token }}" method='POST'>
+<form name="admin_form" id="admin_form">
 <select name="questions" id="questions">
     {{ range $key, $q := .Available }}
         <option value="{{ $q }}">{{ $q }}</option>
