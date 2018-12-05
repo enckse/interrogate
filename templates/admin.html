@@ -22,7 +22,9 @@ $(document).ready(function () {
 <pre>
 {{ .File }}
 </pre>
-<b>Config: {{ .CfgName }}</b>: <a href="/results?token={{ .Token }}">results</a>
+<b>Config: {{ .CfgName }}</b>
+<br />
+<a href="/results?token={{ .Token }}">results</a>
 <table>
     <tr>
         <th>client</th>
