@@ -127,7 +127,7 @@ def run(args):
             count += 1
         obj = Result(mode, client, datum)
         results.append(obj)
-    fields = list([display(ind, x) for ind, x in enumerate(questions)])
+    fields = list([display(ind, x[0]) for ind, x in enumerate(questions)])
     fields += [_CLIENT, _MODE]
     markdown_file = args.out + ".md"
     with open(args.out + ".json", 'w') as j_file:
