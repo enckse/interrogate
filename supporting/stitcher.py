@@ -32,9 +32,9 @@ class Data(object):
     def to_md(self, md_file):
         """Convert to markdown."""
         md_file.write("\n#### {} ({})".format(self.text, self.typed))
-        md_file.write("\n```")
+        md_file.write("\n```\n")
         md_file.write(self.data)
-        md_file.write("```\n")
+        md_file.write("\n```\n")
 
 
 class Result(object):
