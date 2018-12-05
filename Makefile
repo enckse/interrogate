@@ -11,7 +11,7 @@ SUPPORT := supporting/
 all: clean build format
 
 build:
-	go build -o $(BIN)$@ $(FLAGS) survey.go
+	go build -o $(BIN)survey $(FLAGS) survey.go
 
 clean:
 	rm -rf $(BIN)
