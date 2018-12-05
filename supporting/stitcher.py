@@ -8,6 +8,8 @@ import markdown
 
 _CLIENT = "client"
 _MODE = "mode"
+_HTML_HEADER = "<html><body>"
+_HTML_FOOTER = "</body></html>"
 
 
 class Data(object):
@@ -134,9 +136,11 @@ def run(args):
                     result.to_object(j_file, csv_file)
                 j_file.write("\n]")
     with open(args.out + ".html", 'w') as h_file:
+        h_file.write(_HTML_HEADER)
         with open(markdown_file) as m_file:
             html = markdown.markdown(m_file.read())
             h_file.write(html)
+        h_file.write(_HTML_FOOTER)
 
 
 if __name__ == "__main__":
