@@ -70,7 +70,7 @@ def main():
     args = parser.parse_args()
     try:
         run(args)
-    except e as Exception:
+    except Exception as e:
         print("unable to process for stitching")
         print(e)
         exit(1)
@@ -86,7 +86,19 @@ def run(args):
         manifest = json.loads(f.read())
     results = []
     questions = list([(x["text"], x["type"]) for x in cfg["questions"]])
-    for mani in manifest:
+    objs = []
+    files = manifest["files"]
+    modes = manifest["modes"]
+    idx = 0
+    for client in manifest["clients"]:
+        m = modes[idx]
+        f = files[idx]
+        idx += 1
+        obj = {"client": client, "mode": m}
+        with open(os.path.join(args.dir, f)) as f:
+            obj["data"] = json.loads(f.read())
+        objs.append(obj)
+    for mani in objs:
         client = mani["client"]
         mode = mani["mode"]
         data = mani['data']
