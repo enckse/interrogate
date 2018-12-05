@@ -435,7 +435,7 @@ func createPath(filename string, ctx *Context) string {
 
 func newFile(filename string, ctx *Context) (*os.File, error) {
 	fname := createPath(filename, ctx)
-	logger.WriteInfo("file name", fname)
+	logger.WriteDebug("file name", fname)
 	return os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 }
 
@@ -451,7 +451,7 @@ func readManifestFile(ctx *Context) (string, *Manifest, error) {
 	existing := &Manifest{}
 	fname := createPath(fmt.Sprintf("%s.index.manifest", ctx.tag), ctx)
 	if opsys.PathExists(fname) {
-		logger.WriteInfo("reading index")
+		logger.WriteDebug("reading index")
 		c, err := ioutil.ReadFile(fname)
 		if err != nil {
 			logger.WriteError("unable to read index", err)
@@ -504,7 +504,7 @@ func reindex(client, filename string, ctx *Context, mode string) {
 		existing.Files = append(existing.Files, filename)
 		existing.Modes = append(existing.Modes, mode)
 	}
-	logger.WriteInfo("writing new index", fname)
+	logger.WriteDebug("writing new index", fname)
 	writeManifest(existing, fname)
 }
 
@@ -525,6 +525,9 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, ts, mode, name)
 	go reindex(client, fname, ctx, mode)
 	j, jerr := newFile(fname+".json", ctx)
+	if mode == saveFileName {
+		logger.WriteInfo("save", fname)
+	}
 	if jerr == nil {
 		defer j.Close()
 		jsonString, merr := json.Marshal(data)
