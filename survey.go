@@ -23,18 +23,11 @@ import (
 )
 
 const (
-	JsonFile         = ".json"
-	htmlFile         = ".html"
-	defaultStore     = "/var/cache/survey/"
 	questionConf     = ".config"
-	pythonCmd        = "survey-stitcher"
 	staticURL        = "/static/"
 	surveyURL        = "/survey/"
-	tokenParam       = "token"
 	surveyClientURL  = surveyURL + "%d/%s"
 	alphaNum         = "abcdefghijklmnopqrstuvwxyz0123456789"
-	beginURL         = "/begin/"
-	indexFile        = "index.manifest"
 	questionFileName = "questions"
 	qReset           = "RESET"
 	saveFileName     = "save"
@@ -358,7 +351,7 @@ func convFormat(manifest, out, dir, configFile, pre, post string) error {
 	if len(post) > 0 {
 		includes = fmt.Sprintf("%s --post %s", includes, post)
 	}
-	_, err := opsys.RunBashCommand(fmt.Sprintf("%s --manifest %s --out %s --dir %s --config %s %s", pythonCmd, manifest, out, dir, configFile, includes))
+	_, err := opsys.RunBashCommand(fmt.Sprintf("survey-stitcher --manifest %s --out %s --dir %s --config %s %s", manifest, out, dir, configFile, includes))
 	return err
 }
 
@@ -439,7 +432,7 @@ func responseBadRequest(resp http.ResponseWriter, message string, err error) {
 
 func readManifestFile(ctx *Context) (string, *Manifest, error) {
 	existing := &Manifest{}
-	fname := createPath(fmt.Sprintf("%s.%s", ctx.tag, indexFile), ctx)
+	fname := createPath(fmt.Sprintf("%s.index.manifest", ctx.tag), ctx)
 	if opsys.PathExists(fname) {
 		logger.WriteInfo("reading index")
 		c, err := ioutil.ReadFile(fname)
@@ -514,7 +507,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 	data["timestamp"] = []string{ts}
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, ts, mode, name)
 	go reindex(client, fname, ctx, mode)
-	j, jerr := newFile(fname+JsonFile, ctx)
+	j, jerr := newFile(fname+".json", ctx)
 	if jerr == nil {
 		defer j.Close()
 		jsonString, merr := json.Marshal(data)
@@ -569,7 +562,7 @@ func getSession(length int) string {
 
 func isAdmin(ctx *Context, req *http.Request) bool {
 	query := req.URL.Query()
-	v, ok := query[tokenParam]
+	v, ok := query["token"]
 	if !ok {
 		return false
 	}
@@ -652,7 +645,7 @@ func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
 		err := convFormat(f, results, ctx.store, ctx.cfgName+questionConf, ctx.preManifest, ctx.postManifest)
 		if err == nil {
-			data, err := ioutil.ReadFile(results + htmlFile)
+			data, err := ioutil.ReadFile(results + ".html")
 			if err == nil {
 				resp.Write(data)
 			} else {
@@ -781,7 +774,7 @@ func runSurvey(conf *config.Config, settings *initSurvey) {
 	ctx := &Context{}
 	ctx.snapshot = snapValue
 	ctx.tag = conf.GetStringOrDefault("tag", settings.tag)
-	ctx.store = conf.GetStringOrDefault("storage", defaultStore)
+	ctx.store = conf.GetStringOrDefault("storage", "/var/cache/survey/")
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
 	ctx.beginTmpl = readTemplate(static, "begin.html")
