@@ -28,6 +28,7 @@ class Data(object):
             self.data = "<no response>"
         else:
             self.data = "\n".join(data)
+            self.data = self.data.strip()
 
     def to_md(self, md_file):
         """Convert to markdown."""
