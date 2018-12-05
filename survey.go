@@ -126,7 +126,7 @@ type Manifest struct {
 	Modes   []string `json:"modes"`
 }
 
-func (m *Manifest) Check() error {
+func (m *Manifest) check() error {
 	valid := true
 	if len(m.Files) != len(m.Clients) {
 		valid = false
@@ -394,12 +394,6 @@ func getTuple(req *http.Request, strPos int) (string, bool) {
 	return parts[strPos], true
 }
 
-func writeString(file *os.File, line string) {
-	if _, err := file.WriteString(line); err != nil {
-		logger.WriteError("file append error", err)
-	}
-}
-
 func createPath(filename string, ctx *Context) string {
 	return filepath.Join(ctx.store, filename)
 }
@@ -433,7 +427,7 @@ func readManifestFile(ctx *Context) (string, *Manifest, error) {
 			logger.WriteError("corrupt index", err)
 			return fname, nil, err
 		}
-		err = existing.Check()
+		err = existing.check()
 		if err != nil {
 			logger.WriteWarn("invalid index... (lengths)")
 			return fname, nil, errors.New("invalid index lengths")
