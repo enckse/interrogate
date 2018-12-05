@@ -97,6 +97,8 @@ type Field struct {
 	CondEnd        bool
 	HorizontalFeed bool
 	hidden         bool
+	RawType        string
+	Hash           string
 }
 
 type ManifestEntry struct {
@@ -185,6 +187,21 @@ func readManifest(contents []byte) (*Manifest, error) {
 		return nil, err
 	}
 	return &manifest, nil
+}
+
+func createHash(number int, value string) string {
+	use := "hash" + value
+	if number >= 0 {
+		use = fmt.Sprintf("%s%d", use, number)
+	}
+	use = strings.ToLower(use)
+	output := ""
+	for _, c := range use {
+		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' {
+			output = output + string(c)
+		}
+	}
+	return output
 }
 
 func (ctx *Context) newSet(configFile, pre, post string) error {
@@ -307,6 +324,8 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 			field.Height = getWhenEmpty(field.Height, "250")
 			field.Width = getWhenEmpty(field.Width, "250")
 		}
+		field.RawType = createHash(-1, q.Type)
+		field.Hash = createHash(field.Id, field.Text)
 		mapping = append(mapping, *field)
 	}
 	if inCond {
