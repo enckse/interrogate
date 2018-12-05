@@ -52,6 +52,7 @@ class Result(object):
         md_file.write("### {} ({})\n".format(self.client, self.mode))
         for d in self.data:
             d.to_md(md_file)
+        md_file.write("\n")
 
     def to_object(self, json_file, csv_file):
         """Convert to object-based output."""
