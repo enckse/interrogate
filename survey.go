@@ -38,17 +38,6 @@ var (
 	vers = "master"
 )
 
-type strFlagSlice []string
-
-func (s *strFlagSlice) Set(str string) error {
-	*s = append(*s, str)
-	return nil
-}
-
-func (s *strFlagSlice) String() string {
-	return fmt.Sprintf("%v", *s)
-}
-
 type Context struct {
 	snapshot     int
 	tag          string
