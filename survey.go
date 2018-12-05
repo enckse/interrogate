@@ -644,7 +644,7 @@ func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	f, _, werr := readManifestFile(ctx)
 	if werr == nil {
 		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
-		err := convFormat(f, results, ctx.store, ctx.cfgName)
+		err := convFormat(f, results, ctx.store, ctx.cfgName+questionConf)
 		if err == nil {
 			data, err := ioutil.ReadFile(results + htmlFile)
 			if err == nil {

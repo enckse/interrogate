@@ -116,7 +116,7 @@ def run(args):
         idx = {}
         for v in data:
             values = data[v]
-            if v in ["session", "client"]:
+            if v in ["session", "client", "timestamp"]:
                 continue
             idx[int(v)] = values
         datum = []
