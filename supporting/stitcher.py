@@ -78,8 +78,6 @@ def main():
     parser.add_argument("--manifest", required=True, help="input manifest")
     parser.add_argument("--dir", required=True, help="directory of files")
     parser.add_argument("--config", required=True, help="input config")
-    parser.add_argument("--pre", help="post overlay config")
-    parser.add_argument("--post", help="pre overlay config")
     parser.add_argument("--out", default="results", help="output file(s)")
     args = parser.parse_args()
     try:
@@ -96,7 +94,7 @@ def load_config(config):
     cfg = {}
     with open(config) as f:
         cfg = json.loads(f.read())
-    return list([(x["text"], x["type"]) for x in cfg["questions"]])
+    return list([(x["text"], x["type"]) for x in cfg])
 
 
 def run(args):
@@ -106,10 +104,6 @@ def run(args):
         manifest = json.loads(f.read())
     results = []
     questions = load_config(args.config)
-    if args.pre and len(args.pre) > 0:
-        questions = load_config(args.pre) + questions
-    if args.post and len(args.post) > 0:
-        questions = questions + load_config(args.post)
     objs = []
     files = manifest["files"]
     modes = manifest["modes"]

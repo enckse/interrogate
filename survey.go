@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -55,6 +54,7 @@ type Context struct {
 	cfgName      string
 	preManifest  string
 	postManifest string
+	memoryConfig string
 }
 
 type initSurvey struct {
@@ -67,6 +67,11 @@ type initSurvey struct {
 	postOverlay string
 	searchDir   string
 	ignores     map[string]struct{}
+}
+
+type ExportField struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
 }
 
 type Field struct {
@@ -251,6 +256,7 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 	number := 0
 	inCond := false
 	condCount := 0
+	var exports []*ExportField
 	for _, q := range config.Questions {
 		condCount += 1
 		k := number
@@ -327,11 +333,21 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 		field.RawType = createHash(-1, q.Type)
 		field.Hash = createHash(field.Id, field.Text)
 		mapping = append(mapping, *field)
+		exports = append(exports, &ExportField{Text: field.Text, Type: q.Type})
 	}
 	if inCond {
 		panic("unclosed conditional")
 	}
 	ctx.questions = mapping
+	datum, err := json.Marshal(exports)
+	if err != nil {
+		logger.WriteError("unable to write memory config", err)
+		return err
+	}
+	exportConf := filepath.Join(ctx.store, fmt.Sprintf("run.config.%s", timeString()))
+	err = ioutil.WriteFile(exportConf, datum, 0644)
+	logger.WriteInfo("running config", exportConf)
+	ctx.memoryConfig = exportConf
 	return nil
 }
 
@@ -340,15 +356,6 @@ func getWhenEmpty(value, dflt string) string {
 		return dflt
 	} else {
 		return value
-	}
-}
-
-func (ctx *Context) load(q, pre, post string) {
-	err := ctx.newSet(fmt.Sprintf("%s%s", q, questionConf), pre, post)
-	logger.WriteDebug("questions", q)
-	if err != nil {
-		logger.WriteError("unable to load question set", err)
-		panic("invalid question set")
 	}
 }
 
@@ -362,19 +369,8 @@ func NewPageData(req *http.Request, ctx *Context) *PageData {
 	return pd
 }
 
-func write(b *bytes.Buffer, text string) {
-	b.Write([]byte(text))
-}
-
-func convFormat(manifest, out, dir, configFile, pre, post string) error {
-	includes := ""
-	if len(pre) > 0 {
-		includes = fmt.Sprintf("--pre %s", pre)
-	}
-	if len(post) > 0 {
-		includes = fmt.Sprintf("%s --post %s", includes, post)
-	}
-	_, err := opsys.RunBashCommand(fmt.Sprintf("survey-stitcher --manifest %s --out %s --dir %s --config %s %s", manifest, out, dir, configFile, includes))
+func convFormat(manifest, out, dir, configFile string) error {
+	_, err := opsys.RunBashCommand(fmt.Sprintf("survey-stitcher --manifest %s --out %s --dir %s --config %s", manifest, out, dir, configFile))
 	return err
 }
 
@@ -437,14 +433,6 @@ func newFile(filename string, ctx *Context) (*os.File, error) {
 	fname := createPath(filename, ctx)
 	logger.WriteDebug("file name", fname)
 	return os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-}
-
-func responseBadRequest(resp http.ResponseWriter, message string, err error) {
-	logger.WriteInfo("bad request")
-	if err != nil {
-		logger.WriteError("request error", err)
-	}
-	http.Error(resp, message, 400)
 }
 
 func readManifestFile(ctx *Context) (string, *Manifest, error) {
@@ -663,7 +651,7 @@ func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	f, _, werr := readManifestFile(ctx)
 	if werr == nil {
 		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
-		err := convFormat(f, results, ctx.store, ctx.cfgName+questionConf, ctx.preManifest, ctx.postManifest)
+		err := convFormat(f, results, ctx.store, ctx.memoryConfig)
 		if err == nil {
 			data, err := ioutil.ReadFile(results + ".html")
 			if err == nil {
@@ -813,7 +801,12 @@ func runSurvey(conf *config.Config, settings *initSurvey) {
 			logger.Fatal("unable to create directory", err)
 		}
 	}
-	ctx.load(settings.questions, settings.preOverlay, settings.postOverlay)
+	logger.WriteDebug("questions", settings.questions)
+	err = ctx.newSet(fmt.Sprintf("%s%s", settings.questions, questionConf), settings.preOverlay, settings.postOverlay)
+	if err != nil {
+		logger.WriteError("unable to load question set", err)
+		panic("invalid question set")
+	}
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
 	})
