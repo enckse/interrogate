@@ -27,12 +27,14 @@ $(document).ready(function () {
 <a href="/results?token={{ .Token }}">results</a>
 <table>
     <tr>
+        <th>index</th>
         <th>client</th>
         <th>mode</th>
         <th>file</th>
     </tr>
     {{ range $key, $file := .Manifest }}
     <tr>
+        <td>{{ $file.Idx }}</td>
         <td>{{ $file.Client }}</td>
         <td>{{ $file.Mode }}</td>
         <td>{{ $file.Name }}</td>

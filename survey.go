@@ -111,6 +111,7 @@ type ManifestEntry struct {
 	Name   string
 	Client string
 	Mode   string
+	Idx    int
 }
 
 type ManifestData struct {
@@ -634,6 +635,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 			entry.Name = obj
 			entry.Client = m.Clients[i]
 			entry.Mode = m.Modes[i]
+			entry.Idx = i
 			pd.Manifest = append(pd.Manifest, entry)
 		}
 	} else {
