@@ -104,6 +104,7 @@ type Field struct {
 	hidden         bool
 	RawType        string
 	Hash           string
+	Group          string
 }
 
 type ManifestEntry struct {
@@ -171,6 +172,7 @@ type Question struct {
 	Basis       string   `json:"basis"`
 	Height      string   `json:"height"`
 	Width       string   `json:"width"`
+	Group       string   `json:"group"`
 }
 
 func writeManifest(manifest *Manifest, filename string) {
@@ -330,6 +332,7 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 			field.Height = getWhenEmpty(field.Height, "250")
 			field.Width = getWhenEmpty(field.Width, "250")
 		}
+		field.Group = q.Group
 		field.RawType = createHash(-1, q.Type)
 		field.Hash = createHash(field.Id, field.Text)
 		mapping = append(mapping, *field)

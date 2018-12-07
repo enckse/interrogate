@@ -54,7 +54,7 @@ window.onload=function(){
         <input type="hidden" value="{{ $question.Value }}" name="{{ $question.Id }}" id="{{ $question.Text }}">
     {{- end -}}
     {{ range $key, $question := .Questions }}
-    <div class="row {{ $question.RawType }} {{ $question.Hash }}">
+    <div class="row {{ $question.RawType }} {{ $question.Hash }} {{ $question.Group }}">
         <label for="{{ $question.Text }}">{{ $question.Text }}</label>
         <p style="margin-bottom: 1rem;">{{ $question.Description }}</p>
         {{ if $question.CondStart }}
