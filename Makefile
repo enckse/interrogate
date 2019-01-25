@@ -31,4 +31,4 @@ install:
 	install -Dm 644 $(SUPPORT)tmpfiles.d $(DESTDIR)$(TMPD)survey.conf
 	install -Dm 755 $(SUPPORT)stitcher.py $(DESTDIR)/usr/bin/survey-stitcher
 	for f in $(shell find $(TMPL) -type d | cut -d "/" -f 2-); do install -Dm755 -d $(DESTDIR)$(RSRC)/$$f; done
-	for f in $(shell find $(TMPL) -type f | cut -d "/" -f 2-); do install -Dm755 $(TMPL)/$$f $(DESTDIR)$(RSRC)/$$f; done
+	for f in $(shell find $(TMPL) -type f | cut -d "/" -f 2-); do install -Dm644 $(TMPL)/$$f $(DESTDIR)$(RSRC)/$$f; done
