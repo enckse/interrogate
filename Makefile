@@ -25,7 +25,7 @@ install:
 	install -Dm 644 $(SUPPORT)example.config $(DESTDIR)$(ETC)
 	install -Dm 644 $(SUPPORT)settings.conf $(DESTDIR)$(ETC)
 	install -Dm 755 $(BIN)survey $(DESTDIR)/usr/bin/survey
-	install -Dm 755 -d $(DESTDIR)(SYSD)
+	install -Dm 755 -d $(DESTDIR)$(SYSD)
 	install -Dm 644 $(SUPPORT)survey.service $(DESTDIR)$(SYSD)
 	install -Dm 755 -d $(DESTDIR)$(TMPD)
 	install -Dm 644 $(SUPPORT)tmpfiles.d $(DESTDIR)$(TMPD)survey.conf
