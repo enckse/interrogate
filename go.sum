@@ -1,5 +1,3 @@
-github.com/epiphyte/goutils v2.0.0+incompatible h1:z/tEXlA/VlpXauGXL5QmQSqkeiW1dpuvPbFwVoNluSI=
-github.com/epiphyte/goutils v2.0.0+incompatible/go.mod h1:t+lELoJ/wdhHs6KYE4s+L+YP3CCoeujqTcISyKTq9aE=
 gitlab.com/golang-commonmark/html v0.0.0-20180917080848-cfaf75183c4a h1:Ax7kdHNICZiIeFpmevmaEWb0Ae3BUj3zCTKhZHZ+zd0=
 gitlab.com/golang-commonmark/html v0.0.0-20180917080848-cfaf75183c4a/go.mod h1:JT4uoTz0tfPoyVH88GZoWDNm5NHJI2VbUW+eyPClueI=
 gitlab.com/golang-commonmark/linkify v0.0.0-20180917065525-c22b7bdb1179 h1:rbON2KwBnWuFMlSHM8LELLlwroDRZw6xv0e6il6e5dk=
@@ -12,3 +10,5 @@ gitlab.com/golang-commonmark/puny v0.0.0-20180912090636-2cd490539afe h1:5kUPFAF5
 gitlab.com/golang-commonmark/puny v0.0.0-20180912090636-2cd490539afe/go.mod h1:P9LSM1KVzrIstFgUaveuwiAm8PK5VTB3yJEU8kqlbrU=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
+voidedtech.com/goutils v2.0.1+incompatible h1:F901OeR0zK67WOD/wHnRtNz7GfJSldnj95F/P3pVuJY=
+voidedtech.com/goutils v2.0.1+incompatible/go.mod h1:VLiHD+fUHbOqF/Yf7QZkKuj3EfNnR4uatWsiCkD0oQw=

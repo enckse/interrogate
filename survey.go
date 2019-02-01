@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/epiphyte/goutils/config"
-	"github.com/epiphyte/goutils/logger"
-	"github.com/epiphyte/goutils/opsys"
+	"voidedtech.com/goutils/config"
+	"voidedtech.com/goutils/logger"
+	"voidedtech.com/goutils/opsys"
 )
 
 const (
