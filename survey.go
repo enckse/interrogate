@@ -55,6 +55,7 @@ type Context struct {
 	preManifest  string
 	postManifest string
 	memoryConfig string
+	stitcher     string
 }
 
 type initSurvey struct {
@@ -373,8 +374,8 @@ func NewPageData(req *http.Request, ctx *Context) *PageData {
 	return pd
 }
 
-func convFormat(manifest, out, dir, configFile string) error {
-	_, err := opsys.RunBashCommand(fmt.Sprintf("survey-stitcher --manifest %s --out %s --dir %s --config %s", manifest, out, dir, configFile))
+func convFormat(manifest, out, dir, stitcherBin, configFile string) error {
+	_, err := opsys.RunBashCommand(fmt.Sprintf("%s --manifest %s --out %s --dir %s --config %s", stitcherBin, manifest, out, dir, configFile))
 	return err
 }
 
@@ -656,7 +657,7 @@ func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	f, _, werr := readManifestFile(ctx)
 	if werr == nil {
 		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
-		err := convFormat(f, results, ctx.store, ctx.memoryConfig)
+		err := convFormat(f, results, ctx.store, ctx.stitcher, ctx.memoryConfig)
 		if err == nil {
 			data, err := ioutil.ReadFile(results + ".html")
 			if err == nil {
@@ -779,6 +780,7 @@ func runSurvey(conf *config.Config, settings *initSurvey) {
 	ctx.store = filepath.Join(ctx.store, ctx.tag)
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
+	ctx.stitcher = conf.GetStringOrDefault(stitcher, "/usr/bin/survey-stitcher")
 	ctx.beginTmpl = readTemplate(static, "begin.html")
 	ctx.surveyTmpl = readTemplate(static, "survey.html")
 	ctx.completeTmpl = readTemplate(static, "complete.html")
