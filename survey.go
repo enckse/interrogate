@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	questionConf     = ".config"
+	questionConf     = ".json"
 	staticURL        = "/static/"
 	surveyURL        = "/survey/"
 	surveyClientURL  = surveyURL + "%d/%s"
