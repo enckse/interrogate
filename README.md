@@ -37,3 +37,10 @@ clone and to build
 ```
 make
 ```
+
+Update the `supporting/settings.conf` and adjust the paths to match your file system hierarchy
+
+run it
+```
+./bin/survey --config supporting/settings.conf
+```
