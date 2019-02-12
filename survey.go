@@ -780,7 +780,7 @@ func runSurvey(conf *config.Config, settings *initSurvey) {
 	ctx.store = filepath.Join(ctx.store, ctx.tag)
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
-	ctx.stitcher = conf.GetStringOrDefault(stitcher, "/usr/bin/survey-stitcher")
+	ctx.stitcher = conf.GetStringOrDefault("stitcher", "/usr/bin/survey-stitcher")
 	ctx.beginTmpl = readTemplate(static, "begin.html")
 	ctx.surveyTmpl = readTemplate(static, "survey.html")
 	ctx.completeTmpl = readTemplate(static, "complete.html")
