@@ -67,6 +67,7 @@ type initSurvey struct {
 	preOverlay  string
 	postOverlay string
 	searchDir   string
+	cwd         string
 	ignores     map[string]struct{}
 }
 
@@ -717,7 +718,7 @@ func main() {
 	if err != nil {
 		logger.Fatal("unable to load config", err)
 	}
-	tmp := conf.GetStringOrDefault("temp", "/tmp/")
+	tmp, cwd := resolvePath(conf.GetStringOrDefault("temp", "/tmp/"), "")
 	questionFile := filepath.Join(tmp, questionFileName)
 	existed := opsys.PathExists(questionFile)
 	questions := ""
@@ -767,16 +768,40 @@ func main() {
 		postOverlay: postOver,
 		searchDir:   dir,
 		ignores:     ignore,
+		cwd:         cwd,
 	})
 }
 
+func (s *initSurvey) resolvePath(path string) string {
+	pathed, c := resolvePath(path, s.cwd)
+	s.cwd = c
+	return pathed
+}
+
+func resolvePath(path string, cwd string) (string, string) {
+	if strings.HasPrefix(path, "/") {
+		return path, cwd
+	} else {
+		c := cwd
+		if c == "" {
+			c, err := os.Getwd()
+			if err != nil {
+				logger.WriteError("unable to determine working directory", err)
+				return path, c
+			}
+			logger.WriteInfo("cwd is", c)
+		}
+		return filepath.Join(c, path), c
+	}
+}
+
 func runSurvey(conf *config.Config, settings *initSurvey) {
-	static := conf.GetStringOrDefault("resources", "/usr/share/survey/resources/")
+	static := settings.resolvePath(conf.GetStringOrDefault("resources", "/usr/share/survey/resources/"))
 	snapValue := conf.GetIntOrDefaultOnly("snapshot", 15)
 	ctx := &Context{}
 	ctx.snapshot = snapValue
 	ctx.tag = conf.GetStringOrDefault("tag", settings.tag)
-	ctx.store = conf.GetStringOrDefault("storage", "/var/cache/survey/")
+	ctx.store = settings.resolvePath(conf.GetStringOrDefault("storage", "/var/cache/survey/"))
 	ctx.store = filepath.Join(ctx.store, ctx.tag)
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
