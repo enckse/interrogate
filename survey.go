@@ -52,8 +52,6 @@ type Context struct {
 	token        string
 	available    []string
 	cfgName      string
-	preManifest  string
-	postManifest string
 	memoryConfig string
 	stitcher     string
 }
@@ -64,20 +62,13 @@ type initSurvey struct {
 	tmp         string
 	inQuestions string
 	questions   string
-	preOverlay  string
-	postOverlay string
 	searchDir   string
 	cwd         string
-	ignores     map[string]struct{}
 }
 
 type Configuration struct {
-	Surveys struct {
-		Questions string
-		Pre       string
-		Post      string
-	}
 	Server struct {
+		Questions string
 		Bind      string
 		Snapshot  int
 		Storage   string
@@ -232,7 +223,7 @@ func createHash(number int, value string) string {
 	return output
 }
 
-func (ctx *Context) newSet(configFile, pre, post string) error {
+func (ctx *Context) newSet(configFile string) error {
 	data, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return err
@@ -241,38 +232,6 @@ func (ctx *Context) newSet(configFile, pre, post string) error {
 	err = json.Unmarshal(data, &config)
 	if err != nil {
 		return err
-	}
-	for idx, over := range []string{pre, post} {
-		if over == "" {
-			continue
-		}
-		if opsys.PathNotExists(over) {
-			panic("overlay file not found: " + over)
-		}
-		var c Config
-		oData, err := ioutil.ReadFile(over)
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(oData, &c)
-		if err != nil {
-			return err
-		}
-		appending := c.Questions
-		switch idx {
-		case 0:
-			appending = config.Questions
-			config.Questions = c.Questions
-			ctx.preManifest = over
-		case 1:
-			// this is valid but no-op
-			ctx.postManifest = over
-		default:
-			panic("invalid overlay setting")
-		}
-		for _, oQuestion := range appending {
-			config.Questions = append(config.Questions, oQuestion)
-		}
 	}
 	ctx.title = config.Metadata.Title
 	var mapping []Field
@@ -757,7 +716,7 @@ func main() {
 			logger.WriteDebug("unable to remove non-existing file")
 		}
 	}
-	initialQuestions := conf.Surveys.Questions
+	initialQuestions := conf.Server.Questions
 	if questions == "" {
 		questions = initialQuestions
 	}
@@ -765,18 +724,6 @@ func main() {
 		panic("no question set?")
 	}
 	dir := filepath.Dir(cfg)
-	preOver := conf.Surveys.Pre
-	ignore := make(map[string]struct{})
-	if preOver != "" {
-		ignore[preOver] = struct{}{}
-		preOver = filepath.Join(dir, fmt.Sprintf("%s%s", preOver, questionConf))
-	}
-	postOver := conf.Surveys.Post
-	if postOver != "" {
-		ignore[postOver] = struct{}{}
-		postOver = filepath.Join(dir, fmt.Sprintf("%s%s", postOver, questionConf))
-	}
-	ignore[initialQuestions] = struct{}{}
 	settingsFile := filepath.Join(dir, questions)
 	runSurvey(conf, &initSurvey{
 		bind:        *bind,
@@ -784,10 +731,7 @@ func main() {
 		tmp:         tmp,
 		questions:   settingsFile,
 		inQuestions: initialQuestions,
-		preOverlay:  preOver,
-		postOverlay: postOver,
 		searchDir:   dir,
-		ignores:     ignore,
 		cwd:         cwd,
 	})
 }
@@ -849,7 +793,7 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 		base := filepath.Base(a.Name())
 		if strings.HasSuffix(base, questionConf) {
 			base = strings.Replace(base, questionConf, "", -1)
-			if _, ok := settings.ignores[base]; !ok {
+			if base != settings.inQuestions {
 				ctx.available = append(ctx.available, base)
 			}
 		}
@@ -862,7 +806,7 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 		}
 	}
 	logger.WriteDebug("questions", settings.questions)
-	err = ctx.newSet(fmt.Sprintf("%s%s", settings.questions, questionConf), settings.preOverlay, settings.postOverlay)
+	err = ctx.newSet(fmt.Sprintf("%s%s", settings.questions, questionConf))
 	if err != nil {
 		logger.WriteError("unable to load question set", err)
 		panic("invalid question set")
