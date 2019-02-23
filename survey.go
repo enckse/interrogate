@@ -16,9 +16,9 @@ import (
 	"sync"
 	"time"
 
-	"voidedtech.com/goutils/config"
 	"voidedtech.com/goutils/logger"
 	"voidedtech.com/goutils/opsys"
+	"voidedtech.com/goutils/preyaml"
 )
 
 const (
@@ -69,6 +69,24 @@ type initSurvey struct {
 	searchDir   string
 	cwd         string
 	ignores     map[string]struct{}
+}
+
+type Configuration struct {
+	Surveys struct {
+		Questions string
+		Pre       string
+		Post      string
+	}
+	Server struct {
+		Bind      string
+		Snapshot  int
+		Storage   string
+		Temp      string
+		Resources string
+		Stitcher  string
+		Tag       string
+		Token     string
+	}
 }
 
 type ExportField struct {
@@ -714,11 +732,13 @@ func main() {
 	logging.Info = true
 	logger.ConfigureLogging(logging)
 	logger.WriteInfo(vers)
-	conf, err := config.LoadConfig(cfg, config.NewConfigSettings())
+	d := &preyaml.Directives{}
+	conf := &Configuration{}
+	err := preyaml.UnmarshalFile(cfg, d, conf)
 	if err != nil {
 		logger.Fatal("unable to load config", err)
 	}
-	tmp, cwd := resolvePath(conf.GetStringOrDefault("temp", "/tmp/"), "")
+	tmp, cwd := resolvePath(conf.Server.Temp, "")
 	questionFile := filepath.Join(tmp, questionFileName)
 	existed := opsys.PathExists(questionFile)
 	questions := ""
@@ -737,7 +757,7 @@ func main() {
 			logger.WriteDebug("unable to remove non-existing file")
 		}
 	}
-	initialQuestions := conf.GetStringOrEmpty("questions")
+	initialQuestions := conf.Surveys.Questions
 	if questions == "" {
 		questions = initialQuestions
 	}
@@ -745,13 +765,13 @@ func main() {
 		panic("no question set?")
 	}
 	dir := filepath.Dir(cfg)
-	preOver := conf.GetStringOrEmpty("pre")
+	preOver := conf.Surveys.Pre
 	ignore := make(map[string]struct{})
 	if preOver != "" {
 		ignore[preOver] = struct{}{}
 		preOver = filepath.Join(dir, fmt.Sprintf("%s%s", preOver, questionConf))
 	}
-	postOver := conf.GetStringOrEmpty("post")
+	postOver := conf.Surveys.Post
 	if postOver != "" {
 		ignore[postOver] = struct{}{}
 		postOver = filepath.Join(dir, fmt.Sprintf("%s%s", postOver, questionConf))
@@ -795,22 +815,30 @@ func resolvePath(path string, cwd string) (string, string) {
 	}
 }
 
-func runSurvey(conf *config.Config, settings *initSurvey) {
-	static := settings.resolvePath(conf.GetStringOrDefault("resources", "/usr/share/survey/resources/"))
-	snapValue := conf.GetIntOrDefaultOnly("snapshot", 15)
+func setIfEmpty(setting, defaultValue string) string {
+	if strings.TrimSpace(setting) == "" {
+		return defaultValue
+	} else {
+		return setting
+	}
+}
+
+func runSurvey(conf *Configuration, settings *initSurvey) {
+	static := settings.resolvePath(conf.Server.Resources)
+	snapValue := conf.Server.Snapshot
 	ctx := &Context{}
 	ctx.snapshot = snapValue
-	ctx.tag = conf.GetStringOrDefault("tag", settings.tag)
-	ctx.store = settings.resolvePath(conf.GetStringOrDefault("storage", "/var/cache/survey/"))
+	ctx.tag = setIfEmpty(conf.Server.Tag, settings.tag)
+	ctx.store = settings.resolvePath(conf.Server.Storage)
 	ctx.store = filepath.Join(ctx.store, ctx.tag)
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
-	ctx.stitcher = conf.GetStringOrDefault("stitcher", "/usr/bin/survey-stitcher")
+	ctx.stitcher = conf.Server.Stitcher
 	ctx.beginTmpl = readTemplate(static, "begin.html")
 	ctx.surveyTmpl = readTemplate(static, "survey.html")
 	ctx.completeTmpl = readTemplate(static, "complete.html")
 	ctx.adminTmpl = readTemplate(static, "admin.html")
-	ctx.token = conf.GetStringOrDefault("token", time.Now().Format("150405"))
+	ctx.token = setIfEmpty(conf.Server.Token, time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
 	ctx.cfgName = settings.questions
 	avails, err := ioutil.ReadDir(settings.searchDir)
@@ -861,7 +889,7 @@ func runSurvey(conf *config.Config, settings *initSurvey) {
 	}
 	staticPath := filepath.Join(static, staticURL)
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
-	err = http.ListenAndServe(conf.GetStringOrDefault("bind", settings.bind), nil)
+	err = http.ListenAndServe(setIfEmpty(conf.Server.Bind, settings.bind), nil)
 	if err != nil {
 		logger.WriteError("unable to start", err)
 		panic("failure")
