@@ -11,7 +11,8 @@ SUPPORT := supporting/
 all: clean build format
 
 build:
-	go build -o $(BIN)survey $(FLAGS) survey.go
+	go-bindata $(TMPL)
+	go build -o $(BIN)survey $(FLAGS) survey.go bindata.go
 
 clean:
 	rm -rf $(BIN)
@@ -22,7 +23,7 @@ format:
 
 install:
 	install -Dm 755 -d $(DESTDIR)$(ETC)
-	install -Dm 644 $(SUPPORT)example.config $(DESTDIR)$(ETC)
+	install -Dm 644 $(SUPPORT)example.json $(DESTDIR)$(ETC)
 	install -Dm 644 $(SUPPORT)settings.conf $(DESTDIR)$(ETC)
 	install -Dm 755 $(BIN)survey $(DESTDIR)/usr/bin/survey
 	install -Dm 755 -d $(DESTDIR)$(SYSD)
@@ -31,4 +32,4 @@ install:
 	install -Dm 644 $(SUPPORT)tmpfiles.d $(DESTDIR)$(TMPD)survey.conf
 	install -Dm 755 $(SUPPORT)stitcher.py $(DESTDIR)/usr/bin/survey-stitcher
 	for f in $(shell find $(TMPL) -type d | cut -d "/" -f 2-); do install -Dm755 -d $(DESTDIR)$(RSRC)/$$f; done
-	for f in $(shell find $(TMPL) -type f | cut -d "/" -f 2-); do install -Dm644 $(TMPL)/$$f $(DESTDIR)$(RSRC)/$$f; done
+	for f in $(shell find $(TMPL) -type f | cut -d "/" -f 2- | grep -v "html"); do install -Dm644 $(TMPL)/$$f $(DESTDIR)$(RSRC)/$$f; done

@@ -357,19 +357,17 @@ func convFormat(manifest, out, dir, stitcherBin, configFile string) error {
 	return err
 }
 
-func readContent(directory string, name string) string {
-	file := filepath.Join(directory, name)
-	b, err := ioutil.ReadFile(file)
+func readAsset(name string) string {
+	asset, err := Asset(fmt.Sprintf("templates/%s.html", name))
 	if err != nil {
-		logger.WriteError("unable to read file: "+file, err)
-		panic("bad file")
+		logger.WriteWarn("template unavailable", name)
+		logger.Fatal("unable to read asset", err)
 	}
-	return string(b)
+	return string(asset)
 }
 
-func readTemplate(directory string, tmpl string) *template.Template {
-	base := readContent(directory, "base.html")
-	file := readContent(directory, tmpl)
+func readTemplate(base, tmpl string) *template.Template {
+	file := readAsset(tmpl)
 	def := strings.Replace(base, "{{CONTENT}}", file, -1)
 	t, err := template.New("t").Parse(def)
 	if err != nil {
@@ -778,10 +776,11 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
 	ctx.stitcher = conf.Server.Stitcher
-	ctx.beginTmpl = readTemplate(static, "begin.html")
-	ctx.surveyTmpl = readTemplate(static, "survey.html")
-	ctx.completeTmpl = readTemplate(static, "complete.html")
-	ctx.adminTmpl = readTemplate(static, "admin.html")
+	baseTemplate := readAsset("base")
+	ctx.beginTmpl = readTemplate(baseTemplate, "begin")
+	ctx.surveyTmpl = readTemplate(baseTemplate, "survey")
+	ctx.completeTmpl = readTemplate(baseTemplate, "complete")
+	ctx.adminTmpl = readTemplate(baseTemplate, "admin")
 	ctx.token = setIfEmpty(conf.Server.Token, time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
 	ctx.cfgName = settings.questions
