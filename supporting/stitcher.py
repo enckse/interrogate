@@ -72,15 +72,65 @@ def display(number, text):
     return "{}. {}".format(number, text)
 
 
+def set_if_unset(file_name, key, prefix, value, directory):
+    """Set a config value if not set."""
+    match = False
+    if prefix and file_name.startswith(key):
+        match = True
+    if not prefix and file_name.endswith(key):
+        match = True
+    if match:
+        if value:
+            print("found {} but already given ({})".format(key, value))
+        else:
+            return os.path.join(directory, file_name)
+    return value
+
+
+def autodetect(args):
+    """Auto detect settings."""
+    if not os.path.exists(args.dir):
+        print("directory {} does not exist".format(args.dir))
+        return None
+    for f in os.listdir(args.dir):
+        args.config = set_if_unset(f,
+                                   "run.config.",
+                                   True,
+                                   args.config,
+                                   args.dir)
+        args.manifest = set_if_unset(f,
+                                     ".index.manifest",
+                                     False,
+                                     args.manifest,
+                                     args.dir)
+    return args
+
+
 def main():
     """Program entry point."""
     parser = argparse.ArgumentParser(description="stitch survey results")
-    parser.add_argument("--manifest", required=True, help="input manifest")
+    parser.add_argument("--manifest", help="input manifest")
     parser.add_argument("--dir", required=True, help="directory of files")
-    parser.add_argument("--config", required=True, help="input config")
+    parser.add_argument("--config", help="input config")
     parser.add_argument("--out", default="results", help="output file(s)")
+    parser.add_argument("--auto",
+                        action="store_true",
+                        help="auto detect file inputs")
     args = parser.parse_args()
     try:
+        if args.auto:
+            args = autodetect(args)
+            if args is None:
+                return
+        stop = False
+        if args.manifest is None:
+            print("manifest is required")
+            stop = True
+        if args.config is None:
+            print("config is required")
+            stop = True
+        if stop:
+            return
         print("processing...")
         run(args)
     except Exception as e:

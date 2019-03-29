@@ -31,12 +31,15 @@ survey question definitions (json) are stored in `/etc/survey/` and must have a 
 
 Accessing these urls will require a token (e.g. `/results?token=123456`) that will be displayed at survey startup
 
-To manually produce html, markdown, or csv outputs, navigate to the folder where the results are stored (e.g. `/var/cache/survey/<date>`)
+To generate the results file manually (using default caching dir)
+```
+survey-stitcher --dir /var/cache/survey/<leaf directory> --auto
+```
+
+Alternatively navigate to the folder where the results are stored (e.g. `/var/cache/survey/<date>`)
 ```
 survey-stitcher --dir $PWD --manifest <date/tag>.index.manifest --config run.config.<date/tag>
 ```
-
-^ will produce all output types by default
 
 ## development
 
