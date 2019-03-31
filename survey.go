@@ -624,7 +624,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 }
 
-func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
+func getResults(resp http.ResponseWriter, req *http.Request, ctx *Context, display bool) {
 	if !isAdmin(ctx, req) {
 		return
 	}
@@ -635,7 +635,11 @@ func dispResults(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
 		err := convFormat(f, results, ctx.store, ctx.stitcher, ctx.memoryConfig)
 		if err == nil {
-			data, err := ioutil.ReadFile(results + ".html")
+			fileResult := results + ".tar.gz"
+			if display {
+				fileResult = results + ".html"
+			}
+			data, err := ioutil.ReadFile(fileResult)
 			if err == nil {
 				resp.Write(data)
 			} else {
@@ -820,7 +824,10 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 		completeEndpoint(resp, req, ctx)
 	})
 	http.HandleFunc("/results", func(resp http.ResponseWriter, req *http.Request) {
-		dispResults(resp, req, ctx)
+		getResults(resp, req, ctx, true)
+	})
+	http.HandleFunc("/bundle.tar.gz", func(resp http.ResponseWriter, req *http.Request) {
+		getResults(resp, req, ctx, false)
 	})
 	http.HandleFunc("/admin", func(resp http.ResponseWriter, req *http.Request) {
 		adminEndpoint(resp, req, ctx)

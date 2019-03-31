@@ -5,6 +5,7 @@ import json
 import argparse
 import csv
 import markdown
+import subprocess
 
 _CLIENT = "client"
 _MODE = "mode"
@@ -194,9 +195,15 @@ def run(args):
     fields = list(sorted(fields))
     markdown_file = args.out + ".md"
     print("outputs...")
-    with open(args.out + ".json", 'w') as j_file:
+    tar_files = []
+    j_file = args.out + ".json"
+    c_file = args.out + ".csv"
+    tar_files.append(j_file)
+    tar_files.append(c_file)
+    tar_files.append(markdown_file)
+    with open(j_file, 'w') as j_file:
         with open(markdown_file, 'w') as md_file:
-            with open(args.out + ".csv", 'w') as c_file:
+            with open(c_file, 'w') as c_file:
                 csv_file = csv.DictWriter(c_file, fieldnames=fields)
                 csv_file.writeheader()
                 j_file.write("[\n")
@@ -208,13 +215,17 @@ def run(args):
                     first = False
                     result.to_object(j_file, csv_file)
                 j_file.write("\n]")
-    with open(args.out + ".html", 'w') as h_file:
+    h_file = args.out + ".html"
+    tar_files.append(h_file)
+    with open(h_file, 'w') as h_file:
         h_file.write(_HTML_HEADER)
         with open(markdown_file) as m_file:
             html = markdown.markdown(m_file.read())
             h_file.write(html)
         h_file.write(_HTML_FOOTER)
-
+    subprocess.call(["tar",
+                     "cvzf",
+                     args.out + ".tar.gz"] + tar_files)
 
 if __name__ == "__main__":
     main()

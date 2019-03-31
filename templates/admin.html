@@ -24,7 +24,11 @@ $(document).ready(function () {
 </pre>
 <b>Config: {{ .CfgName }}</b>
 <br />
-<a href="/results?token={{ .Token }}">results</a>
+results:
+<br />
+<a href="/results?token={{ .Token }}">view</a>
+<br />
+<a href="/bundle.tar.gz?token={{ .Token }}">download</a>
 <table>
     <tr>
         <th>index</th>
