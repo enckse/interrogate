@@ -18,7 +18,7 @@ import (
 
 	"voidedtech.com/goutils/logger"
 	"voidedtech.com/goutils/opsys"
-	"voidedtech.com/goutils/preyaml"
+	"voidedtech.com/goutils/yaml"
 )
 
 const (
@@ -353,7 +353,7 @@ func NewPageData(req *http.Request, ctx *Context) *PageData {
 }
 
 func convFormat(manifest, out, dir, stitcherBin, configFile string) error {
-	_, err := opsys.RunBashCommand(fmt.Sprintf("%s --manifest %s --out %s --dir %s --config %s", stitcherBin, manifest, out, dir, configFile))
+	_, err := opsys.RunCommand(stitcherBin, "--manifest", manifest, "--out", out, "--dir", dir, "--config", configFile)
 	return err
 }
 
@@ -692,9 +692,8 @@ func main() {
 	logging.Info = true
 	logger.ConfigureLogging(logging)
 	logger.WriteInfo(vers)
-	d := &preyaml.Directives{}
 	conf := &Configuration{}
-	err := preyaml.UnmarshalFile(cfg, d, conf)
+	err := yaml.UnmarshalFile(cfg, conf)
 	if err != nil {
 		logger.Fatal("unable to load config", err)
 	}
