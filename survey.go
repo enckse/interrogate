@@ -371,8 +371,7 @@ func readTemplate(base, tmpl string) *template.Template {
 	def := strings.Replace(base, "{{CONTENT}}", file, -1)
 	t, err := template.New("t").Parse(def)
 	if err != nil {
-		logger.WriteError("unable to read template: "+file, err)
-		panic("bad template")
+		logger.Fatal("unable to read template: "+file, err)
 	}
 	return t
 }
@@ -811,8 +810,7 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	logger.WriteDebug("questions", settings.questions)
 	err = ctx.newSet(fmt.Sprintf("%s%s", settings.questions, questionConf))
 	if err != nil {
-		logger.WriteError("unable to load question set", err)
-		panic("invalid question set")
+		logger.Fatal("unable to load question set", err)
 	}
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
@@ -841,7 +839,6 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
 	err = http.ListenAndServe(setIfEmpty(conf.Server.Bind, settings.bind), nil)
 	if err != nil {
-		logger.WriteError("unable to start", err)
-		panic("failure")
+		logger.Fatal("unable to start", err)
 	}
 }
