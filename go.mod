@@ -1,3 +1,5 @@
 module voidedtech.com/survey
 
-require voidedtech.com/goutils v3.1.0+incompatible
+go 1.12
+
+require gopkg.in/yaml.v2 v2.2.2 // indirect

@@ -11,14 +11,13 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"voidedtech.com/goutils/logger"
-	"voidedtech.com/goutils/opsys"
-	"voidedtech.com/goutils/yaml"
+	yaml "gopkg.in/yaml.v2"
 )
 
 const (
@@ -187,15 +186,36 @@ type Question struct {
 	Group       string   `json:"group"`
 }
 
+func writeError(message string, err error) {
+	fmt.Println(fmt.Sprintf("%s (%v)", message, err))
+}
+
+func fatal(message string, err error) {
+	writeError(message, err)
+	panic("fatal error ^")
+}
+
+func pathExists(file string) bool {
+	if _, err := os.Stat(file); os.IsNotExist(err) {
+		return false
+	} else {
+		return true
+	}
+}
+
+func info(message string) {
+	fmt.Println(message)
+}
+
 func writeManifest(manifest *Manifest, filename string) {
 	datum, err := json.Marshal(manifest)
 	if err != nil {
-		logger.WriteError("unable to marshal manifest", err)
+		writeError("unable to marshal manifest", err)
 		return
 	}
 	err = ioutil.WriteFile(filename, datum, 0644)
 	if err != nil {
-		logger.WriteError("manifest writing failure", err)
+		writeError("manifest writing failure", err)
 	}
 }
 
@@ -324,12 +344,12 @@ func (ctx *Context) newSet(configFile string) error {
 	ctx.questions = mapping
 	datum, err := json.Marshal(exports)
 	if err != nil {
-		logger.WriteError("unable to write memory config", err)
+		writeError("unable to write memory config", err)
 		return err
 	}
 	exportConf := filepath.Join(ctx.store, fmt.Sprintf("run.config.%s", timeString()))
 	err = ioutil.WriteFile(exportConf, datum, 0644)
-	logger.WriteInfo("running config", exportConf)
+	fmt.Println(fmt.Sprintf("running config", exportConf))
 	ctx.memoryConfig = exportConf
 	return nil
 }
@@ -353,15 +373,14 @@ func NewPageData(req *http.Request, ctx *Context) *PageData {
 }
 
 func convFormat(manifest, out, dir, stitcherBin, configFile string) error {
-	_, err := opsys.RunCommand(stitcherBin, "--manifest", manifest, "--out", out, "--dir", dir, "--config", configFile)
-	return err
+	cmd := exec.Command(stitcherBin, "--manifest", manifest, "--out", out, "--dir", dir, "--config", configFile)
+	return cmd.Run()
 }
 
 func readAsset(name string) string {
 	asset, err := Asset(fmt.Sprintf("templates/%s.html", name))
 	if err != nil {
-		logger.WriteWarn("template unavailable", name)
-		logger.Fatal("unable to read asset", err)
+		fatal(fmt.Sprintf("template not available %s", name), err)
 	}
 	return string(asset)
 }
@@ -371,7 +390,7 @@ func readTemplate(base, tmpl string) *template.Template {
 	def := strings.Replace(base, "{{CONTENT}}", file, -1)
 	t, err := template.New("t").Parse(def)
 	if err != nil {
-		logger.Fatal("unable to read template: "+file, err)
+		fatal(fmt.Sprintf("unable to read file %s", file), err)
 	}
 	return t
 }
@@ -379,7 +398,7 @@ func readTemplate(base, tmpl string) *template.Template {
 func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageData) {
 	err := tmpl.Execute(resp, pd)
 	if err != nil {
-		logger.WriteError("template execution error", err)
+		writeError("template execution error", err)
 	}
 }
 
@@ -399,7 +418,7 @@ func getTuple(req *http.Request, strPos int) (string, bool) {
 	parts := strings.Split(path, "/")
 	required := strPos
 	if len(parts) < required+1 {
-		logger.WriteInfo("warning, invalid url", path)
+		info(fmt.Sprintf("warning, invalid url %s", path))
 		return "", false
 	}
 	return parts[strPos], true
@@ -411,28 +430,26 @@ func createPath(filename string, ctx *Context) string {
 
 func newFile(filename string, ctx *Context) (*os.File, error) {
 	fname := createPath(filename, ctx)
-	logger.WriteDebug("file name", fname)
 	return os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 }
 
 func readManifestFile(ctx *Context) (string, *Manifest, error) {
 	existing := &Manifest{}
 	fname := createPath(fmt.Sprintf("%s.index.manifest", ctx.tag), ctx)
-	if opsys.PathExists(fname) {
-		logger.WriteDebug("reading index")
+	if pathExists(fname) {
 		c, err := ioutil.ReadFile(fname)
 		if err != nil {
-			logger.WriteError("unable to read index", err)
+			writeError("unable to read index", err)
 			return fname, nil, err
 		}
 		existing, err = readManifest(c)
 		if err != nil {
-			logger.WriteError("corrupt index", err)
+			writeError("corrupt index", err)
 			return fname, nil, err
 		}
 		err = existing.check()
 		if err != nil {
-			logger.WriteWarn("invalid index... (lengths)")
+			info("invalid index... (lengths)")
 			return fname, nil, errors.New("invalid index lengths")
 		}
 	}
@@ -472,7 +489,6 @@ func reindex(client, filename string, ctx *Context, mode string) {
 		existing.Files = append(existing.Files, filename)
 		existing.Modes = append(existing.Modes, mode)
 	}
-	logger.WriteDebug("writing new index", fname)
 	writeManifest(existing, fname)
 }
 
@@ -494,7 +510,7 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 	go reindex(client, fname, ctx, mode)
 	j, jerr := newFile(fname+".json", ctx)
 	if mode == saveFileName {
-		logger.WriteInfo("save", fname)
+		info(fmt.Sprintf("save %s", fname))
 	}
 	if jerr == nil {
 		defer j.Close()
@@ -502,10 +518,10 @@ func saveData(data map[string][]string, ctx *Context, mode string, client string
 		if merr == nil {
 			j.Write(jsonString)
 		} else {
-			logger.WriteError("unable to write json", merr)
+			writeError("unable to write json", merr)
 		}
 	} else {
-		logger.WriteError("error writing json output", jerr)
+		writeError("error writing json output", jerr)
 	}
 }
 
@@ -515,7 +531,7 @@ func getClient(req *http.Request) string {
 	if err == nil {
 		remoteAddress = host
 	} else {
-		logger.WriteError("unable to read host port", err)
+		writeError("unable to read host port", err)
 	}
 	return remoteAddress
 }
@@ -580,7 +596,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 			q := filepath.Join(ctx.temp, questionFileName)
 			err := ioutil.WriteFile(q, []byte(name), 0644)
 			if err != nil {
-				logger.WriteError("unable to write question file and restart", err)
+				writeError("unable to write question file and restart", err)
 			}
 		case "restart":
 			for _, val := range v {
@@ -591,7 +607,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		}
 	}
 	if restarting {
-		logger.WriteInfo("restart requested")
+		info("restart requested")
 		os.Exit(1)
 	}
 	lock.Lock()
@@ -619,7 +635,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 	err = ctx.adminTmpl.Execute(resp, pd)
 	if err != nil {
-		logger.WriteError("template execution error", err)
+		writeError("template execution error", err)
 	}
 }
 
@@ -642,15 +658,15 @@ func getResults(resp http.ResponseWriter, req *http.Request, ctx *Context, displ
 			if err == nil {
 				resp.Write(data)
 			} else {
-				logger.WriteError("unable to read stitch results", err)
+				writeError("unable to read stitch results", err)
 				werr = err
 			}
 		} else {
-			logger.WriteError("unable to stitch", err)
+			writeError("unable to stitch", err)
 			werr = err
 		}
 	} else {
-		logger.WriteError("unable to get manifest", werr)
+		writeError("unable to get manifest", werr)
 	}
 	if werr != nil {
 		resp.Write([]byte("unable to process results"))
@@ -688,32 +704,31 @@ func main() {
 	configFile := flag.String("config", "settings.conf", "configuration path")
 	flag.Parse()
 	cfg := *configFile
-	logging := logger.NewLogOptions()
-	logging.Info = true
-	logger.ConfigureLogging(logging)
-	logger.WriteInfo(vers)
+	info(vers)
 	conf := &Configuration{}
-	err := yaml.UnmarshalFile(cfg, conf)
+	cfgData, err := ioutil.ReadFile(cfg)
 	if err != nil {
-		logger.Fatal("unable to load config", err)
+		fatal("unable to load config bytes", err)
+	}
+	err = yaml.Unmarshal(cfgData, conf)
+	if err != nil {
+		fatal("unable to load config", err)
 	}
 	tmp, cwd := resolvePath(conf.Server.Temp, "")
 	questionFile := filepath.Join(tmp, questionFileName)
-	existed := opsys.PathExists(questionFile)
+	existed := pathExists(questionFile)
 	questions := ""
 	if existed {
-		logger.WriteInfo("loading question set input file", questionFile)
+		info(fmt.Sprintf("loading question set input file: %s", questionFile))
 		q, err := ioutil.ReadFile(questionFile)
 		if err != nil {
-			logger.Fatal("unable to read question setting file", err)
+			fatal("unable to read questoin settings file", err)
 		}
 		questions = string(q)
 	}
 	if err != nil {
 		if existed {
-			logger.Fatal("unable to remove question file", err)
-		} else {
-			logger.WriteDebug("unable to remove non-existing file")
+			fatal("unable to remove question file", err)
 		}
 	}
 	initialQuestions := conf.Server.Questions
@@ -750,10 +765,10 @@ func resolvePath(path string, cwd string) (string, string) {
 		if c == "" {
 			c, err := os.Getwd()
 			if err != nil {
-				logger.WriteError("unable to determine working directory", err)
+				writeError("unable to determine working directory", err)
 				return path, c
 			}
-			logger.WriteInfo("cwd is", c)
+			info(fmt.Sprintf("cwd is %s", c))
 		}
 		return filepath.Join(c, path), c
 	}
@@ -788,7 +803,7 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	ctx.cfgName = settings.questions
 	avails, err := ioutil.ReadDir(settings.searchDir)
 	if err != nil {
-		logger.Fatal("unable to read available configs", err)
+		fatal("unable to read available configs", err)
 	}
 	for _, a := range avails {
 		base := filepath.Base(a.Name())
@@ -799,17 +814,16 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 			}
 		}
 	}
-	logger.WriteInfo("admin token", ctx.token)
+	info(fmt.Sprintf("admin token: %s", ctx.token))
 	for _, d := range []string{ctx.store, ctx.temp} {
 		err := os.MkdirAll(d, 0755)
 		if err != nil {
-			logger.Fatal("unable to create directory", err)
+			fatal("unable to create directory", err)
 		}
 	}
-	logger.WriteDebug("questions", settings.questions)
 	err = ctx.newSet(fmt.Sprintf("%s%s", settings.questions, questionConf))
 	if err != nil {
-		logger.Fatal("unable to load question set", err)
+		fatal("unable to load question set", err)
 	}
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
@@ -838,6 +852,6 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
 	err = http.ListenAndServe(setIfEmpty(conf.Server.Bind, settings.bind), nil)
 	if err != nil {
-		logger.Fatal("unable to start", err)
+		fatal("unable to start", err)
 	}
 }
