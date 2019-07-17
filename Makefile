@@ -1,5 +1,8 @@
 BIN     := bin/
-VERSION := DEVELOP
+VERSION := $(BUILD_VERSION)
+ifeq ($(VERSION),)
+       VERSION := DEVELOP
+endif
 FLAGS   := -ldflags '-linkmode external -extldflags $(LDFLAGS) -s -w -X main.vers=$(VERSION)' -gcflags=all=-trimpath=$(GOPATH) -asmflags=all=-trimpath=$(GOPATH) -buildmode=pie
 RSRC    := /usr/share/survey/resources
 TMPL    := templates/
