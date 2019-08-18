@@ -349,7 +349,7 @@ func (ctx *Context) newSet(configFile string) error {
 	}
 	exportConf := filepath.Join(ctx.store, fmt.Sprintf("run.config.%s", timeString()))
 	err = ioutil.WriteFile(exportConf, datum, 0644)
-	fmt.Println(fmt.Sprintf("running config", exportConf))
+	fmt.Println(fmt.Sprintf("running config: %s", exportConf))
 	ctx.memoryConfig = exportConf
 	return nil
 }
