@@ -22,7 +22,7 @@ clean:
 	mkdir -p $(BIN)
 
 format:
-	exit $(shell goimports -l survey.go | wc -l)
+	goformatter
 
 install:
 	install -Dm 755 -d $(DESTDIR)$(ETC)

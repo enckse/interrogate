@@ -51,50 +51,50 @@ window.onload=function(){
 <form name="survey_form" id="survey_form" action="/snapshot" method='POST'>
     <input type="hidden" name="session" value="{{ .Session }}" />
     {{ range $key, $question := .Hidden }}
-        <input type="hidden" value="{{ $question.Value }}" name="{{ $question.Id }}" id="{{ $question.Text }}">
+        <input type="hidden" value="{{ $question.Value }}" name="{{ $question.ID }}" id="{{ $question.Text }}">
     {{- end -}}
     {{ range $key, $question := .Questions }}
     <div class="row {{ $question.RawType }} {{ $question.Hash }} {{ $question.Group }}">
         <label for="{{ $question.Text }}">{{ $question.Text }}</label>
         <p style="margin-bottom: 1rem;">{{ $question.Description }}</p>
         {{ if $question.CondStart }}
-            <input class="" value="0" onchange="toggleCheckbox('conditional-{{ $question.Id }}')" type="checkbox" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
-            <div style="display: none;" id="conditional-{{ $question.Id }}">
+            <input class="" value="0" onchange="toggleCheckbox('conditional-{{ $question.ID }}')" type="checkbox" placeholder="" name="{{ $question.ID }}" id="{{ $question.Text }}">
+            <div style="display: none;" id="conditional-{{ $question.ID }}">
         {{- end -}}
         {{ if $question.HorizontalFeed }}
             <hr />
         {{- end -}}
         {{ if $question.Explanation }}
-            <input class="u-full-width" type="hidden" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
+            <input class="u-full-width" type="hidden" placeholder="" name="{{ $question.ID }}" id="{{ $question.Text }}">
         {{- end -}}
         {{ if $question.Input }}
-        <input class="u-full-width" value="{{ $question.Value }}" type="text" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}" {{ $question.Required }}>
+        <input class="u-full-width" value="{{ $question.Value }}" type="text" placeholder="" name="{{ $question.ID }}" id="{{ $question.Text }}" {{ $question.Required }}>
         {{- end -}}
         {{ if $question.Long }}
-            <textarea class="u-full-width" name="{{ $question.Id}}" style="min-height: 105px;" placeholder="" id="{{ $question.Text }}"></textarea>
+            <textarea class="u-full-width" name="{{ $question.ID}}" style="min-height: 105px;" placeholder="" id="{{ $question.Text }}"></textarea>
         {{- end -}}
         {{ if $question.Label }}
-            <input class="u-full-width" type="hidden" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
+            <input class="u-full-width" type="hidden" placeholder="" name="{{ $question.ID }}" id="{{ $question.Text }}">
         {{- end -}}
         {{ if $question.Check }}
-            <input class="" type="checkbox" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
+            <input class="" type="checkbox" placeholder="" name="{{ $question.ID }}" id="{{ $question.Text }}">
         {{- end -}}
         {{ if $question.Number }}
-            <input class="u-full-width" type="number" placeholder="" name="{{ $question.Id }}" id="{{ $question.Text }}">
+            <input class="u-full-width" type="number" placeholder="" name="{{ $question.ID }}" id="{{ $question.Text }}">
         {{- end -}}
         {{ if $question.Option }}
-              <select class="u-full-width" id="{{ $question.Text }}" name="{{ $question.Id }}">
+              <select class="u-full-width" id="{{ $question.Text }}" name="{{ $question.ID }}">
                 {{ range $kopt, $option := $question.Options }}
                     <option value="{{ $option }}"> {{ $option }}</option>
                 {{- end -}}
               </select>
         {{- end -}}
         {{ if $question.Slider }}
-            <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="slide{{ $question.Id }}"></div>
-            <input type="hidden" name="{{ $question.Id }}" value="" id="hidden{{ $question.Id }}" />
+            <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="slide{{ $question.ID }}"></div>
+            <input type="hidden" name="{{ $question.ID }}" value="" id="hidden{{ $question.ID }}" />
             <script>
-                var {{$question.SlideId}} = document.getElementById('{{ $question.SlideId }}');
-                noUiSlider.create({{$question.SlideId}}, {
+                var {{$question.SlideID}} = document.getElementById('{{ $question.SlideID }}');
+                noUiSlider.create({{$question.SlideID}}, {
                     start: {{$question.Basis}},
                     range: {
                         min: 0,
@@ -109,9 +109,9 @@ window.onload=function(){
                         }
                 });
 
-                var {{$question.SlideHideId}} = document.getElementById('hidden{{ $question.Id }}');
-                {{ $question.SlideId }}.noUiSlider.on('update', function( values, handle ) {
-                    {{ $question.SlideHideId }}.value = values[handle];
+                var {{$question.SlideHideID}} = document.getElementById('hidden{{ $question.ID }}');
+                {{ $question.SlideID }}.noUiSlider.on('update', function( values, handle ) {
+                    {{ $question.SlideHideID }}.value = values[handle];
                 });
             </script>
         {{- end -}}

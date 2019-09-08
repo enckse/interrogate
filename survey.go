@@ -36,6 +36,7 @@ var (
 	vers = "master"
 )
 
+// Context for the running server
 type Context struct {
 	snapshot     int
 	tag          string
@@ -65,6 +66,7 @@ type initSurvey struct {
 	cwd         string
 }
 
+// Configuration is the file-based configuration
 type Configuration struct {
 	Server struct {
 		Questions string
@@ -79,14 +81,16 @@ type Configuration struct {
 	}
 }
 
+// ExportField is how fields are exported for definition
 type ExportField struct {
 	Text string `json:"text"`
 	Type string `json:"type"`
 }
 
+// Field represents a question field
 type Field struct {
 	Value       string
-	Id          int
+	ID          int
 	Text        string
 	Input       bool
 	Long        bool
@@ -99,8 +103,8 @@ type Field struct {
 	Slider      bool
 	Required    string
 	Options     []string
-	SlideId     template.JS
-	SlideHideId template.JS
+	SlideID     template.JS
+	SlideHideID template.JS
 	Basis       string
 	Image       bool
 	Video       bool
@@ -117,6 +121,7 @@ type Field struct {
 	Group          string
 }
 
+// ManifestEntry represents a line in the manifest
 type ManifestEntry struct {
 	Name   string
 	Client string
@@ -124,6 +129,7 @@ type ManifestEntry struct {
 	Idx    int
 }
 
+// ManifestData is how we serialize the data to the manifest
 type ManifestData struct {
 	Title     string
 	Tag       string
@@ -135,6 +141,7 @@ type ManifestData struct {
 	CfgName   string
 }
 
+// PageData represents the templating for a survey page
 type PageData struct {
 	QueryParams string
 	Title       string
@@ -144,15 +151,18 @@ type PageData struct {
 	Questions   []Field
 }
 
+// Config represents the question configuration
 type Config struct {
 	Metadata  Meta       `json:"meta"`
 	Questions []Question `json:"questions"`
 }
 
+// Meta represents a configuration overall survey meta-definition
 type Meta struct {
 	Title string `json:"title"`
 }
 
+// Manifest represents the actual object-definition of the manifest
 type Manifest struct {
 	Files   []string `json:"files"`
 	Clients []string `json:"clients"`
@@ -173,6 +183,7 @@ func (m *Manifest) check() error {
 	return errors.New("corrupt index")
 }
 
+// Question represents a single question configuration definition
 type Question struct {
 	Text        string   `json:"text"`
 	Description string   `json:"desc"`
@@ -198,9 +209,8 @@ func fatal(message string, err error) {
 func pathExists(file string) bool {
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
 func info(message string) {
@@ -260,7 +270,7 @@ func (ctx *Context) newSet(configFile string) error {
 	condCount := 0
 	var exports []*ExportField
 	for _, q := range config.Questions {
-		condCount += 1
+		condCount++
 		k := number
 		number = number + 1
 		if q.Numbered > 0 {
@@ -272,7 +282,7 @@ func (ctx *Context) newSet(configFile string) error {
 				field.Required = attr
 			}
 		}
-		field.Id = k
+		field.ID = k
 		field.Text = q.Text
 		field.Basis = q.Basis
 		field.Height = q.Height
@@ -307,8 +317,8 @@ func (ctx *Context) newSet(configFile string) error {
 			field.HorizontalFeed = true
 		case "slide":
 			field.Slider = true
-			field.SlideId = template.JS(fmt.Sprintf("slide%d", k))
-			field.SlideHideId = template.JS(fmt.Sprintf("shide%d", k))
+			field.SlideID = template.JS(fmt.Sprintf("slide%d", k))
+			field.SlideHideID = template.JS(fmt.Sprintf("shide%d", k))
 			field.Basis = getWhenEmpty(field.Basis, "50")
 		case "conditional":
 			if inCond {
@@ -334,7 +344,7 @@ func (ctx *Context) newSet(configFile string) error {
 		}
 		field.Group = q.Group
 		field.RawType = createHash(-1, q.Type)
-		field.Hash = createHash(field.Id, field.Text)
+		field.Hash = createHash(field.ID, field.Text)
 		mapping = append(mapping, *field)
 		exports = append(exports, &ExportField{Text: field.Text, Type: q.Type})
 	}
@@ -357,11 +367,11 @@ func (ctx *Context) newSet(configFile string) error {
 func getWhenEmpty(value, dflt string) string {
 	if len(strings.TrimSpace(value)) == 0 {
 		return dflt
-	} else {
-		return value
 	}
+	return value
 }
 
+// NewPageData create a new survey page data object for templating
 func NewPageData(req *http.Request, ctx *Context) *PageData {
 	pd := &PageData{}
 	pd.QueryParams = req.URL.RawQuery
@@ -760,26 +770,24 @@ func (s *initSurvey) resolvePath(path string) string {
 func resolvePath(path string, cwd string) (string, string) {
 	if strings.HasPrefix(path, "/") {
 		return path, cwd
-	} else {
-		c := cwd
-		if c == "" {
-			c, err := os.Getwd()
-			if err != nil {
-				writeError("unable to determine working directory", err)
-				return path, c
-			}
-			info(fmt.Sprintf("cwd is %s", c))
-		}
-		return filepath.Join(c, path), c
 	}
+	c := cwd
+	if c == "" {
+		c, err := os.Getwd()
+		if err != nil {
+			writeError("unable to determine working directory", err)
+			return path, c
+		}
+		info(fmt.Sprintf("cwd is %s", c))
+	}
+	return filepath.Join(c, path), c
 }
 
 func setIfEmpty(setting, defaultValue string) string {
 	if strings.TrimSpace(setting) == "" {
 		return defaultValue
-	} else {
-		return setting
 	}
+	return setting
 }
 
 func runSurvey(conf *Configuration, settings *initSurvey) {
