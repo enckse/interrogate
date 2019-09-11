@@ -223,9 +223,11 @@ def run(args):
             html = markdown.markdown(m_file.read())
             h_file.write(html)
         h_file.write(_HTML_FOOTER)
+    tar_files = [os.path.basename(x) for x in tar_files]
     subprocess.call(["tar",
                      "cvzf",
-                     args.out + ".tar.gz"] + tar_files)
+                     args.out + ".tar.gz",
+                     "-C", os.path.dirname(args.out)] + tar_files)
 
 if __name__ == "__main__":
     main()
