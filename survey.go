@@ -382,11 +382,6 @@ func NewPageData(req *http.Request, ctx *Context) *PageData {
 	return pd
 }
 
-func convFormat(manifest, out, dir, stitcherBin, configFile string) error {
-	cmd := exec.Command(stitcherBin, "--manifest", manifest, "--out", out, "--dir", dir, "--config", configFile)
-	return cmd.Run()
-}
-
 func readAsset(name string) string {
 	asset, err := Asset(fmt.Sprintf("templates/%s.html", name))
 	if err != nil {
@@ -624,11 +619,11 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 			bundling = isChecked(v)
 		}
 	}
-	if bundling {
-		info("bundling")
-		bundle(ctx, "")
-	}
 	if restarting {
+		if bundling {
+			info("bundling")
+			bundle(ctx, "")
+		}
 		info("restart requested")
 		os.Exit(1)
 	}
@@ -671,7 +666,10 @@ func bundle(ctx *Context, readResult string) []byte {
 	}
 	results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
 	info(fmt.Sprintf("result file: %s", results))
-	err = convFormat(f, results, ctx.store, ctx.stitcher, ctx.memoryConfig)
+	cmd := exec.Command(ctx.stitcher, "--manifest", f, "--out", results, "--dir", ctx.store, "--config", ctx.memoryConfig)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
 	if err != nil {
 		writeError("unable to stitch bundle", err)
 		return nil
@@ -697,9 +695,9 @@ func getResults(resp http.ResponseWriter, req *http.Request, ctx *Context, displ
 	}
 	data := bundle(ctx, fileResult)
 	if data == nil {
-		resp.Write(data)
-	} else {
 		resp.Write([]byte("unable to process results"))
+	} else {
+		resp.Write(data)
 	}
 }
 
