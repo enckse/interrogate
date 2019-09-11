@@ -590,12 +590,22 @@ func isAdmin(ctx *Context, req *http.Request) bool {
 	return false
 }
 
+func isChecked(values []string) bool {
+	for _, val := range values {
+		if val == "on" {
+			return true
+		}
+	}
+	return false
+}
+
 func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	if !isAdmin(ctx, req) {
 		return
 	}
 	req.ParseForm()
 	restarting := false
+	bundling := true
 	for k, v := range req.Form {
 		switch k {
 		case "questions":
@@ -609,12 +619,14 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 				writeError("unable to write question file and restart", err)
 			}
 		case "restart":
-			for _, val := range v {
-				if val == "on" {
-					restarting = true
-				}
-			}
+			restarting = isChecked(v)
+		case "bundling":
+			bundling = isChecked(v)
 		}
+	}
+	if bundling {
+		info("bundling")
+		bundle(ctx, "")
 	}
 	if restarting {
 		info("restart requested")
@@ -649,36 +661,44 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 }
 
+func bundle(ctx *Context, readResult string) []byte {
+	lock.Lock()
+	defer lock.Unlock()
+	f, _, err := readManifestFile(ctx)
+	if err != nil {
+		writeError("unable to read bundle manifest", err)
+		return nil
+	}
+	results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
+	info(fmt.Sprintf("result file: %s", results))
+	err = convFormat(f, results, ctx.store, ctx.stitcher, ctx.memoryConfig)
+	if err != nil {
+		writeError("unable to stitch bundle", err)
+		return nil
+	}
+	if len(readResult) > 0 {
+		data, err := ioutil.ReadFile(fmt.Sprintf("%s.%s", results, readResult))
+		if err != nil {
+			writeError("unable to read result file", err)
+			return nil
+		}
+		return data
+	}
+	return nil
+}
+
 func getResults(resp http.ResponseWriter, req *http.Request, ctx *Context, display bool) {
 	if !isAdmin(ctx, req) {
 		return
 	}
-	lock.Lock()
-	defer lock.Unlock()
-	f, _, werr := readManifestFile(ctx)
-	if werr == nil {
-		results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
-		err := convFormat(f, results, ctx.store, ctx.stitcher, ctx.memoryConfig)
-		if err == nil {
-			fileResult := results + ".tar.gz"
-			if display {
-				fileResult = results + ".html"
-			}
-			data, err := ioutil.ReadFile(fileResult)
-			if err == nil {
-				resp.Write(data)
-			} else {
-				writeError("unable to read stitch results", err)
-				werr = err
-			}
-		} else {
-			writeError("unable to stitch", err)
-			werr = err
-		}
-	} else {
-		writeError("unable to get manifest", werr)
+	fileResult := "tar.gz"
+	if display {
+		fileResult = "html"
 	}
-	if werr != nil {
+	data := bundle(ctx, fileResult)
+	if data == nil {
+		resp.Write(data)
+	} else {
 		resp.Write([]byte("unable to process results"))
 	}
 }
