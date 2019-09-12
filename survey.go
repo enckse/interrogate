@@ -390,10 +390,13 @@ func readAsset(name string) string {
 	return string(asset)
 }
 
-func readTemplate(base, tmpl string) *template.Template {
+func readTemplate(base *template.Template, tmpl string) *template.Template {
+	copied, err := base.Clone()
+	if err != nil {
+		fatal("unable to clone base template", err)
+	}
 	file := readAsset(tmpl)
-	def := strings.Replace(base, "{{CONTENT}}", file, -1)
-	t, err := template.New("t").Parse(def)
+	t, err := copied.Parse(string(file))
 	if err != nil {
 		fatal(fmt.Sprintf("unable to read file %s", file), err)
 	}
@@ -809,6 +812,11 @@ func setIfEmpty(setting, defaultValue string) string {
 }
 
 func runSurvey(conf *Configuration, settings *initSurvey) {
+	baseAsset := readAsset("base")
+	baseTemplate, err := template.New("base").Parse(string(baseAsset))
+	if err != nil {
+		fatal("unable to parse base template", err)
+	}
 	static := settings.resolvePath(conf.Server.Resources)
 	snapValue := conf.Server.Snapshot
 	ctx := &Context{}
@@ -819,7 +827,6 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
 	ctx.stitcher = conf.Server.Stitcher
-	baseTemplate := readAsset("base")
 	ctx.beginTmpl = readTemplate(baseTemplate, "begin")
 	ctx.surveyTmpl = readTemplate(baseTemplate, "survey")
 	ctx.completeTmpl = readTemplate(baseTemplate, "complete")
