@@ -1,52 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <!-- Basic Page Needs –––––––––––––––––––––––––––––––––––––––––––––––––– -->
         <meta charset="utf-8">
         <title>{{ .Title  }}</title>
-        <!-- FONT –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-        <!-- <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css"> -->
-        <!-- we have to create a set of styles to link to local resources or the fonts wont pull from non internet connected devices -->
-        <style>
-        @font-face {
-          font-family: 'Raleway';
-          font-style: normal;
-          font-weight: 300;
-          src: local('Raleway Light'), local('Raleway-Light'),
-               url('/static/fonts/raleway-v11-latin-300.woff2')') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-               url('/static/fonts/raleway-v11-latin-300.woff')') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
-        }
-        @font-face {
-          font-family: 'Raleway';
-          font-style: normal;
-          font-weight: 400;
-          src: local('Raleway'), local('Raleway-Regular'),
-               url('/static/fonts/raleway-v11-latin-regular.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-               url('/static/fonts/raleway-v11-latin-regular.woff') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
-        }
-        @font-face {
-          font-family: 'Raleway';
-          font-style: normal;
-          font-weight: 600;
-          src: local('Raleway SemiBold'), local('Raleway-SemiBold'),
-               url('/static/fonts/raleway-v11-latin-600.woff2') format('woff2'), /* Chrome 26+, Opera 23+, Firefox 39+ */
-               url('/static/fonts/raleway-v11-latin-600.woff2') format('woff'); /* Chrome 6+, Firefox 3.6+, IE 9+, Safari 5.1+ */
-        }
-        </style>
-        <!-- CSS –––––––––––––––––––––––––––––––––––––––––––––––––– -->
         <link rel="stylesheet" href="/static/skeleton/css/normalize.css">
         <link rel="stylesheet" href="/static/skeleton/css/skeleton.css">
         <link rel="stylesheet" href="/static/nouislider/nouislider.min.css">
         <link rel="stylesheet" href="/static/survey.css">
         <link rel="stylesheet" href="/static/survey.custom.css">
-        <!-- SCRIPT –––––––––––––––––––––––––––––––––––––––––––––––––– -->
         <script src="/static/nouislider/nouislider.min.js"></script>
         <script src="/static/jquery.min.js"></script>
         <script src="/static/survey.js"></script>
         <script src="/static/survey.custom.js"></script>
     </head>
     <body>
-        <!-- Primary Page Layout –––––––––––––––––––––––––––––––––––––––––––––––––– -->
         <div class="container">
             <div class="row">
                 <div style="margin-top: 5%">
