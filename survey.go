@@ -827,17 +827,21 @@ type staticHandler struct {
 
 func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
-	b, err := readAssetRaw(filepath.Join(staticURL, path))
-	if err != nil {
-		full := filepath.Join(s.path, path)
-		notFound := true
-		if pathExists(full) {
-			b, err = ioutil.ReadFile(full)
-			if err == nil {
-				notFound = false
-			}
+	full := filepath.Join(s.path, path)
+	notFound := true
+	var b []byte
+	var err error
+	if pathExists(full) {
+		b, err = ioutil.ReadFile(full)
+		if err == nil {
+			notFound = false
+		} else {
+			writeError(fmt.Sprintf("%s asset read failure: %v", path), err)
 		}
-		if notFound {
+	}
+	if notFound {
+		b, err = readAssetRaw(filepath.Join(staticURL, path))
+		if err != nil {
 			resp.WriteHeader(http.StatusNotFound)
 		}
 	}
