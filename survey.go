@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"math/rand"
+	"mime"
 	"net"
 	"net/http"
 	"os"
@@ -382,8 +383,16 @@ func NewPageData(req *http.Request, ctx *Context) *PageData {
 	return pd
 }
 
+func readAssetRaw(name string) ([]byte, error) {
+	fixed := name
+	if !strings.HasPrefix(fixed, "/") {
+		fixed = fmt.Sprintf("/%s", fixed)
+	}
+	return Asset(fmt.Sprintf("templates%s", fixed))
+}
+
 func readAsset(name string) string {
-	asset, err := Asset(fmt.Sprintf("templates/%s.html", name))
+	asset, err := readAssetRaw(fmt.Sprintf("%s.html", name))
 	if err != nil {
 		fatal(fmt.Sprintf("template not available %s", name), err)
 	}
@@ -811,6 +820,35 @@ func setIfEmpty(setting, defaultValue string) string {
 	return setting
 }
 
+type staticHandler struct {
+	http.Handler
+	path string
+}
+
+func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+	path := req.URL.Path
+	b, err := readAssetRaw(filepath.Join(staticURL, path))
+	if err != nil {
+		full := filepath.Join(s.path, path)
+		notFound := true
+		if pathExists(full) {
+			b, err = ioutil.ReadFile(full)
+			if err == nil {
+				notFound = false
+			}
+		}
+		if notFound {
+			resp.WriteHeader(http.StatusNotFound)
+		}
+	}
+	m := mime.TypeByExtension(filepath.Ext(path))
+	if m == "" {
+		m = "text/plaintext"
+	}
+	resp.Header().Set("Content-Type", m)
+	resp.Write(b)
+}
+
 func runSurvey(conf *Configuration, settings *initSurvey) {
 	baseAsset := readAsset("base")
 	baseTemplate, err := template.New("base").Parse(string(baseAsset))
@@ -881,8 +919,8 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 			saveEndpoint(resp, req, ctx)
 		})
 	}
-	staticPath := filepath.Join(static, staticURL)
-	http.Handle(staticURL, http.StripPrefix(staticURL, http.FileServer(http.Dir(staticPath))))
+	staticHandle := &staticHandler{path: static}
+	http.Handle(staticURL, http.StripPrefix(staticURL, staticHandle))
 	err = http.ListenAndServe(setIfEmpty(conf.Server.Bind, settings.bind), nil)
 	if err != nil {
 		fatal("unable to start", err)

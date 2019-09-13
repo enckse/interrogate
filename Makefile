@@ -4,8 +4,7 @@ ifeq ($(VERSION),)
        VERSION := DEVELOP
 endif
 FLAGS   := -ldflags '-linkmode external -extldflags $(LDFLAGS) -s -w -X main.vers=$(VERSION)' -gcflags=all=-trimpath=$(GOPATH) -asmflags=all=-trimpath=$(GOPATH) -buildmode=pie
-RSRC    := /usr/share/survey/resources
-TMPL    := templates/
+TMPL    := $(shell find templates/ -type f)
 SYSD    := /lib/systemd/system/
 TMPD    := /usr/lib/tmpfiles.d/
 ETC     := /etc/survey/
@@ -34,5 +33,4 @@ install:
 	install -Dm 755 -d $(DESTDIR)$(TMPD)
 	install -Dm 644 $(SUPPORT)tmpfiles.d $(DESTDIR)$(TMPD)survey.conf
 	install -Dm 755 $(SUPPORT)stitcher.py $(DESTDIR)/usr/bin/survey-stitcher
-	for f in $(shell find $(TMPL) -type d | cut -d "/" -f 2-); do install -Dm755 -d $(DESTDIR)$(RSRC)/$$f; done
-	for f in $(shell find $(TMPL) -type f | cut -d "/" -f 2- | grep -v "html"); do install -Dm644 $(TMPL)/$$f $(DESTDIR)$(RSRC)/$$f; done
+	install -Dm 755 -d $(DESTDIR)/usr/share/survey/resources
