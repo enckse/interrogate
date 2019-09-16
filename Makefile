@@ -19,8 +19,8 @@ all: $(BINARY) $(FORMAT)
 $(BINDATA): $(TMPL)
 	go-bindata $(TMPL)
 
-$(BINARY): $(SURVEY) $(BINDATA)
-	go build -o $(BIN)survey $(FLAGS) survey.go bindata.go
+$(BINARY): $(SURVEY) $(BINDATA) $(SURVEY)
+	go build -o $(BIN)survey $(FLAGS) $(SURVEY) $(BINDATA)
 
 clean:
 	rm -f $(BINDATA)
@@ -29,7 +29,7 @@ clean:
 
 $(FORMAT): $(SURVEY)
 	goformatter
-	touch $(FORMAT)
+	@touch $(FORMAT)
 
 install:
 	install -Dm 755 -d $(DESTDIR)$(ETC)
