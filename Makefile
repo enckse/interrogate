@@ -9,19 +9,27 @@ SYSD    := /lib/systemd/system/
 TMPD    := /usr/lib/tmpfiles.d/
 ETC     := /etc/survey/
 SUPPORT := supporting/
+FORMAT  := $(BIN)format
+BINDATA := bindata.go
+SURVEY  := survey.go
+BINARY  := $(BIN)survey
 
-all: clean build format
+all: $(BINARY) $(FORMAT)
 
-build:
+$(BINDATA): $(TMPL)
 	go-bindata $(TMPL)
+
+$(BINARY): $(SURVEY) $(BINDATA)
 	go build -o $(BIN)survey $(FLAGS) survey.go bindata.go
 
 clean:
+	rm -f $(BINDATA)
 	rm -rf $(BIN)
 	mkdir -p $(BIN)
 
-format:
+$(FORMAT): $(SURVEY)
 	goformatter
+	touch $(FORMAT)
 
 install:
 	install -Dm 755 -d $(DESTDIR)$(ETC)
