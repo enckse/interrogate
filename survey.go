@@ -79,6 +79,7 @@ type Configuration struct {
 		Stitcher  string
 		Tag       string
 		Token     string
+		Convert   bool
 	}
 }
 
@@ -853,6 +854,59 @@ func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	resp.Write(b)
 }
 
+func convertMap(i interface{}) interface{} {
+	switch x := i.(type) {
+	case map[interface{}]interface{}:
+		m2 := map[string]interface{}{}
+		for k, v := range x {
+			m2[k.(string)] = convertMap(v)
+		}
+		return m2
+	case []interface{}:
+		for i, v := range x {
+			x[i] = convertMap(v)
+		}
+	}
+	return i
+}
+
+func convertJSON(search string) error {
+	conv, err := ioutil.ReadDir(search)
+	if err != nil {
+		return err
+	}
+	for _, f := range conv {
+		n := f.Name()
+		if strings.HasSuffix(n, ".json") {
+			y := fmt.Sprintf("%s%s", strings.TrimSuffix(n, ".json"), questionConf)
+			if pathExists(y) {
+				continue
+			}
+			info(fmt.Sprintf("converting: %s", n))
+			b, err := ioutil.ReadFile(filepath.Join(search, n))
+			if err != nil {
+				return err
+			}
+			var obj interface{}
+			err = json.Unmarshal(b, &obj)
+			if err != nil {
+				return err
+			}
+			obj = convertMap(obj)
+			b, err = yaml.Marshal(obj)
+			if err != nil {
+				return err
+			}
+			err = ioutil.WriteFile(filepath.Join(search, y), b, 0644)
+			if err != nil {
+				return err
+			}
+			info(fmt.Sprintf("converted: %s", y))
+		}
+	}
+	return nil
+}
+
 func runSurvey(conf *Configuration, settings *initSurvey) {
 	baseAsset := readAsset("base")
 	baseTemplate, err := template.New("base").Parse(string(baseAsset))
@@ -876,6 +930,12 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	ctx.token = setIfEmpty(conf.Server.Token, time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
 	ctx.cfgName = settings.questions
+	if conf.Server.Convert {
+		err = convertJSON(settings.searchDir)
+		if err != nil {
+			fatal("unable to convert configuration file", err)
+		}
+	}
 	avails, err := ioutil.ReadDir(settings.searchDir)
 	if err != nil {
 		fatal("unable to read available configs", err)

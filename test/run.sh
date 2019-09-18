@@ -1,7 +1,12 @@
 #!/bin/bash
 rm -rf bin/
 mkdir -p bin/
+rm -f *.yaml
 cp ../examples/*.yaml .
+
+../bin/survey --config settings.conf &
+sleep 3
+pkill survey
 
 failed=0
 _run() {
@@ -24,9 +29,15 @@ _run() {
     pkill survey
 }
 
+did=0
 for f in $(ls *.yaml); do
+    did=1
     _run $(echo $f | sed "s/\.yaml//g")
 done
+if [ $did -eq 0 ]; then
+    echo "no tests ran..."
+    failed=1
+fi
 ../bin/survey-stitcher --manifest stitch/test.index.manifest --dir stitch/ --config stitch/run.config.test --out $PWD/bin/results
 for f in $(ls expect/results*); do
     diff -u $f bin/$(basename $f)

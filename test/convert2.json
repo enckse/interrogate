@@ -1,0 +1,13 @@
+{
+    "meta":
+    {
+        "title": "Participant Survey (Basics)"
+    },
+    "questions":
+    [
+        { "text": "What is this?",  "desc": "This is a longer set of text that we would want to render above the input but below the title text.", "type": "input", "numbered": 2 },
+        { "text": "Describe yourself", "desc": "This is a longer set of text that we would want to render above the input but below the title text.", "type": "long", "numbered": 1 },
+        { "text": "Your understanding", "desc": "This is a longer set of text that we would want to render above the input but below the title text.", "type": "option", "options": ["High", "Medium", "Low" ], "numbered": 3 },
+        { "text": "Preference on sliders", "desc": "This is a longer set of text that we would want to render above the input but below the title text.", "type": "slide", "numbered": 4}
+    ]
+}

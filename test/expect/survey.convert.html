@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Participant Survey (Basics)</title>
+        <link rel="stylesheet" href="/static/skeleton/css/normalize.css">
+        <link rel="stylesheet" href="/static/skeleton/css/skeleton.css">
+        <link rel="stylesheet" href="/static/nouislider/nouislider.min.css">
+        <link rel="stylesheet" href="/static/survey.css">
+        <link rel="stylesheet" href="/static/survey.custom.css">
+        <script src="/static/nouislider/nouislider.min.js"></script>
+        <script src="/static/jquery.min.js"></script>
+        <script src="/static/survey.js"></script>
+        <script src="/static/survey.custom.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div style="margin-top: 5%">
+                    
+<script type="text/javascript">
+function do_submit(mode, url){
+    $('#survey_form').submit(function(e){
+        e.preventDefault();
+        $.ajax({
+            data: $(this).serialize(),
+            type: $(this).attr('method'),
+            url: "/" + mode + '/',
+            success: function(response) {
+                
+                if (url)
+                {
+                    window.location = url;
+                }
+            }
+        });
+        return false;
+    });
+}
+
+function do_save(){
+    
+    useUrl = "/completed"
+    do_submit('save', useUrl)
+}
+
+function toggleCheckbox(id) {
+    $('#' + id).toggle();
+}
+
+$(document).ready(function() {
+    do_submit('snapshot')
+});
+
+window.onload=function(){
+    if ( 15  > 0) {
+        var auto = setTimeout(function(){ autoRefresh(); }, 100);
+        function submitform(){
+            $('#survey_form').submit()
+        }
+
+        function autoRefresh(){
+            clearTimeout(auto);
+            
+            auto = setTimeout(function(){ submitform(); autoRefresh(); }, 15000);
+        }
+    }
+}
+</script>
+<h4>Participant Survey (Basics)</h4>
+<form name="survey_form" id="survey_form" action="/snapshot" method='POST'>
+    <input type="hidden" name="session" value="testid" />
+    
+        <input type="hidden" value="" name="1" id="Hidden">
+    <div class="row hashinput hashwhatisthis0 ">
+        <label for="What is this?">What is this?</label>
+        <p style="margin-bottom: 1rem;">This is a longer set of text that we would want to render above the input but below the title text.</p>
+        
+        <input class="u-full-width" value="" type="text" placeholder="" name="0" id="What is this?" required>
+        </div>
+    <div class="row hashlong hashdescribeyourself2 ">
+        <label for="Describe yourself">Describe yourself</label>
+        <p style="margin-bottom: 1rem;">This is a longer set of text that we would want to render above the input but below the title text.</p>
+        
+            <textarea class="u-full-width" name="2" style="min-height: 105px;" placeholder="" id="Describe yourself"></textarea>
+        </div>
+    <div class="row hashoption hashyourunderstanding3 ">
+        <label for="Your understanding">Your understanding</label>
+        <p style="margin-bottom: 1rem;">This is a longer set of text that we would want to render above the input but below the title text.</p>
+        
+              <select class="u-full-width" id="Your understanding" name="3">
+                
+                    <option value="High"> High</option>
+                    <option value="Medium"> Medium</option>
+                    <option value="Low"> Low</option></select>
+        </div>
+    <div class="row hashlabel hashshowsomelabeltext4 ">
+        <label for="Show some label text">Show some label text</label>
+        <p style="margin-bottom: 1rem;">This is a longer set of text that we would want to render above the input but below the title text.</p>
+        
+            <input class="u-full-width" type="hidden" placeholder="" name="4" id="Show some label text">
+        </div>
+    <div class="row hashhr hash5 ">
+        <label for=""></label>
+        <p style="margin-bottom: 1rem;"></p>
+        
+            <hr />
+        </div>
+    <div class="row hashcheckbox hashcanyoucheckthisbox6 mygroup">
+        <label for="Can you check this box?">Can you check this box?</label>
+        <p style="margin-bottom: 1rem;">Check?</p>
+        
+            <input class="" type="checkbox" placeholder="" name="6" id="Can you check this box?">
+        </div>
+    <div class="row hashnumber hashpickanumberanynumber7 ">
+        <label for="Pick a number, any number...">Pick a number, any number...</label>
+        <p style="margin-bottom: 1rem;">This is a numeric field.</p>
+        
+            <input class="u-full-width" type="number" placeholder="" name="7" id="Pick a number, any number...">
+        </div>
+    <div class="row hashslide hashpreferenceonsliders8 ">
+        <label for="Preference on sliders">Preference on sliders</label>
+        <p style="margin-bottom: 1rem;">This is a longer set of text that we would want to render above the input but below the title text.</p>
+        
+            <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="slide8"></div>
+            <input type="hidden" name="8" value="" id="hidden8" />
+            <script>
+                var slide8 = document.getElementById('slide8');
+                noUiSlider.create(slide8, {
+                    start: "20",
+                    range: {
+                        min: 0,
+                        max: 100
+                    },
+                    step: 5,
+                    behaviour: 'tap',
+                    pips: {
+                        mode: 'values',
+                        values: [10, 20, 30, 40, 50, 60, 70, 80, 90],
+                        density: 4
+                        }
+                });
+
+                var shide8 = document.getElementById('hidden8');
+                slide8.noUiSlider.on('update', function( values, handle ) {
+                    shide8.value = values[handle];
+                });
+            </script>
+        </div>
+    <div class="row hashconditional hashcanyoucheckthisboxconditionally9 ">
+        <label for="Can you check this box conditionally?">Can you check this box conditionally?</label>
+        <p style="margin-bottom: 1rem;">Check Cond?</p>
+        
+            <input class="" value="0" onchange="toggleCheckbox('conditional-9')" type="checkbox" placeholder="" name="9" id="Can you check this box conditionally?">
+            <div style="display: none;" id="conditional-9">
+    <div class="row hashlong hashisthislong10 ">
+        <label for="Is this long?">Is this long?</label>
+        <p style="margin-bottom: 1rem;">Should you answer this?</p>
+        
+            <textarea class="u-full-width" name="10" style="min-height: 105px;" placeholder="" id="Is this long?"></textarea>
+        </div>
+    <div class="row hashconditional hash11 ">
+        <label for=""></label>
+        <p style="margin-bottom: 1rem;"></p>
+        
+            </div></div>
+        </div><hr />
+    <div style="position:relative; z-index:2;">
+        <div style="position:absolute; top:-1em; left:-1em; right:-1em; bottom:-1em;">
+    <button class="button-primary" id="submit_form" onclick="do_save();">Submit</button>
+        </div>
+    </div>
+</form>
+
+                </div>
+           </div>
+        </div>
+    </body>
+</html>
