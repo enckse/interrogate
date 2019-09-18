@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	questionConf     = ".json"
+	questionConf     = ".yaml"
 	staticURL        = "/static/"
 	surveyURL        = "/survey/"
 	surveyClientURL  = surveyURL + "%d/%s"
@@ -154,13 +154,13 @@ type PageData struct {
 
 // Config represents the question configuration
 type Config struct {
-	Metadata  Meta       `json:"meta"`
-	Questions []Question `json:"questions"`
+	Metadata  Meta       `yaml:"meta"`
+	Questions []Question `yaml:"questions"`
 }
 
 // Meta represents a configuration overall survey meta-definition
 type Meta struct {
-	Title string `json:"title"`
+	Title string `yaml:"title"`
 }
 
 // Manifest represents the actual object-definition of the manifest
@@ -186,16 +186,16 @@ func (m *Manifest) check() error {
 
 // Question represents a single question configuration definition
 type Question struct {
-	Text        string   `json:"text"`
-	Description string   `json:"desc"`
-	Type        string   `json:"type"`
-	Attributes  []string `json:"attrs"`
-	Options     []string `json:"options"`
-	Numbered    int      `json:"numbered"`
-	Basis       string   `json:"basis"`
-	Height      string   `json:"height"`
-	Width       string   `json:"width"`
-	Group       string   `json:"group"`
+	Text        string   `yaml:"text"`
+	Description string   `yaml:"desc"`
+	Type        string   `yaml:"type"`
+	Attributes  []string `yaml:"attrs"`
+	Options     []string `yaml:"options"`
+	Numbered    int      `yaml:"numbered"`
+	Basis       string   `yaml:"basis"`
+	Height      string   `yaml:"height"`
+	Width       string   `yaml:"width"`
+	Group       string   `yaml:"group"`
 }
 
 func writeError(message string, err error) {
@@ -260,7 +260,7 @@ func (ctx *Context) newSet(configFile string) error {
 		return err
 	}
 	var config Config
-	err = json.Unmarshal(data, &config)
+	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		return err
 	}

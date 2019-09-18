@@ -1,0 +1,47 @@
+meta:
+    title: Participant Survey (Basics)
+questions:
+  - text: What is this?
+    desc: This is a longer set of text that we would want to render above the input but below the title text.
+    type: input
+    attrs:
+    - required
+  - text: Hidden
+    desc: I should be a hidden field.
+    type: hidden
+  - text: Describe yourself
+    desc: This is a longer set of text that we would want to render above the input but below the title text.
+    type: long
+  - text: Your understanding
+    desc: This is a longer set of text that we would want to render above the input but below the title text.
+    type: option
+    options:
+    - High
+    - Medium
+    - Low
+  - text: Show some label text
+    desc: This is a longer set of text that we would want to render above the input but below the title text.
+    type: label
+  - text: ''
+    desc: ''
+    type: hr
+  - text: Can you check this box?
+    desc: Check?
+    type: checkbox
+    group: mygroup
+  - text: Pick a number, any number...
+    desc: This is a numeric field.
+    type: number
+  - text: Preference on sliders
+    desc: This is a longer set of text that we would want to render above the input but below the title text.
+    type: slide
+    basis: '20'
+  - text: Can you check this box conditionally?
+    desc: Check Cond?
+    type: conditional
+  - text: Is this long?
+    desc: Should you answer this?
+    type: long
+  - text: ''
+    desc: ''
+    type: conditional 

@@ -1,7 +1,7 @@
 #!/bin/bash
 rm -rf bin/
 mkdir -p bin/
-cp ../examples/*.json .
+cp ../examples/*.yaml .
 
 failed=0
 _run() {
@@ -21,7 +21,7 @@ _run() {
     pkill survey
 }
 
-for f in $(ls *.json); do
-    _run $(echo $f | sed "s/\.json//g")
+for f in $(ls *.yaml); do
+    _run $(echo $f | sed "s/\.yaml//g")
 done
 exit $failed
