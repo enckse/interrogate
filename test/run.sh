@@ -1,17 +1,27 @@
 #!/bin/bash
 rm -rf bin/
 mkdir -p bin/
-pkill survey
-../bin/survey --config settings.conf &
-curl -s http://localhost:8080/survey/testid > bin/survey.html
-curl -s http://localhost:8080/admin?token=123456 > bin/admin.html
+cp ../examples/*.json .
+
 failed=0
-for f in admin survey; do
-    diff -u $f.html bin/$f.html
-    if [ $? -ne 0 ]; then
-        failed=1
-    fi
+_run() {
+    echo "running: $1"
+    cat settings.conf | sed "s#example#$1#g" > settings.$1.conf
+    pkill survey
+    ../bin/survey --config settings.$1.conf &
+    curl -s http://localhost:8080/survey/testid > bin/survey.$1.html
+    curl -s http://localhost:8080/admin?token=123456 > bin/admin.$1.html
+    for f in admin survey; do
+        diff -u $f.$1.html bin/$f.$1.html
+        if [ $? -ne 0 ]; then
+            failed=1
+        fi
+    done
+    sleep 1
+    pkill survey
+}
+
+for f in $(ls *.json); do
+    _run $(echo $f | sed "s/\.json//g")
 done
-sleep 1
-pkill survey
 exit $failed

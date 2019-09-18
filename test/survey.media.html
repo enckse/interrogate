@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Participant Survey (Media)</title>
+        <link rel="stylesheet" href="/static/skeleton/css/normalize.css">
+        <link rel="stylesheet" href="/static/skeleton/css/skeleton.css">
+        <link rel="stylesheet" href="/static/nouislider/nouislider.min.css">
+        <link rel="stylesheet" href="/static/survey.css">
+        <link rel="stylesheet" href="/static/survey.custom.css">
+        <script src="/static/nouislider/nouislider.min.js"></script>
+        <script src="/static/jquery.min.js"></script>
+        <script src="/static/survey.js"></script>
+        <script src="/static/survey.custom.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div style="margin-top: 5%">
+                    
+<script type="text/javascript">
+function do_submit(mode, url){
+    $('#survey_form').submit(function(e){
+        e.preventDefault();
+        $.ajax({
+            data: $(this).serialize(),
+            type: $(this).attr('method'),
+            url: "/" + mode + '/',
+            success: function(response) {
+                
+                if (url)
+                {
+                    window.location = url;
+                }
+            }
+        });
+        return false;
+    });
+}
+
+function do_save(){
+    
+    useUrl = "/completed"
+    do_submit('save', useUrl)
+}
+
+function toggleCheckbox(id) {
+    $('#' + id).toggle();
+}
+
+$(document).ready(function() {
+    do_submit('snapshot')
+});
+
+window.onload=function(){
+    if ( 15  > 0) {
+        var auto = setTimeout(function(){ autoRefresh(); }, 100);
+        function submitform(){
+            $('#survey_form').submit()
+        }
+
+        function autoRefresh(){
+            clearTimeout(auto);
+            
+            auto = setTimeout(function(){ submitform(); autoRefresh(); }, 15000);
+        }
+    }
+}
+</script>
+<h4>Participant Survey (Media)</h4>
+<form name="survey_form" id="survey_form" action="/snapshot" method='POST'>
+    <input type="hidden" name="session" value="testid" />
+    
+    <div class="row hashinput hashwhatisthis0 ">
+        <label for="What is this?">What is this?</label>
+        <p style="margin-bottom: 1rem;">This is a longer set of text that we would want to render above the input but below the title text.</p>
+        
+        <input class="u-full-width" value="" type="text" placeholder="" name="0" id="What is this?" required>
+        </div>
+    <div class="row hashaudio hashthisisanaudioclip1 ">
+        <label for="This is an audio clip">This is an audio clip</label>
+        <p style="margin-bottom: 1rem;">Please listen.</p>
+        
+            <audio controls>
+                <source src="/static/test.mp3">
+            </audio>
+        </div>
+    <div class="row hashvideo hashthisisavideoclip2 ">
+        <label for="This is a video clip">This is a video clip</label>
+        <p style="margin-bottom: 1rem;">Please watch.</p>
+        
+            <video width="400" height="300" controls>
+                <source src="/static/test.mp4">
+            </video>
+        </div>
+    <div class="row hashimage hashthisisanimage3 ">
+        <label for="This is an image">This is an image</label>
+        <p style="margin-bottom: 1rem;">Please look.</p>
+        
+            <img src="/static/test.png" height="50" width="100">
+        </div><hr />
+    <div style="position:relative; z-index:2;">
+        <div style="position:absolute; top:-1em; left:-1em; right:-1em; bottom:-1em;">
+    <button class="button-primary" id="submit_form" onclick="do_save();">Submit</button>
+        </div>
+    </div>
+</form>
+
+                </div>
+           </div>
+        </div>
+    </body>
+</html>

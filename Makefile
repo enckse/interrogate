@@ -19,7 +19,7 @@ $(BINARY): bindata.go $(SRC)
 $(PY): $(STITCH)
 	install -Dm755 $(STITCH) $(PY)
 
-tests:
+tests: $(BINARY)
 	cd test/ && ./run.sh
 
 clean:

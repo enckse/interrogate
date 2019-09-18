@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Admin</title>
+        <link rel="stylesheet" href="/static/skeleton/css/normalize.css">
+        <link rel="stylesheet" href="/static/skeleton/css/skeleton.css">
+        <link rel="stylesheet" href="/static/nouislider/nouislider.min.css">
+        <link rel="stylesheet" href="/static/survey.css">
+        <link rel="stylesheet" href="/static/survey.custom.css">
+        <script src="/static/nouislider/nouislider.min.js"></script>
+        <script src="/static/jquery.min.js"></script>
+        <script src="/static/survey.js"></script>
+        <script src="/static/survey.custom.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div style="margin-top: 5%">
+                    
+<script type="text/javascript">
+$(document).ready(function () {
+    $('#admin_form').on('submit', function(e) {
+        e.preventDefault();
+        $.ajax({
+            url : "/admin?token=123456",
+            type: "POST",
+            data: $(this).serialize(),
+            success: function (data) {
+                setTimeout(location.reload.bind(location), 5000);
+            },
+            error: function (jXHR, textStatus, errorThrown) {
+                setTimeout(location.reload.bind(location), 5000);
+            }
+        });
+    });
+});
+</script>
+<h4>Survey Administration</h4>
+<hr />
+<h5>Tag test</h5>
+<pre>
+bin/store/test/test.index.manifest
+</pre>
+<b>Config: media</b>
+<br />
+results:
+<br />
+<a href="/results?token=123456">view</a>
+<br />
+<a href="/bundle.tar.gz?token=123456">download</a>
+<table>
+    <tr>
+        <th>index</th>
+        <th>client</th>
+        <th>mode</th>
+        <th>file</th>
+    </tr>
+    
+</table>
+<hr />
+<h4>management</h4>
+<form name="admin_form" id="admin_form">
+<select name="questions" id="questions">
+    
+        <option value="media">media</option>
+    
+        <option value="example">example</option>
+    
+        <option value="number">number</option>
+    
+        <option value="RESET">RESET</option>
+    
+</select>
+    <br />
+    are you sure you want to restart?
+    <input class="" type="checkbox" placeholder="" name="restart" id="restart">
+    <br />
+    bundle the output to disk before restart?
+    <input class="" type="checkbox" placeholder="" name="bundling" id="bundling" checked>
+    <br />
+    <br />
+    <div style="position:relative; z-index:2;">
+        <div style="position:absolute; top:-1em; left:-1em; right:-1em; bottom:-1em;">
+            <button class="button-primary" id="submit_form">Restart</button>
+        </div>
+    </div>
+</form>
+
+
+                </div>
+           </div>
+        </div>
+    </body>
+</html>
