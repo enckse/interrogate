@@ -8,7 +8,7 @@ SRC     := $(shell find . -type f -name "*.go")
 STITCH  := survey-stitcher
 PY      := $(BIN)$(STITCH)
 
-all: $(BINARY) $(FORMAT) $(PY)
+all: $(BINARY) $(FORMAT) $(PY) tests
 
 bindata.go: $(TMPL)
 	go-bindata $(TMPL)
@@ -18,6 +18,9 @@ $(BINARY): bindata.go $(SRC)
 
 $(PY): $(STITCH)
 	install -Dm755 $(STITCH) $(PY)
+
+tests:
+	cd test/ && ./run.sh
 
 clean:
 	rm -f bindata.go
