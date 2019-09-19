@@ -1,9 +1,15 @@
 .ordered {
-  list-style-type: none;
-}
-li.sorted {
+    list-style-type: none;
+    border-style: solid;
+    border-width: 1px;
     background: #e6e6e6;
 }
-li.sorted:nth-child(odd) {
-    background: #cccccc;
+li.sorted {
+    background: #ffffff;
+    padding-left: 10px;
+    margin: 5px 5px 5px 5px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-style: solid;
+    border-width: 1px;
 }
