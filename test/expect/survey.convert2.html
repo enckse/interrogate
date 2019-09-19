@@ -10,6 +10,7 @@
         <link rel="stylesheet" href="/static/survey.custom.css">
         <script src="/static/nouislider/nouislider.min.js"></script>
         <script src="/static/jquery.min.js"></script>
+        <script src="/static/jquery-ui.min.js"></script>
         <script src="/static/survey.js"></script>
         <script src="/static/survey.custom.js"></script>
     </head>
@@ -65,6 +66,15 @@ window.onload=function(){
             auto = setTimeout(function(){ submitform(); autoRefresh(); }, 15000);
         }
     }
+    $(".sortable").sortable();
+    $(".sortable").disableSelection();
+    $(".sortable").each(function () {
+        $(this).sortable({
+            update: function (event, ui) {
+                $(this).closest("form").trigger("onsubmit");
+            }
+        });
+    });
 }
 </script>
 <h4>Participant Survey (Basics)</h4>

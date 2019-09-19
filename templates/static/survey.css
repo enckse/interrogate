@@ -1,0 +1,9 @@
+.ordered {
+  list-style-type: none;
+}
+li.sorted {
+    background: #e6e6e6;
+}
+li.sorted:nth-child(odd) {
+    background: #cccccc;
+}

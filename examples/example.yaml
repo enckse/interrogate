@@ -45,3 +45,10 @@ questions:
   - text: ''
     desc: ''
     type: conditional 
+  - text: This is sortable
+    type: order
+    desc: Please sort this list
+    options:
+    - a
+    - b
+    - c

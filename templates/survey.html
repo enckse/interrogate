@@ -46,6 +46,15 @@ window.onload=function(){
             auto = setTimeout(function(){ submitform(); autoRefresh(); }, 15000);
         }
     }
+    $(".sortable").sortable();
+    $(".sortable").disableSelection();
+    $(".sortable").each(function () {
+        $(this).sortable({
+            update: function (event, ui) {
+                $(this).closest("form").trigger("onsubmit");
+            }
+        });
+    });
 }
 </script>
 <h4>{{ .Title }}</h4>
@@ -89,6 +98,15 @@ window.onload=function(){
                     <option value="{{ $option }}"> {{ $option }}</option>
                 {{- end -}}
               </select>
+        {{- end -}}
+        {{ if $question.Order }}
+            <div id="order{{ $question.ID }}">
+                <ul id="{{ $question.OrderID }}" class="ordered sortable">
+                {{ range $kopt, $option := $question.Options }}
+                <li class="sorted">{{ $option }}<input id="{{ $question.OrderID }}" name="{{ $question.OrderID }}" type="hidden" value="{{ $option }}"></li>
+                {{- end -}}
+                </ul>
+            </div>
         {{- end -}}
         {{ if $question.Slider }}
             <div class="sliders" style="margin-top: 10px; margin-bottom: 50px" id="slide{{ $question.ID }}"></div>

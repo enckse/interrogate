@@ -10,6 +10,7 @@
         <link rel="stylesheet" href="/static/survey.custom.css">
         <script src="/static/nouislider/nouislider.min.js"></script>
         <script src="/static/jquery.min.js"></script>
+        <script src="/static/jquery-ui.min.js"></script>
         <script src="/static/survey.js"></script>
         <script src="/static/survey.custom.js"></script>
     </head>
@@ -65,6 +66,15 @@ window.onload=function(){
             auto = setTimeout(function(){ submitform(); autoRefresh(); }, 15000);
         }
     }
+    $(".sortable").sortable();
+    $(".sortable").disableSelection();
+    $(".sortable").each(function () {
+        $(this).sortable({
+            update: function (event, ui) {
+                $(this).closest("form").trigger("onsubmit");
+            }
+        });
+    });
 }
 </script>
 <h4>Participant Survey (Basics)</h4>
@@ -164,6 +174,18 @@ window.onload=function(){
         <p style="margin-bottom: 1rem;"></p>
         
             </div></div>
+        </div>
+    <div class="row hashorder hashthisissortable12 ">
+        <label for="This is sortable">This is sortable</label>
+        <p style="margin-bottom: 1rem;">Please sort this list</p>
+        
+            <div id="order12">
+                <ul id="sort12" class="ordered sortable">
+                
+                <li class="sorted">a<input id="sort12" name="sort12" type="hidden" value="a"></li>
+                <li class="sorted">b<input id="sort12" name="sort12" type="hidden" value="b"></li>
+                <li class="sorted">c<input id="sort12" name="sort12" type="hidden" value="c"></li></ul>
+            </div>
         </div><hr />
     <div style="position:relative; z-index:2;">
         <div style="position:absolute; top:-1em; left:-1em; right:-1em; bottom:-1em;">
