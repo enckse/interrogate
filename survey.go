@@ -107,7 +107,7 @@ type Field struct {
 	Required    string
 	Options     []string
 	Multi       bool
-	MinSize     int
+	MinSize     string
 	SlideID     template.JS
 	SlideHideID template.JS
 	Basis       string
@@ -307,10 +307,11 @@ func (ctx *Context) newSet(configFile string) error {
 			field.Multi = q.Type == "multiselect"
 			// NOTE: try a reasonable size of pixels
 			if field.Multi {
-				field.MinSize = len(q.Options) * 20
-				if field.MinSize < 50 {
-					field.MinSize = 50
+				min := len(q.Options) * 20
+				if min < 50 {
+					min = 50
 				}
+				field.MinSize = getWhenEmpty(field.Basis, fmt.Sprintf("%d", min))
 			}
 		case "order":
 			field.Order = true
