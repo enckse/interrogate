@@ -106,6 +106,8 @@ type Field struct {
 	Slider      bool
 	Required    string
 	Options     []string
+	Multi       bool
+	MinSize     int
 	SlideID     template.JS
 	SlideHideID template.JS
 	Basis       string
@@ -299,9 +301,17 @@ func (ctx *Context) newSet(configFile string) error {
 			field.hidden = true
 		case "long":
 			field.Long = true
-		case "option":
+		case "option", "multiselect":
 			field.Option = true
 			field.Options = q.Options
+			field.Multi = q.Type == "multiselect"
+			// NOTE: try a reasonable size of pixels
+			if field.Multi {
+				field.MinSize = len(q.Options) * 20
+				if field.MinSize < 50 {
+					field.MinSize = 50
+				}
+			}
 		case "order":
 			field.Order = true
 			field.Options = q.Options

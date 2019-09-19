@@ -93,7 +93,7 @@ window.onload=function(){
             <input class="u-full-width" type="number" placeholder="" name="{{ $question.ID }}" id="{{ $question.Text }}">
         {{- end -}}
         {{ if $question.Option }}
-              <select class="u-full-width" id="{{ $question.Text }}" name="{{ $question.ID }}">
+        <select class="u-full-width" id="{{ $question.Text }}" name="{{ $question.ID }}" {{ if $question.Multi }}style="min-height: {{ $question.MinSize }}px" multiple{{ end }}>
                 {{ range $kopt, $option := $question.Options }}
                     <option value="{{ $option }}"> {{ $option }}</option>
                 {{- end -}}
