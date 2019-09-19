@@ -100,7 +100,6 @@ type Field struct {
 	Check       bool
 	Number      bool
 	Order       bool
-	OrderID     string
 	Explanation bool
 	Description string
 	Option      bool
@@ -306,7 +305,6 @@ func (ctx *Context) newSet(configFile string) error {
 		case "order":
 			field.Order = true
 			field.Options = q.Options
-			field.OrderID = fmt.Sprintf("sort%d", k)
 		case "label":
 			field.Label = true
 		case "checkbox":

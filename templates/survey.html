@@ -101,9 +101,9 @@ window.onload=function(){
         {{- end -}}
         {{ if $question.Order }}
             <div id="order{{ $question.ID }}">
-                <ul id="{{ $question.OrderID }}" class="ordered sortable">
+                <ul id="{{ $question.ID }}" class="ordered sortable">
                 {{ range $kopt, $option := $question.Options }}
-                <li class="sorted">{{ $option }}<input id="{{ $question.OrderID }}" name="{{ $question.OrderID }}" type="hidden" value="{{ $option }}"></li>
+                <li class="sorted">{{ $option }}<input id="{{ $question.Text }}" name="{{ $question.ID }}" type="hidden" value="{{ $option }}"></li>
                 {{- end -}}
                 </ul>
             </div>
