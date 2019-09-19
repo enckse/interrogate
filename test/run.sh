@@ -20,7 +20,7 @@ _run() {
     for f in admin survey; do
         file=bin/$f.$1.html
         sed -i "s#<td>test\_.*#<td>uid</td>#" $file
-        diff -u expect/$f.$1.html $file
+        diff -b -u expect/$f.$1.html $file
         if [ $? -ne 0 ]; then
             failed=1
         fi
@@ -40,7 +40,7 @@ if [ $did -eq 0 ]; then
 fi
 ../bin/survey-stitcher --manifest stitch/test.index.manifest --dir stitch/ --config stitch/run.config.test --out $PWD/bin/results
 for f in $(ls expect/results*); do
-    diff -u $f bin/$(basename $f)
+    diff -b -u $f bin/$(basename $f)
     if [ $? -ne 0 ]; then
         failed=1
     fi
