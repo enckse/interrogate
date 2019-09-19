@@ -838,6 +838,11 @@ func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	notFound := true
 	var b []byte
 	var err error
+	m := mime.TypeByExtension(filepath.Ext(path))
+	if m == "" {
+		m = "text/plaintext"
+	}
+	resp.Header().Set("Content-Type", m)
 	if pathExists(full) {
 		b, err = ioutil.ReadFile(full)
 		if err == nil {
@@ -850,13 +855,9 @@ func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		b, err = readAssetRaw(filepath.Join(staticURL, path))
 		if err != nil {
 			resp.WriteHeader(http.StatusNotFound)
+			return
 		}
 	}
-	m := mime.TypeByExtension(filepath.Ext(path))
-	if m == "" {
-		m = "text/plaintext"
-	}
-	resp.Header().Set("Content-Type", m)
 	resp.Write(b)
 }
 
