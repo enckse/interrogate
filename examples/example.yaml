@@ -52,3 +52,10 @@ questions:
     - a
     - b
     - c
+  - text: Select multiple things
+    desc: This is a longer set of text that we would want to render above the input but below the title text.
+    type: multiselect
+    options:
+    - High
+    - Medium
+    - Low
