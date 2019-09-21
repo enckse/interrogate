@@ -20,19 +20,22 @@ import (
 const (
 	templateHTML = `<!doctype html>
 <html lang="en">
+<style>
+pre{
+    white-space: pre-wrap;
+}
+</style>
 <body>
 <div>
 {{ range $okey, $resp := .Objects }}
 {{ if $resp.Start }}<hr />{{ end }}
 	<h4>{{ $resp.Question }}</h4>
-	<pre>{{ range $key, $h := $resp.HTMLResponse }}{{ $h }}
-{{ end }}</pre>
+	<pre>{{ $resp.HTMLResponse }}</pre>
 {{ if $resp.End }}<hr />{{ end }}
 {{ end }}
 </div>
 </body>
-</html>
-`
+</html>`
 )
 
 type inputs struct {
@@ -50,7 +53,7 @@ type TemplateResult struct {
 // TemplateResponse is an HTML friendly response
 type TemplateResponse struct {
 	Question     string
-	HTMLResponse []string
+	HTMLResponse string
 	Start        bool
 	End          bool
 }
@@ -65,22 +68,10 @@ func (s *StitchResult) toHTML(file string) error {
 		totalResp := len(o.Responses) - 1
 		for idx, r := range o.Responses {
 			resp := &TemplateResponse{
-				Start:    idx == 0,
-				End:      idx == totalResp,
-				Question: r.Question,
-			}
-			for _, p := range strings.Split(r.Answer, "\n") {
-				escaped := html.EscapeString(p)
-				var parts []string
-				for {
-					if len(escaped) < 100 {
-						parts = append(parts, escaped)
-						break
-					}
-					parts = append(parts, escaped[0:100])
-					escaped = escaped[100:]
-				}
-				resp.HTMLResponse = parts
+				Start:        idx == 0,
+				End:          idx == totalResp,
+				Question:     html.EscapeString(r.Question),
+				HTMLResponse: html.EscapeString(r.Answer),
 			}
 			obj.Objects = append(obj.Objects, resp)
 		}

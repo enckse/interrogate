@@ -5,7 +5,6 @@ TMPL    := $(shell find templates/ -type f)
 FORMAT  := $(BIN)format
 BINARY  := $(BIN)survey $(BIN)survey-stitcher
 SRC     := $(shell find . -type f -name "*.go")
-STITCH  := survey-stitcher
 PY      := $(BIN)$(STITCH)
 BINDATA := core/bindata.go
 
@@ -25,8 +24,6 @@ clean:
 	rm -rf $(BIN)
 	mkdir -p $(BIN)
 
-$(FORMAT): $(SRC) $(STITCH)
+$(FORMAT): $(SRC)
 	goformatter
-	pycodestyle $(STITCH)
-	pydocstyle $(STITCH)
 	@touch $(FORMAT)
