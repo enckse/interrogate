@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -205,15 +206,18 @@ func (i inputs) save(results StitchResult) error {
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(fmt.Sprintf("%s.json", i.outName), b, 0644)
+	jFile := fmt.Sprintf("%s.json", i.outName)
+	hFile := fmt.Sprintf("%s.html", i.outName)
+	cFile := fmt.Sprintf("%s.csv", i.outName)
+	err = ioutil.WriteFile(jFile, b, 0644)
 	if err != nil {
 		return err
 	}
-	err = results.toHTML(fmt.Sprintf("%s.html", i.outName))
+	err = results.toHTML(hFile)
 	if err != nil {
 		return err
 	}
-	csvFile, err := os.Create(fmt.Sprintf("%s.csv", i.outName))
+	csvFile, err := os.Create(cFile)
 	if err != nil {
 		return err
 	}
@@ -240,7 +244,8 @@ func (i inputs) save(results StitchResult) error {
 	if err != nil {
 		return err
 	}
-	return nil
+	cmd := exec.Command("tar", "czvf", fmt.Sprintf("%s.tar.gz", i.outName), "-C", filepath.Dir(i.outName), hFile, cFile, jFile)
+	return cmd.Run()
 }
 
 func (i inputs) process() error {
