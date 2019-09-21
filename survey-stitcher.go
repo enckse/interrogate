@@ -11,8 +11,25 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"html/template"
 
 	"voidedtech.com/survey/core"
+)
+
+const (
+	templateHTML = `<html>
+<body>
+{{ range $okey, $resp := .Objects }}
+{{ if $resp.Start }}<hr />{{ end }}
+	<h4>{{ $resp.Question }}</h4>
+	<p>
+		<pre><code>{{ $resp.HTMLResponse }}</code></pre>
+	</p>
+{{ if $resp.End }}<hr />{{ end }}
+{{ end }}
+</body>
+</html>
+`
 )
 
 type inputs struct {
@@ -20,6 +37,45 @@ type inputs struct {
 	config    string
 	directory string
 	outName   string
+}
+
+// TemplateResult displays/formats for HTML output
+type TemplateResult struct {
+	Objects []*TemplateResponse
+}
+
+// TemplateResponse is an HTML friendly response
+type TemplateResponse struct {
+	Question string
+	HTMLResponse template.HTML
+	Start bool
+	End bool
+}
+
+func (s *StitchResult) toHTML(file string) error {
+	tmpl, err := template.New("t").Parse(templateHTML)
+	if err != nil {
+		return err
+	}
+	obj := &TemplateResult{}
+	for _, o := range s.Objects {
+		totalResp := len(o.Responses) - 1
+		for idx, r := range o.Responses {
+			resp := &TemplateResponse{
+				Start: idx == 0,
+				End: idx == totalResp,
+				Question: r.Question,
+				HTMLResponse: template.HTML(r.Answer),
+			}
+			obj.Objects = append(obj.Objects, resp)
+		}
+	}
+	html, err := os.Create(file)
+	if err != nil {
+		return err
+	}
+	defer html.Close()
+	return tmpl.Execute(html, obj)
 }
 
 // StitchResult represents a json-ish way of seein gresults
@@ -35,6 +91,7 @@ type StitchObject struct {
 	results   *core.ResultData
 	Responses []Response `json:"responses"`
 }
+
 
 // Response is a resulting question/answer from a survey
 type Response struct {
@@ -144,6 +201,10 @@ func (i inputs) save(results StitchResult) error {
 		return err
 	}
 	err = ioutil.WriteFile(fmt.Sprintf("%s.json", i.outName), b, 0644)
+	if err != nil {
+		return err
+	}
+	err = results.toHTML(fmt.Sprintf("%s.html", i.outName))
 	if err != nil {
 		return err
 	}
