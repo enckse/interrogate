@@ -19,6 +19,7 @@ import (
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
+	"voidedtech.com/survey/core"
 )
 
 const (
@@ -81,12 +82,6 @@ type Configuration struct {
 		Token     string
 		Convert   bool
 	}
-}
-
-// ExportField is how fields are exported for definition
-type ExportField struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
 }
 
 // Field represents a question field
@@ -167,27 +162,6 @@ type Meta struct {
 	Title string `yaml:"title"`
 }
 
-// Manifest represents the actual object-definition of the manifest
-type Manifest struct {
-	Files   []string `json:"files"`
-	Clients []string `json:"clients"`
-	Modes   []string `json:"modes"`
-}
-
-func (m *Manifest) check() error {
-	valid := true
-	if len(m.Files) != len(m.Clients) {
-		valid = false
-	}
-	if len(m.Files) != len(m.Modes) {
-		valid = false
-	}
-	if valid {
-		return nil
-	}
-	return errors.New("corrupt index")
-}
-
 // Question represents a single question configuration definition
 type Question struct {
 	Text        string   `yaml:"text"`
@@ -211,18 +185,11 @@ func fatal(message string, err error) {
 	panic("fatal error ^")
 }
 
-func pathExists(file string) bool {
-	if _, err := os.Stat(file); os.IsNotExist(err) {
-		return false
-	}
-	return true
-}
-
 func info(message string) {
 	fmt.Println(message)
 }
 
-func writeManifest(manifest *Manifest, filename string) {
+func writeManifest(manifest *core.Manifest, filename string) {
 	datum, err := json.Marshal(manifest)
 	if err != nil {
 		writeError("unable to marshal manifest", err)
@@ -234,8 +201,8 @@ func writeManifest(manifest *Manifest, filename string) {
 	}
 }
 
-func readManifest(contents []byte) (*Manifest, error) {
-	var manifest Manifest
+func readManifest(contents []byte) (*core.Manifest, error) {
+	var manifest core.Manifest
 	err := json.Unmarshal(contents, &manifest)
 	if err != nil {
 		return nil, err
@@ -273,7 +240,7 @@ func (ctx *Context) newSet(configFile string) error {
 	number := 0
 	inCond := false
 	condCount := 0
-	var exports []*ExportField
+	exports := &core.Exports{}
 	for _, q := range config.Questions {
 		condCount++
 		k := number
@@ -363,7 +330,7 @@ func (ctx *Context) newSet(configFile string) error {
 		field.RawType = createHash(-1, q.Type)
 		field.Hash = createHash(field.ID, field.Text)
 		mapping = append(mapping, *field)
-		exports = append(exports, &ExportField{Text: field.Text, Type: q.Type})
+		exports.Fields = append(exports.Fields, &core.ExportField{Text: field.Text, Type: q.Type})
 	}
 	if inCond {
 		panic("unclosed conditional")
@@ -404,7 +371,7 @@ func readAssetRaw(name string) ([]byte, error) {
 	if !strings.HasPrefix(fixed, "/") {
 		fixed = fmt.Sprintf("/%s", fixed)
 	}
-	return Asset(fmt.Sprintf("templates%s", fixed))
+	return core.Asset(fmt.Sprintf("templates%s", fixed))
 }
 
 func readAsset(name string) string {
@@ -466,10 +433,10 @@ func newFile(filename string, ctx *Context) (*os.File, error) {
 	return os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 }
 
-func readManifestFile(ctx *Context) (string, *Manifest, error) {
-	existing := &Manifest{}
+func readManifestFile(ctx *Context) (string, *core.Manifest, error) {
+	existing := &core.Manifest{}
 	fname := createPath(fmt.Sprintf("%s.index.manifest", ctx.tag), ctx)
-	if pathExists(fname) {
+	if core.PathExists(fname) {
 		c, err := ioutil.ReadFile(fname)
 		if err != nil {
 			writeError("unable to read index", err)
@@ -480,7 +447,7 @@ func readManifestFile(ctx *Context) (string, *Manifest, error) {
 			writeError("corrupt index", err)
 			return fname, nil, err
 		}
-		err = existing.check()
+		err = existing.Check()
 		if err != nil {
 			info("invalid index... (lengths)")
 			return fname, nil, errors.New("invalid index lengths")
@@ -529,16 +496,16 @@ func timeString() string {
 	return time.Now().Format("2006-01-02T15-04-05")
 }
 
-func saveData(data map[string][]string, ctx *Context, mode string, client string, session string) {
+func saveData(data *core.ResultData, ctx *Context, mode string, client string, session string) {
 	name := ""
 	for _, c := range strings.ToLower(fmt.Sprintf("%s_%s_%s", client, getSession(6), session)) {
 		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_') {
 			name = name + string(c)
 		}
 	}
-	data["client"] = []string{client}
+	data.Datum[core.ClientKey] = []string{client}
 	ts := timeString()
-	data["timestamp"] = []string{ts}
+	data.Datum[core.TimestampKey] = []string{ts}
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, ts, mode, name)
 	go reindex(client, fname, ctx, mode)
 	j, jerr := newFile(fname+".json", ctx)
@@ -579,12 +546,15 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	sess := ""
 	for k, v := range req.Form {
 		datum[k] = v
-		if k == "session" && len(v) > 0 {
+		if k == core.SessionKey && len(v) > 0 {
 			sess = v[0]
 		}
 	}
 
-	go saveData(datum, ctx, mode, getClient(req), sess)
+	r := &core.ResultData{
+		Datum: datum,
+	}
+	go saveData(r, ctx, mode, getClient(req), sess)
 }
 
 func getSession(length int) string {
@@ -772,7 +742,7 @@ func main() {
 	}
 	tmp, cwd := resolvePath(conf.Server.Temp, "")
 	questionFile := filepath.Join(tmp, questionFileName)
-	existed := pathExists(questionFile)
+	existed := core.PathExists(questionFile)
 	questions := ""
 	if existed {
 		info(fmt.Sprintf("loading question set input file: %s", questionFile))
@@ -852,7 +822,7 @@ func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		m = "text/plaintext"
 	}
 	resp.Header().Set("Content-Type", m)
-	if pathExists(full) {
+	if core.PathExists(full) {
 		b, err = ioutil.ReadFile(full)
 		if err == nil {
 			notFound = false
@@ -895,7 +865,7 @@ func convertJSON(search string) error {
 		n := f.Name()
 		if strings.HasSuffix(n, ".json") {
 			y := fmt.Sprintf("%s%s", strings.TrimSuffix(n, ".json"), questionConf)
-			if pathExists(y) {
+			if core.PathExists(y) {
 				continue
 			}
 			info(fmt.Sprintf("converting: %s", n))

@@ -3,27 +3,25 @@ VERSION ?= master
 FLAGS   := -ldflags '-linkmode external -extldflags $(LDFLAGS) -s -w -X main.vers=$(VERSION)' -gcflags=all=-trimpath=$(GOPATH) -asmflags=all=-trimpath=$(GOPATH) -buildmode=pie
 TMPL    := $(shell find templates/ -type f)
 FORMAT  := $(BIN)format
-BINARY  := $(BIN)survey
+BINARY  := $(BIN)survey $(BIN)survey-stitcher
 SRC     := $(shell find . -type f -name "*.go")
 STITCH  := survey-stitcher
 PY      := $(BIN)$(STITCH)
+BINDATA := core/bindata.go
 
 all: $(BINARY) $(FORMAT) $(PY) tests
 
-bindata.go: $(TMPL)
-	go-bindata $(TMPL)
+$(BINDATA): $(TMPL)
+	go-bindata -o $(BINDATA) -pkg core $(TMPL)
 
-$(BINARY): bindata.go $(SRC)
-	go build -o $(BIN)survey $(FLAGS) *.go
-
-$(PY): $(STITCH)
-	install -Dm755 $(STITCH) $(PY)
+$(BINARY): $(BINDATA) $(SRC)
+	go build -o $@ $(FLAGS)  $(shell echo $@ | cut -d "/" -f 2).go
 
 tests: $(BINARY)
 	cd test/ && ./run.sh
 
 clean:
-	rm -f bindata.go
+	rm -f $(BINDATA)
 	rm -rf $(BIN)
 	mkdir -p $(BIN)
 
