@@ -45,12 +45,11 @@ type Response struct {
 type fieldData struct {
 	core.ExportField
 	values []string
-	valid  bool
 	index  int
 }
 
 func (f *fieldData) display() string {
-	return fmt.Sprintf("%d. %s (%s)", f.index, f.Text, f.Type)
+	return fmt.Sprintf("%d. %s", f.index, f.Text)
 }
 
 func (i inputs) build(index int, m *core.Manifest, cfg *core.Exports) (*StitchObject, error) {
@@ -75,40 +74,40 @@ func (i inputs) build(index int, m *core.Manifest, cfg *core.Exports) (*StitchOb
 	o.results = r
 	var fieldNames []string
 	responses := make(map[string]*fieldData)
+	var timestamp []string
+	var session []string
 	actualMode := []string{fmt.Sprintf("mode:%s", o.mode)}
-	useIndex := 0
-	for k, v := range r.Datum {
-		switch k {
-		case core.ClientKey:
-			continue
-		case core.SessionKey, core.TimestampKey:
-			actualMode = append(actualMode, fmt.Sprintf("%s:%v", k, v))
-			continue
-		}
-		useIndex++
-		i, err := strconv.Atoi(k)
-		if err != nil {
-			return nil, err
-		}
+	for cfgIdx, obj := range cfg.Fields {
 		data := &fieldData{
-			values: v,
-			valid:  false,
-			index:  useIndex,
+			index: cfgIdx,
 		}
-		for cfgIdx, obj := range cfg.Fields {
-			if cfgIdx == i {
-				data.Text = obj.Text
-				data.Type = obj.Type
-				data.valid = true
+		data.Text = obj.Text
+		data.Type = obj.Type
+		for k, v := range r.Datum {
+			switch k {
+			case core.ClientKey:
+				continue
+			case core.SessionKey:
+				session = v
+				continue
+			case core.TimestampKey:
+				timestamp = v
+				continue
 			}
-		}
-		if !data.valid {
-			return nil, fmt.Errorf("invalid data detected: %s %s", k, p)
+			i, err := strconv.Atoi(k)
+			if err != nil {
+				return nil, err
+			}
+			if cfgIdx == i {
+				data.values = v
+			}
 		}
 		disp := data.display()
 		fieldNames = append(fieldNames, disp)
 		responses[disp] = data
 	}
+	actualMode = append(actualMode, fmt.Sprintf("session:%v", session))
+	actualMode = append(actualMode, fmt.Sprintf("timestamp:%v", timestamp))
 	if len(fieldNames) == 0 {
 		return nil, fmt.Errorf("no fields found")
 	}
@@ -119,9 +118,10 @@ func (i inputs) build(index int, m *core.Manifest, cfg *core.Exports) (*StitchOb
 	responses[core.ClientKey] = &fieldData{values: []string{o.client}}
 	responses[core.ModeKey] = &fieldData{values: []string{o.mode}}
 	for _, f := range fieldNames {
-		data := "[no response]"
 		var useData []string
+		data := ""
 		for _, val := range responses[f].values {
+			data = "<no response>"
 			if strings.TrimSpace(val) == "" {
 				continue
 			}
@@ -168,7 +168,6 @@ func (i inputs) save(results StitchResult) error {
 		}
 		records = append(records, responses)
 	}
-	fmt.Println(fmt.Sprintf("%v", records))
 	writer := csv.NewWriter(csvFile)
 	defer writer.Flush()
 	err = writer.WriteAll(records)
