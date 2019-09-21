@@ -1,1 +1,1 @@
-{"files":["test"],"clients":["127.0.0.1"],"modes":["snapshot"]}
+{"files":["test"],"clients":["::1"],"modes":["save"]}
