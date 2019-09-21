@@ -4,60 +4,60 @@
       "file": "test",
       "responses": [
         {
-          "question": "0. What is this?",
+          "question": "00. What is this? (input)",
           "answer": "This is a test input"
         },
         {
-          "question": "1. Hidden",
-          "answer": "\u003cno response\u003e"
+          "question": "01. Hidden (hidden)",
+          "answer": "[no response]"
         },
         {
-          "question": "10. Is this long?",
-          "answer": "lor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
-        },
-        {
-          "question": "11. ",
-          "answer": ""
-        },
-        {
-          "question": "12. This is sortable",
-          "answer": "b\na\nc"
-        },
-        {
-          "question": "13. Select multiple things",
-          "answer": "Medium\nLow"
-        },
-        {
-          "question": "2. Describe yourself",
+          "question": "02. Describe yourself (long)",
           "answer": "This is a longer\r\n\r\nDescriptiong\r\n\r\n Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic"
         },
         {
-          "question": "3. Your understanding",
+          "question": "03. Your understanding (option)",
           "answer": "Medium"
         },
         {
-          "question": "4. Show some label text",
-          "answer": "\u003cno response\u003e"
+          "question": "04. Show some label text (label)",
+          "answer": "[no response]"
         },
         {
-          "question": "5. ",
+          "question": "05.  (hr)",
           "answer": ""
         },
         {
-          "question": "6. Can you check this box?",
+          "question": "06. Can you check this box? (checkbox)",
           "answer": "on"
         },
         {
-          "question": "7. Pick a number, any number...",
+          "question": "07. Pick a number, any number... (number)",
           "answer": "50000"
         },
         {
-          "question": "8. Preference on sliders",
+          "question": "08. Preference on sliders (slide)",
           "answer": "70.00"
         },
         {
-          "question": "9. Can you check this box conditionally?",
+          "question": "09. Can you check this box conditionally? (conditional)",
           "answer": "0"
+        },
+        {
+          "question": "10. Is this long? (long)",
+          "answer": "lor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum"
+        },
+        {
+          "question": "11.  (conditional)",
+          "answer": ""
+        },
+        {
+          "question": "12. This is sortable (order)",
+          "answer": "b\na\nc"
+        },
+        {
+          "question": "13. Select multiple things (multiselect)",
+          "answer": "Medium\nLow"
         },
         {
           "question": "client",

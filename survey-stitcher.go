@@ -5,28 +5,31 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"html"
+	"html/template"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
-	"html/template"
 
 	"voidedtech.com/survey/core"
 )
 
 const (
-	templateHTML = `<html>
+	templateHTML = `<!doctype html>
+<html lang="en">
 <body>
+<div>
 {{ range $okey, $resp := .Objects }}
 {{ if $resp.Start }}<hr />{{ end }}
 	<h4>{{ $resp.Question }}</h4>
-	<p>
-		<pre><code>{{ $resp.HTMLResponse }}</code></pre>
-	</p>
+	<pre>{{ range $key, $h := $resp.HTMLResponse }}{{ $h }}
+{{ end }}</pre>
 {{ if $resp.End }}<hr />{{ end }}
 {{ end }}
+</div>
 </body>
 </html>
 `
@@ -46,10 +49,10 @@ type TemplateResult struct {
 
 // TemplateResponse is an HTML friendly response
 type TemplateResponse struct {
-	Question string
-	HTMLResponse template.HTML
-	Start bool
-	End bool
+	Question     string
+	HTMLResponse []string
+	Start        bool
+	End          bool
 }
 
 func (s *StitchResult) toHTML(file string) error {
@@ -62,10 +65,22 @@ func (s *StitchResult) toHTML(file string) error {
 		totalResp := len(o.Responses) - 1
 		for idx, r := range o.Responses {
 			resp := &TemplateResponse{
-				Start: idx == 0,
-				End: idx == totalResp,
+				Start:    idx == 0,
+				End:      idx == totalResp,
 				Question: r.Question,
-				HTMLResponse: template.HTML(r.Answer),
+			}
+			for _, p := range strings.Split(r.Answer, "\n") {
+				escaped := html.EscapeString(p)
+				var parts []string
+				for {
+					if len(escaped) < 100 {
+						parts = append(parts, escaped)
+						break
+					}
+					parts = append(parts, escaped[0:100])
+					escaped = escaped[100:]
+				}
+				resp.HTMLResponse = parts
 			}
 			obj.Objects = append(obj.Objects, resp)
 		}
@@ -92,7 +107,6 @@ type StitchObject struct {
 	Responses []Response `json:"responses"`
 }
 
-
 // Response is a resulting question/answer from a survey
 type Response struct {
 	Question string `json:"question"`
@@ -106,7 +120,7 @@ type fieldData struct {
 }
 
 func (f *fieldData) display() string {
-	return fmt.Sprintf("%d. %s", f.index, f.Text)
+	return fmt.Sprintf("%02d. %s (%s)", f.index, f.Text, f.Type)
 }
 
 func (i inputs) build(index int, m *core.Manifest, cfg *core.Exports) (*StitchObject, error) {
@@ -178,7 +192,7 @@ func (i inputs) build(index int, m *core.Manifest, cfg *core.Exports) (*StitchOb
 		var useData []string
 		data := ""
 		for _, val := range responses[f].values {
-			data = "<no response>"
+			data = "[no response]"
 			if strings.TrimSpace(val) == "" {
 				continue
 			}
