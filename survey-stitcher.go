@@ -76,6 +76,7 @@ func (i inputs) build(index int, m *core.Manifest, cfg *core.Exports) (*StitchOb
 	var fieldNames []string
 	responses := make(map[string]*fieldData)
 	actualMode := []string{fmt.Sprintf("mode:%s", o.mode)}
+	useIndex := 0
 	for k, v := range r.Datum {
 		switch k {
 		case core.ClientKey:
@@ -84,6 +85,7 @@ func (i inputs) build(index int, m *core.Manifest, cfg *core.Exports) (*StitchOb
 			actualMode = append(actualMode, fmt.Sprintf("%s:%v", k, v))
 			continue
 		}
+		useIndex++
 		i, err := strconv.Atoi(k)
 		if err != nil {
 			return nil, err
@@ -91,7 +93,7 @@ func (i inputs) build(index int, m *core.Manifest, cfg *core.Exports) (*StitchOb
 		data := &fieldData{
 			values: v,
 			valid:  false,
-			index:  i,
+			index:  useIndex,
 		}
 		for cfgIdx, obj := range cfg.Fields {
 			if cfgIdx == i {
