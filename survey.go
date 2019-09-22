@@ -668,6 +668,10 @@ func bundle(ctx *Context, readResult string) []byte {
 		Config:    ctx.memoryConfig,
 	}
 	err = inputs.Process()
+	if err != nil {
+		writeError("unable to process results", err)
+		return nil
+	}
 	if len(readResult) > 0 {
 		data, err := ioutil.ReadFile(fmt.Sprintf("%s.%s", results, readResult))
 		if err != nil {
