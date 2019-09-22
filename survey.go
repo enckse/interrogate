@@ -12,7 +12,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -55,7 +54,6 @@ type Context struct {
 	available    []string
 	cfgName      string
 	memoryConfig string
-	stitcher     string
 }
 
 type initSurvey struct {
@@ -77,7 +75,6 @@ type Configuration struct {
 		Storage   string
 		Temp      string
 		Resources string
-		Stitcher  string
 		Tag       string
 		Token     string
 		Convert   bool
@@ -664,14 +661,13 @@ func bundle(ctx *Context, readResult string) []byte {
 	}
 	results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
 	info(fmt.Sprintf("result file: %s", results))
-	cmd := exec.Command(ctx.stitcher, "--manifest", f, "--out", results, "--dir", ctx.store, "--config", ctx.memoryConfig)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if err != nil {
-		writeError("unable to stitch bundle", err)
-		return nil
+	inputs := core.Inputs{
+		Manifest:  f,
+		OutName:   results,
+		Directory: ctx.store,
+		Config:    ctx.memoryConfig,
 	}
+	err = inputs.Process()
 	if len(readResult) > 0 {
 		data, err := ioutil.ReadFile(fmt.Sprintf("%s.%s", results, readResult))
 		if err != nil {
@@ -908,7 +904,6 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	ctx.store = filepath.Join(ctx.store, ctx.tag)
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
-	ctx.stitcher = conf.Server.Stitcher
 	ctx.beginTmpl = readTemplate(baseTemplate, "begin")
 	ctx.surveyTmpl = readTemplate(baseTemplate, "survey")
 	ctx.completeTmpl = readTemplate(baseTemplate, "complete")
