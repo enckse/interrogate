@@ -1,7 +1,4 @@
-**/*
-!**/
-!**/*.*
+bin/
 bindata.go
-test/bin/
-test/*.conf
 test/*.yaml
+test/*.conf

@@ -1,26 +1,29 @@
+BIN     := bin/
 VERSION ?= master
 FLAGS   := -ldflags '-linkmode external -extldflags $(LDFLAGS) -s -w -X main.vers=$(VERSION)' -gcflags=all=-trimpath=$(GOPATH) -asmflags=all=-trimpath=$(GOPATH) -buildmode=pie
 TMPL    := $(shell find templates/ -type f)
-OBJECTS := survey survey-stitcher
+FORMAT  := $(BIN)format
+BINARY  := $(BIN)survey $(BIN)survey-stitcher
 SRC     := $(shell find . -type f -name "*.go")
+PY      := $(BIN)$(STITCH)
 BINDATA := core/bindata.go
 
-.PHONY: tests lint clean all
-
-all: $(OBJECTS) lint tests
+all: $(BINARY) $(FORMAT) $(PY) tests
 
 $(BINDATA): $(TMPL)
 	go-bindata -o $(BINDATA) -pkg core $(TMPL)
 
-$(OBJECTS): $(BINDATA) $(SRC)
-	go build -o $@ $(FLAGS) cmd/$@.go 
+$(BINARY): $(BINDATA) $(SRC)
+	go build -o $@ $(FLAGS)  $(shell echo $@ | cut -d "/" -f 2).go
 
-tests: $(OBJECTS)
+tests: $(BINARY)
 	cd test/ && ./run.sh
 
 clean:
 	rm -f $(BINDATA)
-	rm -f $(OBJECTS)
+	rm -rf $(BIN)
+	mkdir -p $(BIN)
 
-lint:
-	@golinter
+$(FORMAT): $(SRC)
+	goformatter
+	@touch $(FORMAT)
