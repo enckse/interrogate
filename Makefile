@@ -25,5 +25,5 @@ clean:
 	mkdir -p $(BIN)
 
 $(FORMAT): $(SRC)
-	goformatter
+	@golinter
 	@touch $(FORMAT)
