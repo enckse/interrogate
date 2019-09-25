@@ -1,4 +1,6 @@
-bin/
 bindata.go
 test/*.yaml
 test/*.conf
+test/bin
+survey
+survey-stitcher

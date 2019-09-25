@@ -4,7 +4,7 @@ mkdir -p bin/
 rm -f *.yaml
 cp ../examples/*.yaml .
 
-../bin/survey --config settings.conf &
+../survey --config settings.conf &
 sleep 3
 pkill survey
 
@@ -13,7 +13,7 @@ _run() {
     echo "running: $1"
     cat settings.conf | sed "s#example#$1#g" > settings.$1.conf
     pkill survey
-    ../bin/survey --config settings.$1.conf &
+    ../survey --config settings.$1.conf &
     curl -s http://localhost:8080/survey/testid > bin/survey.$1.html
     curl -s http://localhost:8080/admin?token=123456 > bin/admin.$1.html
     curl -s http://localhost:8080/snapshot/ -X POST -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'X-Requested-With: XMLHttpRequest' --data 'session=testid&1=&0=ojioj&2=ijoiojoj&3=High&4=&6=on&7=&8=20.00&9=0&10=ijojiojoijojioi'
@@ -38,7 +38,7 @@ if [ $did -eq 0 ]; then
     echo "no tests ran..."
     failed=1
 fi
-../bin/survey-stitcher --manifest stitch/test.index.manifest --dir stitch/ --config stitch/run.config.test --out $PWD/bin/results
+../survey-stitcher --manifest stitch/test.index.manifest --dir stitch/ --config stitch/run.config.test --out $PWD/bin/results
 for f in $(ls expect/results*); do
     diff -b -u $f bin/$(basename $f)
     if [ $? -ne 0 ]; then
