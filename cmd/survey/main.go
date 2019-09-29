@@ -18,7 +18,7 @@ import (
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
-	"voidedtech.com/survey/core"
+	"voidedtech.com/survey/internal"
 )
 
 const (
@@ -186,7 +186,7 @@ func info(message string) {
 	fmt.Println(message)
 }
 
-func writeManifest(manifest *core.Manifest, filename string) {
+func writeManifest(manifest *internal.Manifest, filename string) {
 	datum, err := json.Marshal(manifest)
 	if err != nil {
 		writeError("unable to marshal manifest", err)
@@ -198,8 +198,8 @@ func writeManifest(manifest *core.Manifest, filename string) {
 	}
 }
 
-func readManifest(contents []byte) (*core.Manifest, error) {
-	var manifest core.Manifest
+func readManifest(contents []byte) (*internal.Manifest, error) {
+	var manifest internal.Manifest
 	err := json.Unmarshal(contents, &manifest)
 	if err != nil {
 		return nil, err
@@ -237,7 +237,7 @@ func (ctx *Context) newSet(configFile string) error {
 	number := 0
 	inCond := false
 	condCount := 0
-	exports := &core.Exports{}
+	exports := &internal.Exports{}
 	for _, q := range config.Questions {
 		condCount++
 		k := number
@@ -327,7 +327,7 @@ func (ctx *Context) newSet(configFile string) error {
 		field.RawType = createHash(-1, q.Type)
 		field.Hash = createHash(field.ID, field.Text)
 		mapping = append(mapping, *field)
-		exports.Fields = append(exports.Fields, &core.ExportField{Text: field.Text, Type: q.Type})
+		exports.Fields = append(exports.Fields, &internal.ExportField{Text: field.Text, Type: q.Type})
 	}
 	if inCond {
 		panic("unclosed conditional")
@@ -368,7 +368,7 @@ func readAssetRaw(name string) ([]byte, error) {
 	if !strings.HasPrefix(fixed, "/") {
 		fixed = fmt.Sprintf("/%s", fixed)
 	}
-	return core.Asset(fmt.Sprintf("templates%s", fixed))
+	return internal.Asset(fmt.Sprintf("templates%s", fixed))
 }
 
 func readAsset(name string) string {
@@ -430,10 +430,10 @@ func newFile(filename string, ctx *Context) (*os.File, error) {
 	return os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 }
 
-func readManifestFile(ctx *Context) (string, *core.Manifest, error) {
-	existing := &core.Manifest{}
+func readManifestFile(ctx *Context) (string, *internal.Manifest, error) {
+	existing := &internal.Manifest{}
 	fname := createPath(fmt.Sprintf("%s.index.manifest", ctx.tag), ctx)
-	if core.PathExists(fname) {
+	if internal.PathExists(fname) {
 		c, err := ioutil.ReadFile(fname)
 		if err != nil {
 			writeError("unable to read index", err)
@@ -493,16 +493,16 @@ func timeString() string {
 	return time.Now().Format("2006-01-02T15-04-05")
 }
 
-func saveData(data *core.ResultData, ctx *Context, mode string, client string, session string) {
+func saveData(data *internal.ResultData, ctx *Context, mode string, client string, session string) {
 	name := ""
 	for _, c := range strings.ToLower(fmt.Sprintf("%s_%s_%s", client, getSession(6), session)) {
 		if (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '_') {
 			name = name + string(c)
 		}
 	}
-	data.Datum[core.ClientKey] = []string{client}
+	data.Datum[internal.ClientKey] = []string{client}
 	ts := timeString()
-	data.Datum[core.TimestampKey] = []string{ts}
+	data.Datum[internal.TimestampKey] = []string{ts}
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, ts, mode, name)
 	go reindex(client, fname, ctx, mode)
 	j, jerr := newFile(fname+".json", ctx)
@@ -543,12 +543,12 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	sess := ""
 	for k, v := range req.Form {
 		datum[k] = v
-		if k == core.SessionKey && len(v) > 0 {
+		if k == internal.SessionKey && len(v) > 0 {
 			sess = v[0]
 		}
 	}
 
-	r := &core.ResultData{
+	r := &internal.ResultData{
 		Datum: datum,
 	}
 	go saveData(r, ctx, mode, getClient(req), sess)
@@ -661,7 +661,7 @@ func bundle(ctx *Context, readResult string) []byte {
 	}
 	results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
 	info(fmt.Sprintf("result file: %s", results))
-	inputs := core.Inputs{
+	inputs := internal.Inputs{
 		Manifest:  f,
 		OutName:   results,
 		Directory: ctx.store,
@@ -742,7 +742,7 @@ func main() {
 	}
 	tmp, cwd := resolvePath(conf.Server.Temp, "")
 	questionFile := filepath.Join(tmp, questionFileName)
-	existed := core.PathExists(questionFile)
+	existed := internal.PathExists(questionFile)
 	questions := ""
 	if existed {
 		info(fmt.Sprintf("loading question set input file: %s", questionFile))
@@ -822,7 +822,7 @@ func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		m = "text/plaintext"
 	}
 	resp.Header().Set("Content-Type", m)
-	if core.PathExists(full) {
+	if internal.PathExists(full) {
 		b, err = ioutil.ReadFile(full)
 		if err == nil {
 			notFound = false
@@ -865,7 +865,7 @@ func convertJSON(search string) error {
 		n := f.Name()
 		if strings.HasSuffix(n, ".json") {
 			y := fmt.Sprintf("%s%s", strings.TrimSuffix(n, ".json"), questionConf)
-			if core.PathExists(y) {
+			if internal.PathExists(y) {
 				continue
 			}
 			info(fmt.Sprintf("converting: %s", n))

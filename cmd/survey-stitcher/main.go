@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"voidedtech.com/survey/core"
+	"voidedtech.com/survey/internal"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 	cfg := flag.String("config", "", "configuration file")
 	out := flag.String("out", "", "output file naming (prefix)")
 	flag.Parse()
-	in := core.Inputs{
+	in := internal.Inputs{
 		Manifest:  *manifest,
 		Config:    *cfg,
 		Directory: *dir,
