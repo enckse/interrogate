@@ -36,26 +36,53 @@ pre{
 </html>`
 )
 
-// Inputs represent stitching inputs
-type Inputs struct {
-	Manifest  string
-	Config    string
-	Directory string
-	OutName   string
-}
+type (
+	// Inputs represent stitching inputs
+	Inputs struct {
+		Manifest  string
+		Config    string
+		Directory string
+		OutName   string
+	}
 
-// TemplateResult displays/formats for HTML output
-type TemplateResult struct {
-	Objects []*TemplateResponse
-}
+	// TemplateResult displays/formats for HTML output
+	TemplateResult struct {
+		Objects []*TemplateResponse
+	}
 
-// TemplateResponse is an HTML friendly response
-type TemplateResponse struct {
-	Question     string
-	HTMLResponse string
-	Start        bool
-	End          bool
-}
+	// TemplateResponse is an HTML friendly response
+	TemplateResponse struct {
+		Question     string
+		HTMLResponse string
+		Start        bool
+		End          bool
+	}
+	// StitchResult represents a json-ish way of seein gresults
+	StitchResult struct {
+		Objects []*StitchObject `json:"results"`
+	}
+
+	// StitchObject represents data results
+	StitchObject struct {
+		File      string `json:"file"`
+		client    string
+		mode      string
+		results   *ResultData
+		Responses []Response `json:"responses"`
+	}
+
+	// Response is a resulting question/answer from a survey
+	Response struct {
+		Question string `json:"question"`
+		Answer   string `json:"answer"`
+	}
+
+	fieldData struct {
+		ExportField
+		values []string
+		index  int
+	}
+)
 
 func (s *StitchResult) toHTML(file string) error {
 	tmpl, err := template.New("t").Parse(templateHTML)
@@ -81,32 +108,6 @@ func (s *StitchResult) toHTML(file string) error {
 	}
 	defer html.Close()
 	return tmpl.Execute(html, obj)
-}
-
-// StitchResult represents a json-ish way of seein gresults
-type StitchResult struct {
-	Objects []*StitchObject `json:"results"`
-}
-
-// StitchObject represents data results
-type StitchObject struct {
-	File      string `json:"file"`
-	client    string
-	mode      string
-	results   *ResultData
-	Responses []Response `json:"responses"`
-}
-
-// Response is a resulting question/answer from a survey
-type Response struct {
-	Question string `json:"question"`
-	Answer   string `json:"answer"`
-}
-
-type fieldData struct {
-	ExportField
-	values []string
-	index  int
 }
 
 func (f *fieldData) display() string {

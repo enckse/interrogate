@@ -36,6 +36,7 @@ var (
 type (
 	// Context represent operating context
 	Context struct {
+		http.Handler
 		snapshot     int
 		tag          string
 		store        string
@@ -51,6 +52,7 @@ type (
 		available    []string
 		cfgName      string
 		memoryConfig string
+		serveStatic  string
 	}
 
 	initSurvey struct {
@@ -61,11 +63,6 @@ type (
 		questions   string
 		searchDir   string
 		cwd         string
-	}
-
-	staticHandler struct {
-		http.Handler
-		path string
 	}
 )
 
@@ -525,9 +522,9 @@ func (s *initSurvey) resolvePath(path string) string {
 	return pathed
 }
 
-func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
+func (ctx *Context) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
-	full := filepath.Join(s.path, path)
+	full := filepath.Join(ctx.serveStatic, path)
 	notFound := true
 	var b []byte
 	var err error
@@ -560,7 +557,6 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	if err != nil {
 		internal.Fatal("unable to parse base template", err)
 	}
-	static := settings.resolvePath(conf.Server.Resources)
 	snapValue := conf.Server.Snapshot
 	ctx := &Context{}
 	ctx.snapshot = snapValue
@@ -569,6 +565,7 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	ctx.store = filepath.Join(ctx.store, ctx.tag)
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
+	ctx.serveStatic = settings.resolvePath(conf.Server.Resources)
 	ctx.beginTmpl = internal.ReadTemplate(baseTemplate, "begin")
 	ctx.surveyTmpl = internal.ReadTemplate(baseTemplate, "survey")
 	ctx.completeTmpl = internal.ReadTemplate(baseTemplate, "complete")
@@ -629,8 +626,7 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 			saveEndpoint(resp, req, ctx)
 		})
 	}
-	staticHandle := &staticHandler{path: static}
-	http.Handle(staticURL, http.StripPrefix(staticURL, staticHandle))
+	http.Handle(staticURL, http.StripPrefix(staticURL, ctx))
 	err = http.ListenAndServe(internal.SetIfEmpty(conf.Server.Bind, settings.bind), nil)
 	if err != nil {
 		internal.Fatal("unable to start", err)
