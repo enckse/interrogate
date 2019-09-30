@@ -2,7 +2,19 @@ package internal
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+)
+
+const (
+	// SessionKey contains the unique session identifier
+	SessionKey = "session"
+	// ClientKey contains the client connection information
+	ClientKey = "client"
+	// TimestampKey contains timestamp information
+	TimestampKey = "timestamp"
+	// ModeKey stores underlying save mode information
+	ModeKey = "mode"
 )
 
 type (
@@ -65,6 +77,29 @@ type (
 		Width       string   `yaml:"width"`
 		Group       string   `yaml:"group"`
 	}
+
+	// ResultData is the resulting data from a submission
+	ResultData struct {
+		Datum map[string][]string `json:"data"`
+	}
+
+	// Exports are fields that are exported for reporting/display
+	Exports struct {
+		Fields []*ExportField `json:"fields"`
+	}
+
+	// Manifest represents the actual object-definition of the manifest
+	Manifest struct {
+		Files   []string `json:"files"`
+		Clients []string `json:"clients"`
+		Modes   []string `json:"modes"`
+	}
+
+	// ExportField is how fields are exported for definition
+	ExportField struct {
+		Text string `json:"text"`
+		Type string `json:"type"`
+	}
 )
 
 // Write writes the manifest to file
@@ -86,4 +121,19 @@ func NewManifest(contents []byte) (*Manifest, error) {
 		return nil, err
 	}
 	return &manifest, nil
+}
+
+// Check validates a manifest
+func (manifest *Manifest) Check() error {
+	valid := true
+	if len(manifest.Files) != len(manifest.Clients) {
+		valid = false
+	}
+	if len(manifest.Files) != len(manifest.Modes) {
+		valid = false
+	}
+	if valid {
+		return nil
+	}
+	return fmt.Errorf("corrupt index")
 }
