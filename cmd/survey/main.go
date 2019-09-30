@@ -77,21 +77,6 @@ type (
 		cwd         string
 	}
 
-	// Configuration is the file-based configuration
-	Configuration struct {
-		Server struct {
-			Questions string
-			Bind      string
-			Snapshot  int
-			Storage   string
-			Temp      string
-			Resources string
-			Tag       string
-			Token     string
-			Convert   bool
-		}
-	}
-
 	// Field represents a question field
 	Field struct {
 		Value       string
@@ -659,7 +644,7 @@ func main() {
 	flag.Parse()
 	cfg := *configFile
 	internal.Info(vers)
-	conf := &Configuration{}
+	conf := &internal.Configuration{}
 	cfgData, err := ioutil.ReadFile(cfg)
 	if err != nil {
 		internal.Fatal("unable to load config bytes", err)
@@ -816,7 +801,7 @@ func convertJSON(search string) error {
 	return nil
 }
 
-func runSurvey(conf *Configuration, settings *initSurvey) {
+func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	baseAsset := readAsset("base")
 	baseTemplate, err := template.New("base").Parse(string(baseAsset))
 	if err != nil {
