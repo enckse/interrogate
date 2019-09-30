@@ -129,8 +129,7 @@ func (i Inputs) build(index int, m *Manifest, cfg *Exports) (*StitchObject, erro
 		return nil, err
 	}
 	r := &ResultData{}
-	err = json.Unmarshal(b, &r)
-	if err != nil {
+	if err := json.Unmarshal(b, &r); err != nil {
 		return nil, err
 	}
 	o.results = r
@@ -208,12 +207,10 @@ func (i Inputs) save(results StitchResult) error {
 	jFile := fmt.Sprintf("%s.json", i.OutName)
 	hFile := fmt.Sprintf("%s.html", i.OutName)
 	cFile := fmt.Sprintf("%s.csv", i.OutName)
-	err = ioutil.WriteFile(jFile, b, 0644)
-	if err != nil {
+	if err := ioutil.WriteFile(jFile, b, 0644); err != nil {
 		return err
 	}
-	err = results.toHTML(hFile)
-	if err != nil {
+	if err := results.toHTML(hFile); err != nil {
 		return err
 	}
 	csvFile, err := os.Create(cFile)
@@ -239,8 +236,7 @@ func (i Inputs) save(results StitchResult) error {
 	}
 	writer := csv.NewWriter(csvFile)
 	defer writer.Flush()
-	err = writer.WriteAll(records)
-	if err != nil {
+	if err := writer.WriteAll(records); err != nil {
 		return err
 	}
 	cmd := exec.Command("tar", "czvf", fmt.Sprintf("%s.tar.gz", i.OutName), "-C", filepath.Dir(i.OutName), hFile, cFile, jFile)
@@ -262,12 +258,10 @@ func (i Inputs) Process() error {
 		return err
 	}
 	m := &Manifest{}
-	err = json.Unmarshal(b, &m)
-	if err != nil {
+	if err := json.Unmarshal(b, &m); err != nil {
 		return err
 	}
-	err = m.Check()
-	if err != nil {
+	if err := m.Check(); err != nil {
 		return err
 	}
 	b, err = ioutil.ReadFile(i.Config)
@@ -275,8 +269,7 @@ func (i Inputs) Process() error {
 		return err
 	}
 	cfg := &Exports{}
-	err = json.Unmarshal(b, &cfg)
-	if err != nil {
+	if err := json.Unmarshal(b, &cfg); err != nil {
 		return err
 	}
 	clients := make(map[string]*StitchObject)

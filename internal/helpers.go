@@ -132,8 +132,7 @@ func ConvertJSON(search string) error {
 				return err
 			}
 			var obj interface{}
-			err = json.Unmarshal(b, &obj)
-			if err != nil {
+			if err := json.Unmarshal(b, &obj); err != nil {
 				return err
 			}
 			obj = convertMap(obj)
@@ -141,8 +140,7 @@ func ConvertJSON(search string) error {
 			if err != nil {
 				return err
 			}
-			err = ioutil.WriteFile(filepath.Join(search, y), b, 0644)
-			if err != nil {
+			if err := ioutil.WriteFile(filepath.Join(search, y), b, 0644); err != nil {
 				return err
 			}
 			Info(fmt.Sprintf("converted: %s", y))

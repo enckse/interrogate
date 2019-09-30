@@ -344,8 +344,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	} else {
 		pd.Warning = err.Error()
 	}
-	err = ctx.adminTmpl.Execute(resp, pd)
-	if err != nil {
+	if err := ctx.adminTmpl.Execute(resp, pd); err != nil {
 		internal.Error("template execution error", err)
 	}
 }
@@ -366,8 +365,7 @@ func bundle(ctx *Context, readResult string) []byte {
 		Directory: ctx.store,
 		Config:    ctx.memoryConfig,
 	}
-	err = inputs.Process()
-	if err != nil {
+	if err := inputs.Process(); err != nil {
 		internal.Error("unable to process results", err)
 		return nil
 	}
@@ -438,26 +436,19 @@ func main() {
 	if err != nil {
 		internal.Fatal("unable to load config bytes", err)
 	}
-	err = yaml.Unmarshal(cfgData, conf)
-	if err != nil {
+	if err := yaml.Unmarshal(cfgData, conf); err != nil {
 		internal.Fatal("unable to load config", err)
 	}
 	tmp, cwd := internal.ResolvePath(conf.Server.Temp, "")
 	questionFile := filepath.Join(tmp, questionFileName)
-	existed := internal.PathExists(questionFile)
 	questions := ""
-	if existed {
+	if internal.PathExists(questionFile) {
 		internal.Info(fmt.Sprintf("loading question set input file: %s", questionFile))
 		q, err := ioutil.ReadFile(questionFile)
 		if err != nil {
 			internal.Fatal("unable to read questoin settings file", err)
 		}
 		questions = string(q)
-	}
-	if err != nil {
-		if existed {
-			internal.Fatal("unable to remove question file", err)
-		}
 	}
 	initialQuestions := conf.Server.Questions
 	if questions == "" {
@@ -512,8 +503,7 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	ctx.available = []string{settings.inQuestions}
 	ctx.cfgName = settings.questions
 	if conf.Server.Convert {
-		err = internal.ConvertJSON(settings.searchDir)
-		if err != nil {
+		if err := internal.ConvertJSON(settings.searchDir); err != nil {
 			internal.Fatal("unable to convert configuration file", err)
 		}
 	}
@@ -532,13 +522,11 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	}
 	internal.Info(fmt.Sprintf("admin token: %s", ctx.token))
 	for _, d := range []string{ctx.store, ctx.temp} {
-		err := os.MkdirAll(d, 0755)
-		if err != nil {
+		if err := os.MkdirAll(d, 0755); err != nil {
 			internal.Fatal("unable to create directory", err)
 		}
 	}
-	err = ctx.newSet(fmt.Sprintf("%s%s", settings.questions, internal.ConfigExt))
-	if err != nil {
+	if err := ctx.newSet(fmt.Sprintf("%s%s", settings.questions, internal.ConfigExt)); err != nil {
 		internal.Fatal("unable to load question set", err)
 	}
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
@@ -565,8 +553,7 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 		})
 	}
 	http.Handle(staticURL, http.StripPrefix(staticURL, ctx))
-	err = http.ListenAndServe(internal.SetIfEmpty(conf.Server.Bind, settings.bind), nil)
-	if err != nil {
+	if err := http.ListenAndServe(internal.SetIfEmpty(conf.Server.Bind, settings.bind), nil); err != nil {
 		internal.Fatal("unable to start", err)
 	}
 }

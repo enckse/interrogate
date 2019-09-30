@@ -210,8 +210,7 @@ func (f *Field) Hidden() bool {
 
 // HandleTemplate executes a page data-based template
 func (pd *PageData) HandleTemplate(resp http.ResponseWriter, tmpl *template.Template) {
-	err := tmpl.Execute(resp, pd)
-	if err != nil {
+	if err := tmpl.Execute(resp, pd); err != nil {
 		Error("template execution error", err)
 	}
 }
@@ -231,8 +230,7 @@ func ReadManifestFile(dir, tag string) (string, *Manifest, error) {
 			Error("corrupt index", err)
 			return fname, nil, err
 		}
-		err = existing.Check()
-		if err != nil {
+		if err := existing.Check(); err != nil {
 			Info("invalid index... (lengths)")
 			return fname, nil, fmt.Errorf("invalid index lengths")
 		}
