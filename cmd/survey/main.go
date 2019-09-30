@@ -145,7 +145,7 @@ func (ctx *Context) newSet(configFile string) error {
 		case "conditional":
 			if inCond {
 				if condCount == 1 {
-					panic("conditional contains no questions")
+					internal.Fatal("conditional contains no questions", nil)
 				}
 				field.CondEnd = true
 				inCond = false
@@ -155,7 +155,7 @@ func (ctx *Context) newSet(configFile string) error {
 				field.CondStart = true
 			}
 		default:
-			panic("unknown question type: " + q.Type)
+			internal.Fatal("unknown question type: " + q.Type, nil)
 		}
 		if field.Image || field.Audio || field.Video {
 			field.Basis = fmt.Sprintf("%s%s", ctx.staticPath, field.Basis)
@@ -171,7 +171,7 @@ func (ctx *Context) newSet(configFile string) error {
 		exports.Fields = append(exports.Fields, &internal.ExportField{Text: field.Text, Type: q.Type})
 	}
 	if inCond {
-		panic("unclosed conditional")
+		internal.Fatal("unclosed conditional", nil)
 	}
 	ctx.questions = mapping
 	datum, err := json.Marshal(exports)
@@ -183,7 +183,7 @@ func (ctx *Context) newSet(configFile string) error {
 	if err := ioutil.WriteFile(exportConf, datum, 0644); err != nil {
 		return err
 	}
-	fmt.Println(fmt.Sprintf("running config: %s", exportConf))
+	internal.Info(fmt.Sprintf("running config: %s", exportConf))
 	ctx.memoryConfig = exportConf
 	return nil
 }
@@ -455,7 +455,7 @@ func main() {
 		questions = initialQuestions
 	}
 	if strings.TrimSpace(questions) == "" {
-		panic("no question set?")
+		internal.Fatal("no question set?", nil)
 	}
 	dir := filepath.Dir(cfg)
 	settingsFile := filepath.Join(dir, questions)

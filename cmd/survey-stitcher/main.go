@@ -2,8 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"os"
 
 	"voidedtech.com/survey/internal"
 )
@@ -21,7 +19,6 @@ func main() {
 		OutName:   *out,
 	}
 	if err := in.Process(); err != nil {
-		fmt.Println(fmt.Sprintf("ERROR: %v", err))
-		os.Exit(1)
+		internal.Fatal("processing failure", err)
 	}
 }
