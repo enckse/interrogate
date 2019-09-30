@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"mime"
 	"net/http"
+	"path/filepath"
 )
 
 const (
@@ -212,4 +214,75 @@ func (pd *PageData) HandleTemplate(resp http.ResponseWriter, tmpl *template.Temp
 	if err != nil {
 		Error("template execution error", err)
 	}
+}
+
+// ReadManifestFile reads a manifest from file definitions
+func ReadManifestFile(dir, tag string) (string, *Manifest, error) {
+	existing := &Manifest{}
+	fname := filepath.Join(dir, fmt.Sprintf("%s.index.manifest", tag))
+	if PathExists(fname) {
+		c, err := ioutil.ReadFile(fname)
+		if err != nil {
+			Error("unable to read index", err)
+			return fname, nil, err
+		}
+		existing, err = NewManifest(c)
+		if err != nil {
+			Error("corrupt index", err)
+			return fname, nil, err
+		}
+		err = existing.Check()
+		if err != nil {
+			Info("invalid index... (lengths)")
+			return fname, nil, fmt.Errorf("invalid index lengths")
+		}
+	}
+	return fname, existing, nil
+}
+
+// IsAdmin checks if something is admin only
+func IsAdmin(token string, req *http.Request) bool {
+	query := req.URL.Query()
+	v, ok := query["token"]
+	if !ok {
+		return false
+	}
+	if len(v) > 0 {
+		for _, value := range v {
+			if value == token {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// GetStaticResource reads a static resource and configures response appropriately
+func GetStaticResource(staticPath, staticURL string, resp http.ResponseWriter, req *http.Request) {
+	path := req.URL.Path
+	full := filepath.Join(staticPath, path)
+	notFound := true
+	var b []byte
+	var err error
+	m := mime.TypeByExtension(filepath.Ext(path))
+	if m == "" {
+		m = "text/plaintext"
+	}
+	resp.Header().Set("Content-Type", m)
+	if PathExists(full) {
+		b, err = ioutil.ReadFile(full)
+		if err == nil {
+			notFound = false
+		} else {
+			Error(fmt.Sprintf("%s asset read failure: %v", path), err)
+		}
+	}
+	if notFound {
+		b, err = ReadAssetRaw(filepath.Join(staticURL, path))
+		if err != nil {
+			resp.WriteHeader(http.StatusNotFound)
+			return
+		}
+	}
+	resp.Write(b)
 }

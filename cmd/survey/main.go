@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -72,8 +70,7 @@ func (ctx *Context) newSet(configFile string) error {
 		return err
 	}
 	var config internal.Config
-	err = yaml.Unmarshal(data, &config)
-	if err != nil {
+	if err := yaml.Unmarshal(data, &config); err != nil {
 		return err
 	}
 	ctx.title = config.Metadata.Title
@@ -183,7 +180,9 @@ func (ctx *Context) newSet(configFile string) error {
 		return err
 	}
 	exportConf := filepath.Join(ctx.store, fmt.Sprintf("run.config.%s", internal.TimeString()))
-	err = ioutil.WriteFile(exportConf, datum, 0644)
+	if err := ioutil.WriteFile(exportConf, datum, 0644); err != nil {
+		return err
+	}
 	fmt.Println(fmt.Sprintf("running config: %s", exportConf))
 	ctx.memoryConfig = exportConf
 	return nil
@@ -200,34 +199,15 @@ func completeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context)
 	pd.HandleTemplate(resp, ctx.completeTmpl)
 }
 
-func readManifestFile(ctx *Context) (string, *internal.Manifest, error) {
-	existing := &internal.Manifest{}
-	fname := filepath.Join(ctx.store, fmt.Sprintf("%s.index.manifest", ctx.tag))
-	if internal.PathExists(fname) {
-		c, err := ioutil.ReadFile(fname)
-		if err != nil {
-			internal.Error("unable to read index", err)
-			return fname, nil, err
-		}
-		existing, err = internal.NewManifest(c)
-		if err != nil {
-			internal.Error("corrupt index", err)
-			return fname, nil, err
-		}
-		err = existing.Check()
-		if err != nil {
-			internal.Info("invalid index... (lengths)")
-			return fname, nil, errors.New("invalid index lengths")
-		}
-	}
-	return fname, existing, nil
+func (ctx *Context) getManifest() (string, *internal.Manifest, error) {
+	return internal.ReadManifestFile(ctx.store, ctx.tag)
 }
 
 func reindex(client, filename string, ctx *Context, mode string) {
 	lock.Lock()
 	defer lock.Unlock()
 	handled := false
-	fname, existing, err := readManifestFile(ctx)
+	fname, existing, err := ctx.getManifest()
 	if err != nil {
 		return
 	}
@@ -309,24 +289,8 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	go saveData(r, ctx, mode, internal.GetClient(req), sess)
 }
 
-func isAdmin(ctx *Context, req *http.Request) bool {
-	query := req.URL.Query()
-	v, ok := query["token"]
-	if !ok {
-		return false
-	}
-	if len(v) > 0 {
-		for _, value := range v {
-			if value == ctx.token {
-				return true
-			}
-		}
-	}
-	return false
-}
-
 func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	if !isAdmin(ctx, req) {
+	if !internal.IsAdmin(ctx.token, req) {
 		return
 	}
 	req.ParseForm()
@@ -340,8 +304,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 				name = ctx.available[0]
 			}
 			q := filepath.Join(ctx.temp, questionFileName)
-			err := ioutil.WriteFile(q, []byte(name), 0644)
-			if err != nil {
+			if err := ioutil.WriteFile(q, []byte(name), 0644); err != nil {
 				internal.Error("unable to write question file and restart", err)
 			}
 		case "restart":
@@ -364,7 +327,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd.Available = ctx.available
 	pd.Available = append(pd.Available, qReset)
 	pd.Token = ctx.token
-	f, m, err := readManifestFile(ctx)
+	f, m, err := ctx.getManifest()
 	pd.Title = "Admin"
 	pd.Tag = ctx.tag
 	pd.File = f
@@ -390,7 +353,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 func bundle(ctx *Context, readResult string) []byte {
 	lock.Lock()
 	defer lock.Unlock()
-	f, _, err := readManifestFile(ctx)
+	f, _, err := ctx.getManifest()
 	if err != nil {
 		internal.Error("unable to read bundle manifest", err)
 		return nil
@@ -420,7 +383,7 @@ func bundle(ctx *Context, readResult string) []byte {
 }
 
 func getResults(resp http.ResponseWriter, req *http.Request, ctx *Context, display bool) {
-	if !isAdmin(ctx, req) {
+	if !internal.IsAdmin(ctx.token, req) {
 		return
 	}
 	fileResult := "tar.gz"
@@ -523,32 +486,7 @@ func (s *initSurvey) resolvePath(path string) string {
 }
 
 func (ctx *Context) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	path := req.URL.Path
-	full := filepath.Join(ctx.serveStatic, path)
-	notFound := true
-	var b []byte
-	var err error
-	m := mime.TypeByExtension(filepath.Ext(path))
-	if m == "" {
-		m = "text/plaintext"
-	}
-	resp.Header().Set("Content-Type", m)
-	if internal.PathExists(full) {
-		b, err = ioutil.ReadFile(full)
-		if err == nil {
-			notFound = false
-		} else {
-			internal.Error(fmt.Sprintf("%s asset read failure: %v", path), err)
-		}
-	}
-	if notFound {
-		b, err = internal.ReadAssetRaw(filepath.Join(staticURL, path))
-		if err != nil {
-			resp.WriteHeader(http.StatusNotFound)
-			return
-		}
-	}
-	resp.Write(b)
+	internal.GetStaticResource(ctx.serveStatic, staticURL, resp, req)
 }
 
 func runSurvey(conf *internal.Configuration, settings *initSurvey) {
