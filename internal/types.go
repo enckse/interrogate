@@ -3,7 +3,9 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
+	"net/http"
 )
 
 const (
@@ -18,6 +20,51 @@ const (
 )
 
 type (
+	// Field represents a question field
+	Field struct {
+		Value       string
+		ID          int
+		Text        string
+		Input       bool
+		Long        bool
+		Label       bool
+		Check       bool
+		Number      bool
+		Order       bool
+		Explanation bool
+		Description string
+		Option      bool
+		Slider      bool
+		Required    string
+		Options     []string
+		Multi       bool
+		MinSize     string
+		SlideID     template.JS
+		SlideHideID template.JS
+		Basis       string
+		Image       bool
+		Video       bool
+		Audio       bool
+		Height      string
+		Width       string
+		// Control types, not input types
+		CondStart      bool
+		CondEnd        bool
+		HorizontalFeed bool
+		hidden         bool
+		RawType        string
+		Hash           string
+		Group          string
+	}
+	// PageData represents the templating for a survey page
+	PageData struct {
+		QueryParams string
+		Title       string
+		Session     string
+		Snapshot    int
+		Hidden      []Field
+		Questions   []Field
+	}
 	// Configuration is the file-based configuration
 	Configuration struct {
 		Server struct {
@@ -136,4 +183,33 @@ func (manifest *Manifest) Check() error {
 		return nil
 	}
 	return fmt.Errorf("corrupt index")
+}
+
+// NewPageData creates new page data objects
+func NewPageData(req *http.Request, snapshot int) *PageData {
+	pd := &PageData{}
+	pd.QueryParams = req.URL.RawQuery
+	pd.Snapshot = snapshot
+	if len(pd.QueryParams) > 0 {
+		pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
+	}
+	return pd
+}
+
+// SetHidden marks a field as hidden
+func (f *Field) SetHidden() {
+	f.hidden = true
+}
+
+// Hidden indicates if the field is hidden
+func (f *Field) Hidden() bool {
+	return f.hidden
+}
+
+// HandleTemplate executes a page data-based template
+func (pd *PageData) HandleTemplate(resp http.ResponseWriter, tmpl *template.Template) {
+	err := tmpl.Execute(resp, pd)
+	if err != nil {
+		Error("template execution error", err)
+	}
 }

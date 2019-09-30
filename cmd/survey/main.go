@@ -8,7 +8,6 @@ import (
 	"html/template"
 	"io/ioutil"
 	"mime"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -45,23 +44,13 @@ type (
 		surveyTmpl   *template.Template
 		completeTmpl *template.Template
 		adminTmpl    *template.Template
-		questions    []Field
+		questions    []internal.Field
 		title        string
 		staticPath   string
 		token        string
 		available    []string
 		cfgName      string
 		memoryConfig string
-	}
-
-	// PageData represents the templating for a survey page
-	PageData struct {
-		QueryParams string
-		Title       string
-		Session     string
-		Snapshot    int
-		Hidden      []Field
-		Questions   []Field
 	}
 
 	initSurvey struct {
@@ -72,43 +61,6 @@ type (
 		questions   string
 		searchDir   string
 		cwd         string
-	}
-
-	// Field represents a question field
-	Field struct {
-		Value       string
-		ID          int
-		Text        string
-		Input       bool
-		Long        bool
-		Label       bool
-		Check       bool
-		Number      bool
-		Order       bool
-		Explanation bool
-		Description string
-		Option      bool
-		Slider      bool
-		Required    string
-		Options     []string
-		Multi       bool
-		MinSize     string
-		SlideID     template.JS
-		SlideHideID template.JS
-		Basis       string
-		Image       bool
-		Video       bool
-		Audio       bool
-		Height      string
-		Width       string
-		// Control types, not input types
-		CondStart      bool
-		CondEnd        bool
-		HorizontalFeed bool
-		hidden         bool
-		RawType        string
-		Hash           string
-		Group          string
 	}
 
 	staticHandler struct {
@@ -128,7 +80,7 @@ func (ctx *Context) newSet(configFile string) error {
 		return err
 	}
 	ctx.title = config.Metadata.Title
-	var mapping []Field
+	var mapping []internal.Field
 	number := 0
 	inCond := false
 	condCount := 0
@@ -140,7 +92,7 @@ func (ctx *Context) newSet(configFile string) error {
 		if q.Numbered > 0 {
 			k = q.Numbered
 		}
-		field := &Field{}
+		field := &internal.Field{}
 		for _, attr := range q.Attributes {
 			if attr == "required" {
 				field.Required = attr
@@ -157,7 +109,7 @@ func (ctx *Context) newSet(configFile string) error {
 		case "input":
 			field.Input = true
 		case "hidden":
-			field.hidden = true
+			field.SetHidden()
 		case "long":
 			field.Long = true
 		case "option", "multiselect":
@@ -240,78 +192,20 @@ func (ctx *Context) newSet(configFile string) error {
 	return nil
 }
 
-// NewPageData create a new survey page data object for templating
-func NewPageData(req *http.Request, ctx *Context) *PageData {
-	pd := &PageData{}
-	pd.QueryParams = req.URL.RawQuery
-	pd.Snapshot = ctx.snapshot
-	if len(pd.QueryParams) > 0 {
-		pd.QueryParams = fmt.Sprintf("?%s", pd.QueryParams)
-	}
-	return pd
-}
-
-func readAssetRaw(name string) ([]byte, error) {
-	fixed := name
-	if !strings.HasPrefix(fixed, "/") {
-		fixed = fmt.Sprintf("/%s", fixed)
-	}
-	return internal.Asset(fmt.Sprintf("templates%s", fixed))
-}
-
-func readAsset(name string) string {
-	asset, err := readAssetRaw(fmt.Sprintf("%s.html", name))
-	if err != nil {
-		internal.Fatal(fmt.Sprintf("template not available %s", name), err)
-	}
-	return string(asset)
-}
-
-func readTemplate(base *template.Template, tmpl string) *template.Template {
-	copied, err := base.Clone()
-	if err != nil {
-		internal.Fatal("unable to clone base template", err)
-	}
-	file := readAsset(tmpl)
-	t, err := copied.Parse(string(file))
-	if err != nil {
-		internal.Fatal(fmt.Sprintf("unable to read file %s", file), err)
-	}
-	return t
-}
-
-func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageData) {
-	err := tmpl.Execute(resp, pd)
-	if err != nil {
-		internal.Error("template execution error", err)
-	}
-}
-
 func homeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	pd := NewPageData(req, ctx)
+	pd := ctx.newPage(req)
 	pd.Session = internal.NewSession(20)
-	handleTemplate(resp, ctx.beginTmpl, pd)
+	pd.HandleTemplate(resp, ctx.beginTmpl)
 }
 
 func completeEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	pd := NewPageData(req, ctx)
-	handleTemplate(resp, ctx.completeTmpl, pd)
-}
-
-func getTuple(req *http.Request, strPos int) (string, bool) {
-	path := req.URL.Path
-	parts := strings.Split(path, "/")
-	required := strPos
-	if len(parts) < required+1 {
-		internal.Info(fmt.Sprintf("warning, invalid url %s", path))
-		return "", false
-	}
-	return parts[strPos], true
+	pd := ctx.newPage(req)
+	pd.HandleTemplate(resp, ctx.completeTmpl)
 }
 
 func readManifestFile(ctx *Context) (string, *internal.Manifest, error) {
 	existing := &internal.Manifest{}
-	fname := createPath(fmt.Sprintf("%s.index.manifest", ctx.tag), ctx)
+	fname := filepath.Join(ctx.store, fmt.Sprintf("%s.index.manifest", ctx.tag))
 	if internal.PathExists(fname) {
 		c, err := ioutil.ReadFile(fname)
 		if err != nil {
@@ -380,7 +274,7 @@ func saveData(data *internal.ResultData, ctx *Context, mode string, client strin
 	data.Datum[internal.TimestampKey] = []string{ts}
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, ts, mode, name)
 	go reindex(client, fname, ctx, mode)
-	j, jerr := newFile(fname+".json", ctx)
+	j, jerr := internal.NewFile(ctx.store, fname+".json")
 	if mode == saveFileName {
 		internal.Info(fmt.Sprintf("save %s", fname))
 	}
@@ -397,19 +291,8 @@ func saveData(data *internal.ResultData, ctx *Context, mode string, client strin
 	}
 }
 
-func getClient(req *http.Request) string {
-	remoteAddress := req.RemoteAddr
-	host, _, err := net.SplitHostPort(remoteAddress)
-	if err == nil {
-		remoteAddress = host
-	} else {
-		internal.Error("unable to read host port", err)
-	}
-	return remoteAddress
-}
-
 func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	mode, valid := getTuple(req, 1)
+	mode, valid := internal.GetURLTuple(req, 1)
 	if !valid {
 		return
 	}
@@ -426,7 +309,7 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	r := &internal.ResultData{
 		Datum: datum,
 	}
-	go saveData(r, ctx, mode, getClient(req), sess)
+	go saveData(r, ctx, mode, internal.GetClient(req), sess)
 }
 
 func isAdmin(ctx *Context, req *http.Request) bool {
@@ -555,12 +438,16 @@ func getResults(resp http.ResponseWriter, req *http.Request, ctx *Context, displ
 	}
 }
 
+func (ctx *Context) newPage(req *http.Request) *internal.PageData {
+	return internal.NewPageData(req, ctx.snapshot)
+}
+
 func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	sess, valid := getTuple(req, 2)
+	sess, valid := internal.GetURLTuple(req, 2)
 	if !valid {
 		return
 	}
-	pd := NewPageData(req, ctx)
+	pd := ctx.newPage(req)
 	pd.Session = sess
 	query := req.URL.Query()
 	for _, q := range ctx.questions {
@@ -569,14 +456,14 @@ func surveyEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 		if ok && len(value) == 1 {
 			obj.Value = value[0]
 		}
-		if obj.hidden {
+		if obj.Hidden() {
 			pd.Hidden = append(pd.Hidden, obj)
 		} else {
 			pd.Questions = append(pd.Questions, obj)
 		}
 	}
 	pd.Title = ctx.title
-	handleTemplate(resp, ctx.surveyTmpl, pd)
+	pd.HandleTemplate(resp, ctx.surveyTmpl)
 }
 
 func main() {
@@ -658,7 +545,7 @@ func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		}
 	}
 	if notFound {
-		b, err = readAssetRaw(filepath.Join(staticURL, path))
+		b, err = internal.ReadAssetRaw(filepath.Join(staticURL, path))
 		if err != nil {
 			resp.WriteHeader(http.StatusNotFound)
 			return
@@ -667,17 +554,8 @@ func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	resp.Write(b)
 }
 
-func createPath(filename string, ctx *Context) string {
-	return filepath.Join(ctx.store, filename)
-}
-
-func newFile(filename string, ctx *Context) (*os.File, error) {
-	fname := createPath(filename, ctx)
-	return os.OpenFile(fname, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
-}
-
 func runSurvey(conf *internal.Configuration, settings *initSurvey) {
-	baseAsset := readAsset("base")
+	baseAsset := internal.ReadAsset("base")
 	baseTemplate, err := template.New("base").Parse(string(baseAsset))
 	if err != nil {
 		internal.Fatal("unable to parse base template", err)
@@ -691,10 +569,10 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	ctx.store = filepath.Join(ctx.store, ctx.tag)
 	ctx.temp = settings.tmp
 	ctx.staticPath = staticURL
-	ctx.beginTmpl = readTemplate(baseTemplate, "begin")
-	ctx.surveyTmpl = readTemplate(baseTemplate, "survey")
-	ctx.completeTmpl = readTemplate(baseTemplate, "complete")
-	ctx.adminTmpl = readTemplate(baseTemplate, "admin")
+	ctx.beginTmpl = internal.ReadTemplate(baseTemplate, "begin")
+	ctx.surveyTmpl = internal.ReadTemplate(baseTemplate, "survey")
+	ctx.completeTmpl = internal.ReadTemplate(baseTemplate, "complete")
+	ctx.adminTmpl = internal.ReadTemplate(baseTemplate, "admin")
 	ctx.token = internal.SetIfEmpty(conf.Server.Token, time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
 	ctx.cfgName = settings.questions
