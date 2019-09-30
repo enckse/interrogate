@@ -155,7 +155,7 @@ func (ctx *Context) newSet(configFile string) error {
 				field.CondStart = true
 			}
 		default:
-			internal.Fatal("unknown question type: " + q.Type, nil)
+			internal.Fatal("unknown question type: "+q.Type, nil)
 		}
 		if field.Image || field.Audio || field.Video {
 			field.Basis = fmt.Sprintf("%s%s", ctx.staticPath, field.Basis)
