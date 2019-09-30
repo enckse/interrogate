@@ -37,175 +37,103 @@ var (
 	vers = "master"
 )
 
-// Context for the running server
-type Context struct {
-	snapshot     int
-	tag          string
-	store        string
-	temp         string
-	beginTmpl    *template.Template
-	surveyTmpl   *template.Template
-	completeTmpl *template.Template
-	adminTmpl    *template.Template
-	questions    []Field
-	title        string
-	staticPath   string
-	token        string
-	available    []string
-	cfgName      string
-	memoryConfig string
-}
-
-type initSurvey struct {
-	bind        string
-	tag         string
-	tmp         string
-	inQuestions string
-	questions   string
-	searchDir   string
-	cwd         string
-}
-
-// Configuration is the file-based configuration
-type Configuration struct {
-	Server struct {
-		Questions string
-		Bind      string
-		Snapshot  int
-		Storage   string
-		Temp      string
-		Resources string
-		Tag       string
-		Token     string
-		Convert   bool
+type (
+	// Context represent operating context
+	Context struct {
+		snapshot     int
+		tag          string
+		store        string
+		temp         string
+		beginTmpl    *template.Template
+		surveyTmpl   *template.Template
+		completeTmpl *template.Template
+		adminTmpl    *template.Template
+		questions    []Field
+		title        string
+		staticPath   string
+		token        string
+		available    []string
+		cfgName      string
+		memoryConfig string
 	}
-}
 
-// Field represents a question field
-type Field struct {
-	Value       string
-	ID          int
-	Text        string
-	Input       bool
-	Long        bool
-	Label       bool
-	Check       bool
-	Number      bool
-	Order       bool
-	Explanation bool
-	Description string
-	Option      bool
-	Slider      bool
-	Required    string
-	Options     []string
-	Multi       bool
-	MinSize     string
-	SlideID     template.JS
-	SlideHideID template.JS
-	Basis       string
-	Image       bool
-	Video       bool
-	Audio       bool
-	Height      string
-	Width       string
-	// Control types, not input types
-	CondStart      bool
-	CondEnd        bool
-	HorizontalFeed bool
-	hidden         bool
-	RawType        string
-	Hash           string
-	Group          string
-}
-
-// ManifestEntry represents a line in the manifest
-type ManifestEntry struct {
-	Name   string
-	Client string
-	Mode   string
-	Idx    int
-}
-
-// ManifestData is how we serialize the data to the manifest
-type ManifestData struct {
-	Title     string
-	Tag       string
-	File      string
-	Manifest  []*ManifestEntry
-	Warning   string
-	Available []string
-	Token     string
-	CfgName   string
-}
-
-// PageData represents the templating for a survey page
-type PageData struct {
-	QueryParams string
-	Title       string
-	Session     string
-	Snapshot    int
-	Hidden      []Field
-	Questions   []Field
-}
-
-// Config represents the question configuration
-type Config struct {
-	Metadata  Meta       `yaml:"meta"`
-	Questions []Question `yaml:"questions"`
-}
-
-// Meta represents a configuration overall survey meta-definition
-type Meta struct {
-	Title string `yaml:"title"`
-}
-
-// Question represents a single question configuration definition
-type Question struct {
-	Text        string   `yaml:"text"`
-	Description string   `yaml:"desc"`
-	Type        string   `yaml:"type"`
-	Attributes  []string `yaml:"attrs"`
-	Options     []string `yaml:"options"`
-	Numbered    int      `yaml:"numbered"`
-	Basis       string   `yaml:"basis"`
-	Height      string   `yaml:"height"`
-	Width       string   `yaml:"width"`
-	Group       string   `yaml:"group"`
-}
-
-func writeError(message string, err error) {
-	fmt.Println(fmt.Sprintf("%s (%v)", message, err))
-}
-
-func fatal(message string, err error) {
-	writeError(message, err)
-	panic("fatal error ^")
-}
-
-func info(message string) {
-	fmt.Println(message)
-}
-
-func writeManifest(manifest *internal.Manifest, filename string) {
-	datum, err := json.Marshal(manifest)
-	if err != nil {
-		writeError("unable to marshal manifest", err)
-		return
+	// PageData represents the templating for a survey page
+	PageData struct {
+		QueryParams string
+		Title       string
+		Session     string
+		Snapshot    int
+		Hidden      []Field
+		Questions   []Field
 	}
-	err = ioutil.WriteFile(filename, datum, 0644)
-	if err != nil {
-		writeError("manifest writing failure", err)
-	}
-}
 
-func readManifest(contents []byte) (*internal.Manifest, error) {
-	var manifest internal.Manifest
-	err := json.Unmarshal(contents, &manifest)
-	if err != nil {
-		return nil, err
+	initSurvey struct {
+		bind        string
+		tag         string
+		tmp         string
+		inQuestions string
+		questions   string
+		searchDir   string
+		cwd         string
 	}
-	return &manifest, nil
-}
+
+	// Configuration is the file-based configuration
+	Configuration struct {
+		Server struct {
+			Questions string
+			Bind      string
+			Snapshot  int
+			Storage   string
+			Temp      string
+			Resources string
+			Tag       string
+			Token     string
+			Convert   bool
+		}
+	}
+
+	// Field represents a question field
+	Field struct {
+		Value       string
+		ID          int
+		Text        string
+		Input       bool
+		Long        bool
+		Label       bool
+		Check       bool
+		Number      bool
+		Order       bool
+		Explanation bool
+		Description string
+		Option      bool
+		Slider      bool
+		Required    string
+		Options     []string
+		Multi       bool
+		MinSize     string
+		SlideID     template.JS
+		SlideHideID template.JS
+		Basis       string
+		Image       bool
+		Video       bool
+		Audio       bool
+		Height      string
+		Width       string
+		// Control types, not input types
+		CondStart      bool
+		CondEnd        bool
+		HorizontalFeed bool
+		hidden         bool
+		RawType        string
+		Hash           string
+		Group          string
+	}
+
+	staticHandler struct {
+		http.Handler
+		path string
+	}
+)
 
 func createHash(number int, value string) string {
 	use := "hash" + value
@@ -227,7 +155,7 @@ func (ctx *Context) newSet(configFile string) error {
 	if err != nil {
 		return err
 	}
-	var config Config
+	var config internal.Config
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		return err
@@ -335,7 +263,7 @@ func (ctx *Context) newSet(configFile string) error {
 	ctx.questions = mapping
 	datum, err := json.Marshal(exports)
 	if err != nil {
-		writeError("unable to write memory config", err)
+		internal.Error("unable to write memory config", err)
 		return err
 	}
 	exportConf := filepath.Join(ctx.store, fmt.Sprintf("run.config.%s", timeString()))
@@ -374,7 +302,7 @@ func readAssetRaw(name string) ([]byte, error) {
 func readAsset(name string) string {
 	asset, err := readAssetRaw(fmt.Sprintf("%s.html", name))
 	if err != nil {
-		fatal(fmt.Sprintf("template not available %s", name), err)
+		internal.Fatal(fmt.Sprintf("template not available %s", name), err)
 	}
 	return string(asset)
 }
@@ -382,12 +310,12 @@ func readAsset(name string) string {
 func readTemplate(base *template.Template, tmpl string) *template.Template {
 	copied, err := base.Clone()
 	if err != nil {
-		fatal("unable to clone base template", err)
+		internal.Fatal("unable to clone base template", err)
 	}
 	file := readAsset(tmpl)
 	t, err := copied.Parse(string(file))
 	if err != nil {
-		fatal(fmt.Sprintf("unable to read file %s", file), err)
+		internal.Fatal(fmt.Sprintf("unable to read file %s", file), err)
 	}
 	return t
 }
@@ -395,7 +323,7 @@ func readTemplate(base *template.Template, tmpl string) *template.Template {
 func handleTemplate(resp http.ResponseWriter, tmpl *template.Template, pd *PageData) {
 	err := tmpl.Execute(resp, pd)
 	if err != nil {
-		writeError("template execution error", err)
+		internal.Error("template execution error", err)
 	}
 }
 
@@ -415,7 +343,7 @@ func getTuple(req *http.Request, strPos int) (string, bool) {
 	parts := strings.Split(path, "/")
 	required := strPos
 	if len(parts) < required+1 {
-		info(fmt.Sprintf("warning, invalid url %s", path))
+		internal.Info(fmt.Sprintf("warning, invalid url %s", path))
 		return "", false
 	}
 	return parts[strPos], true
@@ -436,17 +364,17 @@ func readManifestFile(ctx *Context) (string, *internal.Manifest, error) {
 	if internal.PathExists(fname) {
 		c, err := ioutil.ReadFile(fname)
 		if err != nil {
-			writeError("unable to read index", err)
+			internal.Error("unable to read index", err)
 			return fname, nil, err
 		}
-		existing, err = readManifest(c)
+		existing, err = internal.NewManifest(c)
 		if err != nil {
-			writeError("corrupt index", err)
+			internal.Error("corrupt index", err)
 			return fname, nil, err
 		}
 		err = existing.Check()
 		if err != nil {
-			info("invalid index... (lengths)")
+			internal.Info("invalid index... (lengths)")
 			return fname, nil, errors.New("invalid index lengths")
 		}
 	}
@@ -486,7 +414,7 @@ func reindex(client, filename string, ctx *Context, mode string) {
 		existing.Files = append(existing.Files, filename)
 		existing.Modes = append(existing.Modes, mode)
 	}
-	writeManifest(existing, fname)
+	existing.Write(fname)
 }
 
 func timeString() string {
@@ -507,7 +435,7 @@ func saveData(data *internal.ResultData, ctx *Context, mode string, client strin
 	go reindex(client, fname, ctx, mode)
 	j, jerr := newFile(fname+".json", ctx)
 	if mode == saveFileName {
-		info(fmt.Sprintf("save %s", fname))
+		internal.Info(fmt.Sprintf("save %s", fname))
 	}
 	if jerr == nil {
 		defer j.Close()
@@ -515,10 +443,10 @@ func saveData(data *internal.ResultData, ctx *Context, mode string, client strin
 		if merr == nil {
 			j.Write(jsonString)
 		} else {
-			writeError("unable to write json", merr)
+			internal.Error("unable to write json", merr)
 		}
 	} else {
-		writeError("error writing json output", jerr)
+		internal.Error("error writing json output", jerr)
 	}
 }
 
@@ -528,7 +456,7 @@ func getClient(req *http.Request) string {
 	if err == nil {
 		remoteAddress = host
 	} else {
-		writeError("unable to read host port", err)
+		internal.Error("unable to read host port", err)
 	}
 	return remoteAddress
 }
@@ -606,7 +534,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 			q := filepath.Join(ctx.temp, questionFileName)
 			err := ioutil.WriteFile(q, []byte(name), 0644)
 			if err != nil {
-				writeError("unable to write question file and restart", err)
+				internal.Error("unable to write question file and restart", err)
 			}
 		case "restart":
 			restarting = isChecked(v)
@@ -616,15 +544,15 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 	if restarting {
 		if bundling {
-			info("bundling")
+			internal.Info("bundling")
 			bundle(ctx, "")
 		}
-		info("restart requested")
+		internal.Info("restart requested")
 		os.Exit(1)
 	}
 	lock.Lock()
 	defer lock.Unlock()
-	pd := &ManifestData{}
+	pd := &internal.ManifestData{}
 	pd.Available = ctx.available
 	pd.Available = append(pd.Available, qReset)
 	pd.Token = ctx.token
@@ -635,7 +563,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd.CfgName = ctx.cfgName
 	if err == nil {
 		for i, obj := range m.Files {
-			entry := &ManifestEntry{}
+			entry := &internal.ManifestEntry{}
 			entry.Name = obj
 			entry.Client = m.Clients[i]
 			entry.Mode = m.Modes[i]
@@ -647,7 +575,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 	err = ctx.adminTmpl.Execute(resp, pd)
 	if err != nil {
-		writeError("template execution error", err)
+		internal.Error("template execution error", err)
 	}
 }
 
@@ -656,11 +584,11 @@ func bundle(ctx *Context, readResult string) []byte {
 	defer lock.Unlock()
 	f, _, err := readManifestFile(ctx)
 	if err != nil {
-		writeError("unable to read bundle manifest", err)
+		internal.Error("unable to read bundle manifest", err)
 		return nil
 	}
 	results := filepath.Join(ctx.temp, fmt.Sprintf("survey.%s", timeString()))
-	info(fmt.Sprintf("result file: %s", results))
+	internal.Info(fmt.Sprintf("result file: %s", results))
 	inputs := internal.Inputs{
 		Manifest:  f,
 		OutName:   results,
@@ -669,13 +597,13 @@ func bundle(ctx *Context, readResult string) []byte {
 	}
 	err = inputs.Process()
 	if err != nil {
-		writeError("unable to process results", err)
+		internal.Error("unable to process results", err)
 		return nil
 	}
 	if len(readResult) > 0 {
 		data, err := ioutil.ReadFile(fmt.Sprintf("%s.%s", results, readResult))
 		if err != nil {
-			writeError("unable to read result file", err)
+			internal.Error("unable to read result file", err)
 			return nil
 		}
 		return data
@@ -730,31 +658,31 @@ func main() {
 	configFile := flag.String("config", "settings.conf", "configuration path")
 	flag.Parse()
 	cfg := *configFile
-	info(vers)
+	internal.Info(vers)
 	conf := &Configuration{}
 	cfgData, err := ioutil.ReadFile(cfg)
 	if err != nil {
-		fatal("unable to load config bytes", err)
+		internal.Fatal("unable to load config bytes", err)
 	}
 	err = yaml.Unmarshal(cfgData, conf)
 	if err != nil {
-		fatal("unable to load config", err)
+		internal.Fatal("unable to load config", err)
 	}
 	tmp, cwd := resolvePath(conf.Server.Temp, "")
 	questionFile := filepath.Join(tmp, questionFileName)
 	existed := internal.PathExists(questionFile)
 	questions := ""
 	if existed {
-		info(fmt.Sprintf("loading question set input file: %s", questionFile))
+		internal.Info(fmt.Sprintf("loading question set input file: %s", questionFile))
 		q, err := ioutil.ReadFile(questionFile)
 		if err != nil {
-			fatal("unable to read questoin settings file", err)
+			internal.Fatal("unable to read questoin settings file", err)
 		}
 		questions = string(q)
 	}
 	if err != nil {
 		if existed {
-			fatal("unable to remove question file", err)
+			internal.Fatal("unable to remove question file", err)
 		}
 	}
 	initialQuestions := conf.Server.Questions
@@ -791,10 +719,10 @@ func resolvePath(path string, cwd string) (string, string) {
 	if c == "" {
 		c, err := os.Getwd()
 		if err != nil {
-			writeError("unable to determine working directory", err)
+			internal.Error("unable to determine working directory", err)
 			return path, c
 		}
-		info(fmt.Sprintf("cwd is %s", c))
+		internal.Info(fmt.Sprintf("cwd is %s", c))
 	}
 	return filepath.Join(c, path), c
 }
@@ -804,11 +732,6 @@ func setIfEmpty(setting, defaultValue string) string {
 		return defaultValue
 	}
 	return setting
-}
-
-type staticHandler struct {
-	http.Handler
-	path string
 }
 
 func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
@@ -827,7 +750,7 @@ func (s *staticHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 		if err == nil {
 			notFound = false
 		} else {
-			writeError(fmt.Sprintf("%s asset read failure: %v", path), err)
+			internal.Error(fmt.Sprintf("%s asset read failure: %v", path), err)
 		}
 	}
 	if notFound {
@@ -868,7 +791,7 @@ func convertJSON(search string) error {
 			if internal.PathExists(y) {
 				continue
 			}
-			info(fmt.Sprintf("converting: %s", n))
+			internal.Info(fmt.Sprintf("converting: %s", n))
 			b, err := ioutil.ReadFile(filepath.Join(search, n))
 			if err != nil {
 				return err
@@ -887,7 +810,7 @@ func convertJSON(search string) error {
 			if err != nil {
 				return err
 			}
-			info(fmt.Sprintf("converted: %s", y))
+			internal.Info(fmt.Sprintf("converted: %s", y))
 		}
 	}
 	return nil
@@ -897,7 +820,7 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	baseAsset := readAsset("base")
 	baseTemplate, err := template.New("base").Parse(string(baseAsset))
 	if err != nil {
-		fatal("unable to parse base template", err)
+		internal.Fatal("unable to parse base template", err)
 	}
 	static := settings.resolvePath(conf.Server.Resources)
 	snapValue := conf.Server.Snapshot
@@ -918,12 +841,12 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	if conf.Server.Convert {
 		err = convertJSON(settings.searchDir)
 		if err != nil {
-			fatal("unable to convert configuration file", err)
+			internal.Fatal("unable to convert configuration file", err)
 		}
 	}
 	avails, err := ioutil.ReadDir(settings.searchDir)
 	if err != nil {
-		fatal("unable to read available configs", err)
+		internal.Fatal("unable to read available configs", err)
 	}
 	for _, a := range avails {
 		base := filepath.Base(a.Name())
@@ -934,16 +857,16 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 			}
 		}
 	}
-	info(fmt.Sprintf("admin token: %s", ctx.token))
+	internal.Info(fmt.Sprintf("admin token: %s", ctx.token))
 	for _, d := range []string{ctx.store, ctx.temp} {
 		err := os.MkdirAll(d, 0755)
 		if err != nil {
-			fatal("unable to create directory", err)
+			internal.Fatal("unable to create directory", err)
 		}
 	}
 	err = ctx.newSet(fmt.Sprintf("%s%s", settings.questions, questionConf))
 	if err != nil {
-		fatal("unable to load question set", err)
+		internal.Fatal("unable to load question set", err)
 	}
 	http.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
 		homeEndpoint(resp, req, ctx)
@@ -972,6 +895,6 @@ func runSurvey(conf *Configuration, settings *initSurvey) {
 	http.Handle(staticURL, http.StripPrefix(staticURL, staticHandle))
 	err = http.ListenAndServe(setIfEmpty(conf.Server.Bind, settings.bind), nil)
 	if err != nil {
-		fatal("unable to start", err)
+		internal.Fatal("unable to start", err)
 	}
 }
