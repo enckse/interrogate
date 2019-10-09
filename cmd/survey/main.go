@@ -283,9 +283,10 @@ func maskID(client string) string {
 				time.Sleep(500 * time.Millisecond)
 				continue
 			}
-			clientIDs[client] = uid
+			i = uid
 			break
 		}
+		clientIDs[client] = i
 	}
 	return i
 }
