@@ -526,6 +526,7 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	ctx.token = internal.SetIfEmpty(conf.Server.Token, time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
 	ctx.cfgName = settings.questions
+	ctx.masking = conf.Server.MaskIDs
 	if conf.Server.Convert {
 		if err := internal.ConvertJSON(settings.searchDir); err != nil {
 			internal.Fatal("unable to convert configuration file", err)
