@@ -239,7 +239,12 @@ func (i Inputs) save(results StitchResult) error {
 	if err := writer.WriteAll(records); err != nil {
 		return err
 	}
-	cmd := exec.Command("tar", "czvf", fmt.Sprintf("%s.tar.gz", i.OutName), "-C", filepath.Dir(i.OutName), hFile, cFile, jFile)
+	args := []string{"czvf", fmt.Sprintf("%s.tar.gz", filepath.Base(i.OutName))}
+	for _, f := range []string{hFile, cFile, jFile} {
+		args = append(args, filepath.Base(f))
+	}
+	cmd := exec.Command("tar", args...)
+	cmd.Dir = filepath.Dir(i.OutName)
 	return cmd.Run()
 }
 
