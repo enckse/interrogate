@@ -79,7 +79,10 @@ type (
 			Tag       string
 			Token     string
 			Convert   bool
-			MaskIDs   bool
+			Mask      struct {
+				Admin   bool
+				Enabled bool
+			}
 		}
 	}
 
@@ -98,6 +101,8 @@ type (
 		File      string
 		Manifest  []*ManifestEntry
 		Warning   string
+		ShowMasks bool
+		Masks     []string
 		Available []string
 		Token     string
 		CfgName   string

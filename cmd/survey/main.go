@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -55,6 +56,7 @@ type (
 		memoryConfig string
 		serveStatic  string
 		masking      bool
+		showMask     bool
 	}
 
 	initSurvey struct {
@@ -316,6 +318,17 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	go saveData(r, ctx, mode, client, sess)
 }
 
+func getMasks() []string {
+	mask.Lock()
+	defer mask.Unlock()
+	var masks []string
+	for k, v := range clientIDs {
+		masks = append(masks, fmt.Sprintf("%s (%s)", k, v))
+	}
+	sort.Strings(masks)
+	return masks
+}
+
 func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	if !internal.IsAdmin(ctx.token, req) {
 		return
@@ -359,6 +372,13 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd.Tag = ctx.tag
 	pd.File = f
 	pd.CfgName = ctx.cfgName
+	pd.ShowMasks = false
+	if ctx.masking {
+		pd.ShowMasks = ctx.showMask
+		if ctx.showMask {
+			pd.Masks = getMasks()
+		}
+	}
 	if err == nil {
 		for i, obj := range m.Files {
 			entry := &internal.ManifestEntry{}
@@ -531,7 +551,8 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	ctx.token = internal.SetIfEmpty(conf.Server.Token, time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
 	ctx.cfgName = settings.questions
-	ctx.masking = conf.Server.MaskIDs
+	ctx.masking = conf.Server.Mask.Enabled
+	ctx.showMask = ctx.masking && conf.Server.Mask.Admin
 	if conf.Server.Convert {
 		if err := internal.ConvertJSON(settings.searchDir); err != nil {
 			internal.Fatal("unable to convert configuration file", err)

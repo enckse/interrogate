@@ -46,6 +46,19 @@ results:
     </tr>
     {{ end }}
 </table>
+{{ if .ShowMasks }}
+<br />
+<table>
+    <tr>
+        <th>mask</th>
+    </tr>
+    {{ range $key, $mask := .Masks }}
+    <tr>
+        <td>{{ $mask }}</td>
+    </tr>
+    {{ end }}
+</table>
+{{ end }}
 <hr />
 <h4>management</h4>
 <form name="admin_form" id="admin_form">
