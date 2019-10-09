@@ -391,7 +391,7 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 				mask.Lock()
 				for k, v := range clientIDs {
 					if v == entry.Client {
-						entry.FileMask = k
+						entry.Mask = k
 						break
 					}
 				}

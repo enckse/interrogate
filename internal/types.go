@@ -94,11 +94,11 @@ type (
 
 	// ManifestEntry represents a line in the manifest
 	ManifestEntry struct {
-		Name     string
-		Client   string
-		FileMask string
-		Mode     string
-		Idx      int
+		Name   string
+		Client string
+		Mask   string
+		Mode   string
+		Idx    int
 	}
 
 	// ManifestData is how we serialize the data to the manifest
