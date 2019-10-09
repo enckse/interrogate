@@ -95,9 +95,13 @@ func (ctx *Context) newSet(configFile string) error {
 			k = q.Numbered
 		}
 		field := &internal.Field{}
+		field.Normal = true
 		for _, attr := range q.Attributes {
-			if attr == "required" {
+			switch attr {
+			case "required":
 				field.Required = attr
+			case "minimal":
+				field.Normal = false
 			}
 		}
 		field.ID = k

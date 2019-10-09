@@ -120,12 +120,12 @@ window.onload=function(){
                         max: 100
                     },
                     step: 5,
-                    behaviour: 'tap',
+                    behaviour: 'tap'{{ if $question.Normal }},
                     pips: {
                         mode: 'values',
                         values: [10, 20, 30, 40, 50, 60, 70, 80, 90],
                         density: 4
-                        }
+                        }{{ end }}
                 });
 
                 var {{$question.SlideHideID}} = document.getElementById('hidden{{ $question.ID }}');
