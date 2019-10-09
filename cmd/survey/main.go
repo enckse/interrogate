@@ -259,21 +259,21 @@ func saveData(data *internal.ResultData, ctx *Context, mode string, client strin
 	data.Datum[internal.TimestampKey] = []string{ts}
 	fname := fmt.Sprintf("%s_%s_%s_%s", ctx.tag, ts, mode, name)
 	go reindex(client, fname, ctx, mode)
-	j, jerr := internal.NewFile(ctx.store, fname+".json")
+	j, err := internal.NewFile(ctx.store, fname+".json")
 	if mode == saveFileName {
 		internal.Info(fmt.Sprintf("save %s", fname))
 	}
-	if jerr == nil {
-		defer j.Close()
-		jsonString, merr := json.Marshal(data)
-		if merr == nil {
-			j.Write(jsonString)
-		} else {
-			internal.Error("unable to write json", merr)
-		}
-	} else {
-		internal.Error("error writing json output", jerr)
+	if err != nil {
+		internal.Error("error writing json output", err)
+		return
 	}
+	defer j.Close()
+	jsonString, err := json.Marshal(data)
+	if err != nil {
+		internal.Error("unable to write json", err)
+		return
+	}
+	j.Write(jsonString)
 }
 
 func maskID(client string, purge bool) string {
