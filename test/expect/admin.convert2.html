@@ -24,7 +24,7 @@ $(document).ready(function () {
     $('#admin_form').on('submit', function(e) {
         e.preventDefault();
         $.ajax({
-            url : "/admin?token=123456",
+            url : "/admin",
             type: "POST",
             data: $(this).serialize(),
             success: function (data) {
@@ -47,9 +47,9 @@ bin/store/test/test.index.manifest
 <br />
 results:
 <br />
-<a href="/results?token=123456">view</a>
+<a href="/results">view</a>
 <br />
-<a href="/bundle.tar.gz?token=123456">download</a>
+<a href="/bundle.tar.gz">download</a>
 <table>
     <tr>
         <th>index</th>
@@ -59,6 +59,7 @@ results:
     </tr>
     
 </table>
+
 <hr />
 <h4>management</h4>
 <form name="admin_form" id="admin_form">
