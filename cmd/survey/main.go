@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	yaml "gopkg.in/yaml.v2"
 	"voidedtech.com/survey/internal"
 )
@@ -29,8 +28,10 @@ const (
 
 var (
 	lock      = &sync.Mutex{}
+	mask      = &sync.Mutex{}
 	vers      = "master"
 	clientIDs = make(map[string]string)
+	knownIDs  = make(map[string]string)
 )
 
 type (
@@ -272,17 +273,19 @@ func saveData(data *internal.ResultData, ctx *Context, mode string, client strin
 }
 
 func maskID(client string) string {
-	lock.Lock()
-	defer lock.Unlock()
+	mask.Lock()
+	defer mask.Unlock()
 	i, ok := clientIDs[client]
 	if !ok {
-		u, err := uuid.NewRandom()
-		if err != nil {
-			internal.Error("unable to get a uuid", err)
-			return client
+		for {
+			uid := internal.NewSession(10)
+			if _, ok := knownIDs[uid]; ok {
+				time.Sleep(500 * time.Millisecond)
+				continue
+			}
+			clientIDs[client] = uid
+			break
 		}
-		i = u.String()
-		clientIDs[client] = i
 	}
 	return i
 }
@@ -453,6 +456,7 @@ func main() {
 	configFile := flag.String("config", "settings.conf", "configuration path")
 	flag.Parse()
 	clientIDs = make(map[string]string)
+	knownIDs = make(map[string]string)
 	cfg := *configFile
 	internal.Info(vers)
 	conf := &internal.Configuration{}
