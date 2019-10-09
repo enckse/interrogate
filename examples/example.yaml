@@ -1,57 +1,92 @@
 meta:
+    # this represents the header of the survey
     title: Participant Survey (Basics)
 questions:
+
+    # this is a simple text
   - text: What is this?
     desc: This is a longer set of text that we would want to render above the input but below the title text.
     type: input
+    # some fields, like this one, can be mark as required for input
     attrs:
     - required
+
+    # in the chance you need a hidden field (maybe for some custom.css/custom.js)
   - text: Hidden
     desc: I should be a hidden field.
     type: hidden
+
+    # this is a larger text area for longer-form answer
   - text: Describe yourself
     desc: This is a longer set of text that we would want to render above the input but below the title text.
     type: long
+
+    # this is a option select list (pick one)
   - text: Your understanding
     desc: This is a longer set of text that we would want to render above the input but below the title text.
     type: option
+    # these are the options available
     options:
     - High
     - Medium
     - Low
+
+    # this is a label which may help breakup parts of a survey
   - text: Show some label text
     desc: This is a longer set of text that we would want to render above the input but below the title text.
     type: label
+
+    # an hr is a horizontal rule (line)
   - text: ''
     desc: ''
     type: hr
+
+    # this is a simple checkbox [ ] or [x]
   - text: Can you check this box?
     desc: Check?
     type: checkbox
+    # which is a sub-set of a group of questions (good for custom.js or custom.css)
     group: mygroup
+
+    # this is a numeric picker
   - text: Pick a number, any number...
     desc: This is a numeric field.
     type: number
+
+    # this is a slider (0 to 100, left to right)
   - text: Preference on sliders
     desc: This is a longer set of text that we would want to render above the input but below the title text.
+    # alternatively there is a type of 'uslide' which is the same EXCEPT it doesn't show the numeric values on the UI
     type: slide
+    # basis is the place to start the slider picker
     basis: '20'
+
+    # this checkbox begins a conditional section (fields after this are hidden if this is not checked)
   - text: Can you check this box conditionally?
     desc: Check Cond?
     type: conditional
+
+    # this is a long answer field in a conditional section
   - text: Is this long?
     desc: Should you answer this?
     type: long
+
+    # this is a corresponding end to a conditional
   - text: ''
     desc: ''
     type: conditional 
+
+    # this represents a sortable list of things
   - text: This is sortable
     type: order
     desc: Please sort this list
+    # these will default to the array order given and then the user sorts them
     options:
     - a
     - b
     - c
+
+    # this is an option select where the user can pick multiple options
   - text: Select multiple things
     desc: This is a longer set of text that we would want to render above the input but below the title text.
     type: multiselect
