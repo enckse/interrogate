@@ -44,7 +44,7 @@ type (
 		Option      bool
 		Slider      bool
 		Required    string
-		Normal      bool
+		SlideValues bool
 		Options     []string
 		Multi       bool
 		MinSize     string

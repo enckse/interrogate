@@ -95,13 +95,10 @@ func (ctx *Context) newSet(configFile string) error {
 			k = q.Numbered
 		}
 		field := &internal.Field{}
-		field.Normal = true
 		for _, attr := range q.Attributes {
 			switch attr {
 			case "required":
 				field.Required = attr
-			case "minimal":
-				field.Normal = false
 			}
 		}
 		field.ID = k
@@ -149,11 +146,12 @@ func (ctx *Context) newSet(configFile string) error {
 			field.Video = true
 		case "hr":
 			field.HorizontalFeed = true
-		case "slide":
+		case "slide", "uslide":
 			field.Slider = true
 			field.SlideID = template.JS(fmt.Sprintf("slide%d", k))
 			field.SlideHideID = template.JS(fmt.Sprintf("shide%d", k))
 			field.Basis = internal.SetIfEmpty(field.Basis, "50")
+			field.SlideValues = q.Type == "slide"
 		case "conditional":
 			if inCond {
 				if condCount == 1 {
