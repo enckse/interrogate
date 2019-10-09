@@ -58,6 +58,7 @@ type (
 		showMask     bool
 		adminUser    string
 		adminPass    string
+		anonymous    bool
 	}
 
 	initSurvey struct {
@@ -275,7 +276,7 @@ func saveData(data *internal.ResultData, ctx *Context, mode string, client strin
 	}
 }
 
-func maskID(client string) string {
+func maskID(client string, purge bool) string {
 	mask.Lock()
 	defer mask.Unlock()
 	i, ok := clientIDs[client]
@@ -290,6 +291,9 @@ func maskID(client string) string {
 			break
 		}
 		clientIDs[client] = i
+	}
+	if purge {
+		delete(clientIDs, client)
 	}
 	return i
 }
@@ -314,7 +318,7 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	}
 	client := internal.GetClient(req)
 	if ctx.masking {
-		client = maskID(client)
+		client = maskID(client, ctx.anonymous && mode == saveFileName)
 	}
 	go saveData(r, ctx, mode, client, sess)
 }
@@ -375,9 +379,6 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd.ShowMasks = false
 	if ctx.masking {
 		pd.ShowMasks = ctx.showMask
-		if ctx.showMask {
-			pd.Masks = getMasks()
-		}
 	}
 	if err == nil {
 		for i, obj := range m.Files {
@@ -386,6 +387,16 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 			entry.Client = m.Clients[i]
 			entry.Mode = m.Modes[i]
 			entry.Idx = i
+			if pd.ShowMasks {
+				mask.Lock()
+				for k, v := range clientIDs {
+					if v == entry.Client {
+						entry.FileMask = k
+						break
+					}
+				}
+				mask.Unlock()
+			}
 			pd.Manifest = append(pd.Manifest, entry)
 		}
 	} else {
@@ -565,8 +576,21 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	ctx.adminPass = internal.SetIfEmpty(conf.Server.Admin.Pass, time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
 	ctx.cfgName = settings.questions
-	ctx.masking = conf.Server.Mask.Enabled
-	ctx.showMask = ctx.masking && conf.Server.Mask.Admin
+	ctx.anonymous = false
+	switch conf.Server.Clients {
+	case internal.ClientMaskMode:
+		ctx.masking = true
+		ctx.showMask = true
+	case internal.ClientNoneMode:
+		ctx.masking = false
+		ctx.showMask = false
+	case internal.ClientAnonMode:
+		ctx.masking = true
+		ctx.showMask = false
+		ctx.anonymous = true
+	default:
+		internal.Fatal(fmt.Sprintf("unknown client ip handling mode: %s", conf.Server.Clients), nil)
+	}
 	if conf.Server.Convert {
 		if err := internal.ConvertJSON(settings.searchDir); err != nil {
 			internal.Fatal("unable to convert configuration file", err)

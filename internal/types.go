@@ -19,6 +19,12 @@ const (
 	TimestampKey = "timestamp"
 	// ModeKey stores underlying save mode information
 	ModeKey = "mode"
+	// ClientMaskMode indicates client IPs are masked when saved but shown to users
+	ClientMaskMode = "mask"
+	// ClientAnonMode indicates client IPs are not show and not saved
+	ClientAnonMode = "anon"
+	// ClientNoneMode indicates nothing is done to hide client ips
+	ClientNoneMode = "none"
 )
 
 type (
@@ -78,11 +84,8 @@ type (
 			Resources string
 			Tag       string
 			Convert   bool
-			Mask      struct {
-				Admin   bool
-				Enabled bool
-			}
-			Admin struct {
+			Clients   string
+			Admin     struct {
 				User string
 				Pass string
 			}
@@ -91,10 +94,11 @@ type (
 
 	// ManifestEntry represents a line in the manifest
 	ManifestEntry struct {
-		Name   string
-		Client string
-		Mode   string
-		Idx    int
+		Name     string
+		Client   string
+		FileMask string
+		Mode     string
+		Idx      int
 	}
 
 	// ManifestData is how we serialize the data to the manifest
@@ -104,10 +108,9 @@ type (
 		File      string
 		Manifest  []*ManifestEntry
 		Warning   string
-		ShowMasks bool
-		Masks     []string
 		Available []string
 		CfgName   string
+		ShowMasks bool
 	}
 
 	// Config represents the question configuration

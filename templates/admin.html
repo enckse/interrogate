@@ -33,32 +33,20 @@ results:
 <table>
     <tr>
         <th>index</th>
-        <th>client</th>
+		<th>client{{ if .ShowMasks }}(mask){{ end }}</th>
         <th>mode</th>
         <th>file</th>
     </tr>
     {{ range $key, $file := .Manifest }}
     <tr>
         <td>{{ $file.Idx }}</td>
-        <td>{{ $file.Client }}</td>
+		<td>{{ $file.Client }}{{ if $.ShowMasks }}({{ $file.Mask }}){{ end }}</td>
         <td>{{ $file.Mode }}</td>
         <td>{{ $file.Name }}</td>
     </tr>
     {{ end }}
 </table>
-{{ if .ShowMasks }}
-<br />
-<table>
-    <tr>
-        <th>mask</th>
-    </tr>
-    {{ range $key, $mask := .Masks }}
-    <tr>
-        <td>{{ $mask }}</td>
-    </tr>
-    {{ end }}
-</table>
-{{ end }}
+
 <hr />
 <h4>management</h4>
 <form name="admin_form" id="admin_form">
