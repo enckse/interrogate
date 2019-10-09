@@ -77,11 +77,14 @@ type (
 			Temp      string
 			Resources string
 			Tag       string
-			Token     string
 			Convert   bool
 			Mask      struct {
 				Admin   bool
 				Enabled bool
+			}
+			Admin struct {
+				User string
+				Pass string
 			}
 		}
 	}
@@ -104,7 +107,6 @@ type (
 		ShowMasks bool
 		Masks     []string
 		Available []string
-		Token     string
 		CfgName   string
 	}
 

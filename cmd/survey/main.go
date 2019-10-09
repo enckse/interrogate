@@ -50,13 +50,14 @@ type (
 		questions    []internal.Field
 		title        string
 		staticPath   string
-		token        string
 		available    []string
 		cfgName      string
 		memoryConfig string
 		serveStatic  string
 		masking      bool
 		showMask     bool
+		adminUser    string
+		adminPass    string
 	}
 
 	initSurvey struct {
@@ -330,7 +331,7 @@ func getMasks() []string {
 }
 
 func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
-	if !internal.IsAdmin(ctx.token, req) {
+	if !adminLogin(resp, req, ctx) {
 		return
 	}
 	req.ParseForm()
@@ -366,7 +367,6 @@ func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	pd := &internal.ManifestData{}
 	pd.Available = ctx.available
 	pd.Available = append(pd.Available, qReset)
-	pd.Token = ctx.token
 	f, m, err := ctx.getManifest()
 	pd.Title = "Admin"
 	pd.Tag = ctx.tag
@@ -427,8 +427,21 @@ func bundle(ctx *Context, readResult string) []byte {
 	return nil
 }
 
+func adminLogin(resp http.ResponseWriter, req *http.Request, ctx *Context) bool {
+	resp.Header().Set("WWW-Authenticate", `Basic realm="survey admin"`)
+	user, pass, ok := req.BasicAuth()
+	if ok {
+		ok = user == ctx.adminUser && pass == ctx.adminPass
+	}
+	if !ok {
+		resp.WriteHeader(http.StatusUnauthorized)
+		return false
+	}
+	return true
+}
+
 func getResults(resp http.ResponseWriter, req *http.Request, ctx *Context, display bool) {
-	if !internal.IsAdmin(ctx.token, req) {
+	if !adminLogin(resp, req, ctx) {
 		return
 	}
 	fileResult := "tar.gz"
@@ -548,7 +561,8 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	ctx.surveyTmpl = internal.ReadTemplate(baseTemplate, "survey")
 	ctx.completeTmpl = internal.ReadTemplate(baseTemplate, "complete")
 	ctx.adminTmpl = internal.ReadTemplate(baseTemplate, "admin")
-	ctx.token = internal.SetIfEmpty(conf.Server.Token, time.Now().Format("150405"))
+	ctx.adminUser = internal.SetIfEmpty(conf.Server.Admin.User, "admin")
+	ctx.adminPass = internal.SetIfEmpty(conf.Server.Admin.Pass, time.Now().Format("150405"))
 	ctx.available = []string{settings.inQuestions}
 	ctx.cfgName = settings.questions
 	ctx.masking = conf.Server.Mask.Enabled
@@ -571,7 +585,7 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 			}
 		}
 	}
-	internal.Info(fmt.Sprintf("admin token: %s", ctx.token))
+	internal.Info(fmt.Sprintf("admin login: %s (user)  %s (password)", ctx.adminUser, ctx.adminPass))
 	for _, d := range []string{ctx.store, ctx.temp} {
 		if err := os.MkdirAll(d, 0755); err != nil {
 			internal.Fatal("unable to create directory", err)

@@ -4,7 +4,7 @@ $(document).ready(function () {
     $('#admin_form').on('submit', function(e) {
         e.preventDefault();
         $.ajax({
-            url : "/admin?token={{ $.Token }}",
+            url : "/admin",
             type: "POST",
             data: $(this).serialize(),
             success: function (data) {
@@ -27,9 +27,9 @@ $(document).ready(function () {
 <br />
 results:
 <br />
-<a href="/results?token={{ .Token }}">view</a>
+<a href="/results">view</a>
 <br />
-<a href="/bundle.tar.gz?token={{ .Token }}">download</a>
+<a href="/bundle.tar.gz">download</a>
 <table>
     <tr>
         <th>index</th>
