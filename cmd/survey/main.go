@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	yaml "gopkg.in/yaml.v2"
 	"voidedtech.com/survey/internal"
 )
@@ -27,8 +28,9 @@ const (
 )
 
 var (
-	lock = &sync.Mutex{}
-	vers = "master"
+	lock      = &sync.Mutex{}
+	vers      = "master"
+	clientIDs = make(map[string]string)
 )
 
 type (
@@ -51,6 +53,7 @@ type (
 		cfgName      string
 		memoryConfig string
 		serveStatic  string
+		masking      bool
 	}
 
 	initSurvey struct {
@@ -268,6 +271,22 @@ func saveData(data *internal.ResultData, ctx *Context, mode string, client strin
 	}
 }
 
+func maskID(client string) string {
+	lock.Lock()
+	defer lock.Unlock()
+	i, ok := clientIDs[client]
+	if !ok {
+		u, err := uuid.NewRandom()
+		if err != nil {
+			internal.Error("unable to get a uuid", err)
+			return client
+		}
+		i = u.String()
+		clientIDs[client] = i
+	}
+	return i
+}
+
 func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	mode, valid := internal.GetURLTuple(req, 1)
 	if !valid {
@@ -286,7 +305,11 @@ func saveEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
 	r := &internal.ResultData{
 		Datum: datum,
 	}
-	go saveData(r, ctx, mode, internal.GetClient(req), sess)
+	client := internal.GetClient(req)
+	if ctx.masking {
+		client = maskID(client)
+	}
+	go saveData(r, ctx, mode, client, sess)
 }
 
 func adminEndpoint(resp http.ResponseWriter, req *http.Request, ctx *Context) {
@@ -429,6 +452,7 @@ func main() {
 	tag := flag.String("tag", internal.TimeString(), "output tag")
 	configFile := flag.String("config", "settings.conf", "configuration path")
 	flag.Parse()
+	clientIDs = make(map[string]string)
 	cfg := *configFile
 	internal.Info(vers)
 	conf := &internal.Configuration{}

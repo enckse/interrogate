@@ -79,6 +79,7 @@ type (
 			Tag       string
 			Token     string
 			Convert   bool
+			MaskIDs   bool
 		}
 	}
 
