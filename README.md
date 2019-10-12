@@ -22,14 +22,13 @@ systemctl enable survey.service
 
 ### configure
 
-survey question definitions (json) are stored in `/etc/survey/` and must have a `.json` extension, examples are in the `supporting/` folder in the repository
+survey question definitions (yaml) are stored in `/etc/survey/` and must have a `.yaml` extension, examples are in the `examples/` folder in the repository
 
 ### administration
 
 * the server hosts an admin endpoint `/admin` which will display current manifest information and allow for survey restarts
 * additionally the results of the ongoing survey may be rendered as html at `/results`
-
-Accessing these urls will require a token (e.g. `/results?token=123456`) that will be displayed at survey startup
+* accessing `/admin` endpoints require authentication (basic auth) which is either configured and/or shown at startup
 
 To generate the results file manually (using default caching dir)
 ```
@@ -46,11 +45,4 @@ survey-stitcher --dir $PWD --manifest <date/tag>.index.manifest --config run.con
 clone and to build
 ```
 make
-```
-
-Update the `supporting/settings.conf` and adjust the paths to match your file system hierarchy
-
-run it
-```
-./bin/survey --config supporting/settings.conf
 ```
