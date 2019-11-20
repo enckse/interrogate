@@ -2,7 +2,7 @@
 rm -rf bin/
 mkdir -p bin/
 rm -f *.yaml
-cp ../examples/*.yaml .
+cp ../configs/*.yaml .
 
 ../survey --config settings.conf &
 sleep 3

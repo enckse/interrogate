@@ -22,7 +22,7 @@ systemctl enable survey.service
 
 ### configure
 
-survey question definitions (yaml) are stored in `/etc/survey/` and must have a `.yaml` extension, examples are in the `examples/` folder in the repository
+survey question definitions (yaml) are stored in `/etc/survey/` and must have a `.yaml` extension, examples are in the `configs/` folder in the repository
 
 ### administration
 
