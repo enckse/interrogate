@@ -14,6 +14,7 @@ _run() {
     cat settings.conf | sed "s#example#$1#g" > settings.$1.conf
     pkill survey
     ../survey --config settings.$1.conf &
+    sleep 1
     curl -s http://localhost:8080/survey/testid > bin/survey.$1.html
     curl -s http://localhost:8080/admin -u test:123456 > bin/admin.$1.html
     curl -s http://localhost:8080/snapshot/ -X POST -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'X-Requested-With: XMLHttpRequest' --data 'session=testid&1=&0=ojioj&2=ijoiojoj&3=High&4=&6=on&7=&8=20.00&9=0&10=ijojiojoijojioi'
