@@ -1,19 +1,23 @@
-FROM debian:bullseye
+FROM golang:1.14-alpine3.11 AS buildenv
 
 ARG SURVEY_VERSION
+ENV SURVEY=survey-${SURVEY_VERSION}
 
-RUN apt-get update && apt-get install -y wget make go-bindata golang-go && apt-get clean
+RUN apk --no-cache add build-base wget go go-bindata
+RUN wget https://cgit.voidedtech.com/survey/snapshot/${SURVEY}.tar.gz
+RUN tar xf ${SURVEY}.tar.gz
+RUN mv ${SURVEY} build/
+WORKDIR build
+RUN make clean survey survey-stitcher
 
-RUN wget https://cgit.voidedtech.com/survey/snapshot/survey-${SURVEY_VERSION}.tar.gz
-RUN tar xf survey-${SURVEY_VERSION}.tar.gz && mv survey-${SURVEY_VERSION} src
-RUN cd src && make survey survey-stitcher
+FROM alpine:3.11
 
-RUN cp src/survey /usr/bin/
-RUN cp src/survey-stitcher /usr/bin/
+COPY --from=buildenv /go/build/survey /usr/local/bin/
+COPY --from=buildenv /go/build/survey-stitcher /usr/local/bin/
 RUN mkdir /etc/survey
-RUN cp src/configs/settings.conf /etc/survey/
-RUN cp src/configs/example.yaml /etc/survey/
+COPY --from=buildenv /go/build/configs/settings.conf /etc/survey/
+COPY --from=buildenv /go/build/configs/example.yaml /etc/survey/
 
 EXPOSE 8080
 
-ENTRYPOINT /usr/bin/survey --config /etc/survey/settings.conf
+ENTRYPOINT /usr/local/bin/survey --config /etc/survey/settings.conf
