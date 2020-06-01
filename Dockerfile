@@ -1,8 +1,8 @@
-FROM fedora:latest
+FROM debian:buster
 
 ARG SURVEY_VERSION
 
-RUN dnf -y update && dnf -y install wget make  && dnf clean all
+RUN apt-get update && apt-get install -y wget make && apt-get clean
 
 RUN cd /tmp && wget  https://lab.voidedtech.com/binaries/survey.${SURVEY_VERSION}-1.tar.gz
 
