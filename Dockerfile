@@ -1,12 +1,18 @@
-FROM debian:buster
+FROM debian:bullseye
 
 ARG SURVEY_VERSION
 
-RUN apt-get update && apt-get install -y wget make && apt-get clean
+RUN apt-get update && apt-get install -y wget make go-bindata golang-go && apt-get clean
 
-RUN cd /tmp && wget  https://lab.voidedtech.com/binaries/survey.${SURVEY_VERSION}-1.tar.gz
+RUN wget https://cgit.voidedtech.com/survey/snapshot/survey-${SURVEY_VERSION}.tar.gz
+RUN tar xf survey-${SURVEY_VERSION}.tar.gz && mv survey-${SURVEY_VERSION} src
+RUN cd src && make survey survey-stitcher
 
-RUN cd /tmp && tar xf survey.${SURVEY_VERSION}-1.tar.gz && ./deploy
+RUN cp src/survey /usr/bin/
+RUN cp src/survey-stitcher /usr/bin/
+RUN mkdir /etc/survey
+RUN cp src/configs/settings.conf /etc/survey/
+RUN cp src/configs/example.yaml /etc/survey/
 
 EXPOSE 8080
 
