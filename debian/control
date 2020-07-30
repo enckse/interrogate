@@ -1,0 +1,14 @@
+Source: survey
+Section: admin
+Priority: optional
+Maintainer: Sean Enck <enckse@voidedtech.com>
+Build-Depends: debhelper (>= 11),git (>=2.19.1),golang-go (>=1.11) | golang-1.13 (>=1.13),go-bindata(>=3.0.7)
+Standards-Version: 4.1.3
+Homepage: https://cgit.voidedtech.com/survey
+
+Package: survey
+Architecture: amd64
+Depends: ${shlibs:Depends},
+         ${misc:Depends}
+Description: LAN-based surveying tool
+ simple LAN-based tool to survey users
