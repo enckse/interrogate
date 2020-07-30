@@ -3,6 +3,7 @@ FLAGS   := -ldflags '-linkmode external -extldflags $(LDFLAGS) -s -w -X main.ver
 TMPL    := $(shell find templates/ -type f)
 OBJECTS := survey survey-stitcher
 BINDATA := internal/bindata.go
+PACKED  := deb rpm
 
 .PHONY: tests clean all lint
 
@@ -23,8 +24,8 @@ clean:
 lint:
 	@golinter
 
-deb:
+$(PACKED):
 ifeq ($(VERSION),master)
 	$(error VERSION can NOT be master)
 endif
-	podman build --tag debian:survey-deb -f ./dockerfiles/build/debian/Dockerfile --volume $(PWD):/debs --build-arg SURVEY_VERSION=$(VERSION)
+	podman build --tag $@:survey-$@ -f ./build/$@.Dockerfile --volume $(PWD):/$@ --build-arg SURVEY_VERSION=$(VERSION)
