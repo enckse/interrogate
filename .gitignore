@@ -4,3 +4,4 @@ test/*.conf
 test/bin
 survey
 survey-stitcher
+*.deb

@@ -22,3 +22,9 @@ clean:
 
 lint:
 	@golinter
+
+deb:
+ifeq ($(VERSION),master)
+	$(error VERSION can NOT be master)
+endif
+	podman build --tag debian:survey-deb -f ./dockerfiles/build/debian/Dockerfile --volume $(PWD):/debs --build-arg SURVEY_VERSION=$(VERSION)
