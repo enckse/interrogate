@@ -1,23 +1,23 @@
 FROM golang:1.14-alpine3.11 AS buildenv
 
-ARG SURVEY_VERSION
-ENV SURVEY=survey-${SURVEY_VERSION}
+ARG INTERROGATE_VERSION
+ENV INTERROGATE=interrogate-${INTERROGATE_VERSION}
 
 RUN apk --no-cache add build-base wget go go-bindata
-RUN wget https://cgit.voidedtech.com/survey/snapshot/${SURVEY}.tar.gz
-RUN tar xf ${SURVEY}.tar.gz
-RUN mv ${SURVEY} build/
+RUN wget https://cgit.voidedtech.com/interrogate/snapshot/${INTERROGATE}.tar.gz
+RUN tar xf ${INTERROGATE}.tar.gz
+RUN mv ${INTERROGATE} build/
 WORKDIR build
-RUN make clean survey survey-stitcher
+RUN make clean interrogate interrogate-stitcher
 
 FROM alpine:3.11
 
-COPY --from=buildenv /go/build/survey /usr/local/bin/
-COPY --from=buildenv /go/build/survey-stitcher /usr/local/bin/
-RUN mkdir /etc/survey
-COPY --from=buildenv /go/build/configs/settings.conf /etc/survey/
-COPY --from=buildenv /go/build/configs/example.yaml /etc/survey/
+COPY --from=buildenv /go/build/interrogate /usr/local/bin/
+COPY --from=buildenv /go/build/interrogate-stitcher /usr/local/bin/
+RUN mkdir /etc/interrogate
+COPY --from=buildenv /go/build/configs/settings.conf /etc/interrogate/
+COPY --from=buildenv /go/build/configs/example.yaml /etc/interrogate/
 
 EXPOSE 8080
 
-ENTRYPOINT /usr/local/bin/survey --config /etc/survey/settings.conf
+ENTRYPOINT /usr/local/bin/interrogate --config /etc/interrogate/settings.conf
