@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 
-	"voidedtech.com/survey/internal"
+	"voidedtech.com/interrogate/internal"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-survey
+interrogate
 ===
 
 a basic/primitive survey app for LAN-based survey completion.
@@ -12,17 +12,17 @@ a basic/primitive survey app for LAN-based survey completion.
 
 to run
 ```
-survey <args>
+interrogate <args>
 ```
 
 as a service
 ```
-systemctl enable survey.service
+systemctl enable interrogate.service
 ```
 
 ### configure
 
-survey question definitions (yaml) are stored in `/etc/survey/` and must have a `.yaml` extension, examples are in the `configs/` folder in the repository
+survey question definitions (yaml) are stored in `/etc/interrogate/` and must have a `.yaml` extension, examples are in the `configs/` folder in the repository
 
 ### administration
 
@@ -32,12 +32,12 @@ survey question definitions (yaml) are stored in `/etc/survey/` and must have a 
 
 To generate the results file manually (using default caching dir)
 ```
-survey-stitcher --dir /var/cache/survey/<leaf directory> --auto
+interrogate-stitcher --dir /var/cache/interrogate/<leaf directory> --auto
 ```
 
-Alternatively navigate to the folder where the results are stored (e.g. `/var/cache/survey/<date>`)
+Alternatively navigate to the folder where the results are stored (e.g. `/var/cache/interrogate/<date>`)
 ```
-survey-stitcher --dir $PWD --manifest <date/tag>.index.manifest --config run.config.<date/tag>
+interrogate-stitcher --dir $PWD --manifest <date/tag>.index.manifest --config run.config.<date/tag>
 ```
 
 ## development

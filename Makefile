@@ -1,7 +1,7 @@
 VERSION ?= master
 FLAGS   := -ldflags '-linkmode external -extldflags $(LDFLAGS) -s -w -X main.vers=$(VERSION)' -trimpath -buildmode=pie -mod=readonly -modcacherw
 TMPL    := $(shell find templates/ -type f)
-OBJECTS := survey survey-stitcher
+OBJECTS := interrogate interrogate-stitcher
 BINDATA := internal/bindata.go
 
 .PHONY: tests clean all lint

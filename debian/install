@@ -1,6 +1,6 @@
-configs/example.yaml /etc/survey/
-configs/settings.conf /etc/survey/
-configs/systemd/survey.service /lib/systemd/system/
-survey /usr/bin/
-survey-stitcher /usr/bin/
-configs/systemd/survey.conf /usr/lib/tmpfiles.d/
+configs/example.yaml /etc/interrogate/
+configs/settings.conf /etc/interrogate/
+configs/systemd/interrogate.service /lib/systemd/system/
+interrogate /usr/bin/
+interrogate-stitcher /usr/bin/
+configs/systemd/interrogate.conf /usr/lib/tmpfiles.d/

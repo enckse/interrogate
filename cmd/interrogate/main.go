@@ -15,7 +15,7 @@ import (
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
-	"voidedtech.com/survey/internal"
+	"voidedtech.com/interrogate/internal"
 )
 
 const (

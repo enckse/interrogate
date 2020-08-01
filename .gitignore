@@ -2,7 +2,7 @@ bindata.go
 test/*.yaml
 test/*.conf
 test/bin
-survey
-survey-stitcher
 *.deb
 *.rpm
+interrogate
+interrogate-stitcher

@@ -4,16 +4,16 @@ mkdir -p bin/
 rm -f *.yaml
 cp ../configs/*.yaml .
 
-../survey --config settings.conf &
+../interrogate --config settings.conf &
 sleep 3
-pkill survey
+pkill interrogate
 
 failed=0
 _run() {
     echo "running: $1"
     cat settings.conf | sed "s#example#$1#g" > settings.$1.conf
-    pkill survey
-    ../survey --config settings.$1.conf &
+    pkill interrogate
+    ../interrogate --config settings.$1.conf &
     sleep 1
     curl -s http://localhost:8080/survey/testid > bin/survey.$1.html
     curl -s http://localhost:8080/admin -u test:123456 > bin/admin.$1.html
@@ -27,7 +27,7 @@ _run() {
         fi
     done
     sleep 1
-    pkill survey
+    pkill interrogate
 }
 
 did=0
@@ -39,7 +39,7 @@ if [ $did -eq 0 ]; then
     echo "no tests ran..."
     failed=1
 fi
-../survey-stitcher --manifest stitch/test.index.manifest --dir stitch/ --config stitch/run.config.test --out $PWD/bin/results
+../interrogate-stitcher --manifest stitch/test.index.manifest --dir stitch/ --config stitch/run.config.test --out $PWD/bin/results
 for f in $(ls expect/results*); do
     diff -b -u $f bin/$(basename $f)
     if [ $? -ne 0 ]; then

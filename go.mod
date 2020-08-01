@@ -1,4 +1,4 @@
-module voidedtech.com/survey
+module voidedtech.com/interrogate
 
 go 1.14
 
