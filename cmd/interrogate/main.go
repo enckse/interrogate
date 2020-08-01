@@ -593,11 +593,6 @@ func runSurvey(conf *internal.Configuration, settings *initSurvey) {
 	default:
 		internal.Fatal(fmt.Sprintf("unknown client ip handling mode: %s", conf.Server.Clients), nil)
 	}
-	if conf.Server.Convert {
-		if err := internal.ConvertJSON(settings.searchDir); err != nil {
-			internal.Fatal("unable to convert configuration file", err)
-		}
-	}
 	avails, err := ioutil.ReadDir(settings.searchDir)
 	if err != nil {
 		internal.Fatal("unable to read available configs", err)

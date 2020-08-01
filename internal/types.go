@@ -84,7 +84,6 @@ type (
 			Temp      string
 			Resources string
 			Tag       string
-			Convert   bool
 			Clients   string
 			Admin     struct {
 				User string
