@@ -1,0 +1,10 @@
+[Unit]
+Description=Interrogate survey host
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/interrogate --config /etc/interrogate/settings.conf
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
