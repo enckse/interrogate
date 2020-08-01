@@ -3,7 +3,7 @@ Upstream-Name: interrogate
 Source: https://cgit.voidedtech.com/interrogate
 
 Files: *
-Copyright: 2018-2019 Sean Enck <enckse@voidedtech.com>
+Copyright: 2018-2020 Sean Enck <enckse@voidedtech.com>
 License: GPL-3
 
 Files: debian/*
