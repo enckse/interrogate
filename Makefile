@@ -3,10 +3,13 @@ FLAGS   := -ldflags '-linkmode external -extldflags $(LDFLAGS) -s -w -X main.ver
 TMPL    := $(shell find templates/ -type f)
 OBJECTS := interrogate interrogate-stitcher
 BINDATA := internal/bindata.go
+DESTDIR :=
 
-.PHONY: tests clean all lint
+.PHONY: tests clean all
 
-all: $(OBJECTS) lint tests
+all: build
+	
+build: $(OBJECTS) tests
 
 $(BINDATA): $(TMPL)
 	go-bindata -o $(BINDATA) -pkg internal $(TMPL)
@@ -20,5 +23,11 @@ tests: $(BINARY)
 clean:
 	rm -f $(BINDATA) $(OBJECTS)
 
-lint:
-	@golinter
+install: $(OBJECTS)
+	install -d $(DESTDIR)/etc/survey
+	install -Dm755 interrogate $(DESTDIR)/usr/bin/
+	install -Dm755 interrogate-stitcher $(DESTDIR)/usr/bin/
+	install -Dm644 configs/example.yaml $(DESTDIR)/etc/survey/
+	install -Dm644 configs/settings.conf $(DESTDIR)/etc/survey/
+	install -Dm644 configs/systemd/interrogate.conf $(DESTDIR)/usr/lib/tmpfiles.d/
+	install -Dm644 configs/systemd/interrogate.service $(DESTDIR)/usr/lib/systemd/system/
