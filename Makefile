@@ -7,9 +7,9 @@ DESTDIR :=
 
 .PHONY: tests clean all
 
-all: build
+all: build tests
 	
-build: $(OBJECTS) tests
+build: $(OBJECTS)
 
 $(BINDATA): $(TMPL)
 	go-bindata -o $(BINDATA) -pkg internal $(TMPL)
@@ -23,7 +23,7 @@ tests: $(BINARY)
 clean:
 	rm -f $(BINDATA) $(OBJECTS)
 
-install: $(OBJECTS)
+install: build
 	install -d $(DESTDIR)/etc/survey
 	install -Dm755 interrogate $(DESTDIR)/usr/bin/
 	install -Dm755 interrogate-stitcher $(DESTDIR)/usr/bin/
