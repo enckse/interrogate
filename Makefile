@@ -24,7 +24,7 @@ clean:
 	rm -f $(BINDATA) $(OBJECTS)
 
 install: build
-	install -d $(DESTDIR)/etc/survey
+	install -d $(DESTDIR)/etc/interrogate
 	install -Dm755 interrogate $(DESTDIR)/usr/bin/
 	install -Dm755 interrogate-stitcher $(DESTDIR)/usr/bin/
 	install -Dm644 configs/example.yaml $(DESTDIR)/etc/interrogate/
