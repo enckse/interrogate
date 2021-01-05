@@ -5,8 +5,8 @@ a basic/primitive survey app for LAN-based survey completion.
 
 # setup
 
-* by default data is saved to `/var/cache/survey/`
-* configuration is in `/etc/survey/`
+* by default data is saved to `/var/cache/interrogate/`
+* configuration is in `/etc/interrogate/`
 
 ## run
 

@@ -27,7 +27,7 @@ install: build
 	install -d $(DESTDIR)/etc/survey
 	install -Dm755 interrogate $(DESTDIR)/usr/bin/
 	install -Dm755 interrogate-stitcher $(DESTDIR)/usr/bin/
-	install -Dm644 configs/example.yaml $(DESTDIR)/etc/survey/
-	install -Dm644 configs/settings.conf $(DESTDIR)/etc/survey/
+	install -Dm644 configs/example.yaml $(DESTDIR)/etc/interrogate/
+	install -Dm644 configs/settings.conf $(DESTDIR)/etc/interrogate/
 	install -Dm644 configs/systemd/interrogate.conf $(DESTDIR)/usr/lib/tmpfiles.d/
 	install -Dm644 configs/systemd/interrogate.service $(DESTDIR)/usr/lib/systemd/system/
