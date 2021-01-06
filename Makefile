@@ -1,5 +1,4 @@
-VERSION ?= master
-FLAGS   := -ldflags '-linkmode external -extldflags $(LDFLAGS) -s -w -X main.vers=$(VERSION)' -trimpath -buildmode=pie -mod=readonly -modcacherw
+FLAGS   := -ldflags '-linkmode external -extldflags $(LDFLAGS) -s -w' -trimpath -buildmode=pie -mod=readonly -modcacherw
 TMPL    := $(shell find templates/ -type f)
 OBJECTS := interrogate interrogate-stitcher
 BINDATA := internal/bindata.go

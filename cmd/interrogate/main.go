@@ -30,7 +30,6 @@ const (
 var (
 	lock      = &sync.Mutex{}
 	mask      = &sync.Mutex{}
-	vers      = "master"
 	clientIDs = make(map[string]string)
 	knownIDs  = make(map[string]string)
 )
@@ -505,7 +504,6 @@ func main() {
 	clientIDs = make(map[string]string)
 	knownIDs = make(map[string]string)
 	cfg := *configFile
-	internal.Info(vers)
 	conf := &internal.Configuration{}
 	cfgData, err := ioutil.ReadFile(cfg)
 	if err != nil {
